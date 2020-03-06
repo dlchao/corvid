@@ -1,0 +1,8 @@
+# small configuration file for metro seattle
+label example-seattle
+datafile seattle
+R0 2.6
+seed 1
+seedinfected 10
+seedinfecteddaily 0
+
