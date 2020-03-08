@@ -58,6 +58,8 @@ one - a single community of 2000 people.
 
 seattle - metropolitan Seattle, based on the 2000 US Census.
 
+kingcounty - King County (Washington State), based on the 2000 US Census.
+
 la - Los Angeles County.  la-tracts.dat is not from the 2000 Census;
 It is based on 2007 PEPS estimates from Walter R. McDonald & 
 Associates, Inc. (WRMA) and padded with an additional 776,000 
@@ -109,7 +111,7 @@ R0 : real
 Basic reproductive number, which is internally converted to beta. 
 
 symptomaticfraction : real
-Fraction of cases who will become symptomatic.
+Fraction of cases who will become symptomatic. This parameter affects the relationship between beta and R0, which is hard-coded into epimodelparameters.cpp assuming the default of 0.5. So change with caution.
 
 seed : integer
 Random number seed.
@@ -117,8 +119,8 @@ Random number seed.
 runlength : integer
 Number of days the simulation should run. Default is 180. 
 
-preexistingimmunitylevel: real
-Those with pre-existing immunity have susceptibility reduced by preexistingimmunitylevel.
+preexistingimmunityprotection: real
+Those with pre-existing immunity have susceptibility reduced by preexistingimmunityprotection.
 
 preexistingimmunitybyage : real[5]
 Vector of 5 values representing the fraction of individuals in each age group with pre-existing immunity. Those with pre-existing immunity have susceptibility reduced by preexistingimmunitylevel.
@@ -252,26 +254,29 @@ Liberal leave compliance probability. The probability that people will take off 
 --------------------------
 4. Running corvid
 
-Corvid uses a file called "run-number" to specify the suffix 
-of the output files. The contents of the file is a single number 
-(e.g., 0) that is incremented each time Corvid is run.
-The run-number file is not included with the Corvid distribution and must 
-be created by the user. This file, and the desired data files, should be 
-in the same directory as the executable.
-
 To run Corvid:
   ./corvid config
 where config is the name of your configuration file.
 The program will print out its version number and any configuration
 errors to stdout.
 
+Unless the names of all output files are specified in the configuration
+file, Corvid uses a file called "run-number" that is appended to the output
+file names. The contents of the file is a single number (e.g., 0) that is
+incremented each time Corvid is run. For example, the summary and log files
+will be "Summary0" and "Log0" by default. The run-number file is not
+included with the Corvid distribution and must be created by the user. This
+file, and the desired data files, should be in the same directory as the
+executable.
+
+
 --------------------------
 5. Output files
 
-A simulation run will produce 1-4 output files, depending on 
+A simulation run will produce 1 to 4 output files, depending on 
 configuration parameters. The filenames are a prefix (e.g., "Summary") 
 followed by a number, which is taken from the file run-number, unless
-the filenames are specified on the command line.
+the filenames are specified in the configuration file.
 All output files are in ascii text format.
 
 Summary(n) - outputs the settings used for the simulation, final attack 

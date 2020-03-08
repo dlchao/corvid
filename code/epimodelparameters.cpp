@@ -31,7 +31,7 @@ EpiModelParameters::EpiModelParameters(const char *configname) {
     for (int j=0; j<=VACCEFFLENGTH; j++)
       vaccinedata[i].vacceff[j] = vacceff[j];
   }
-  fPreexistingImmunityLevel = 1.0;
+  fPreexistingImmunityProtection = 1.0;
   for (int i=0; i<TAG; i++) {
     fPreexistingImmunityFraction[i] = 0.0;
     fBaselineVESByAge[i] = 0.0;
@@ -456,8 +456,8 @@ bool EpiModelParameters::readConfigFile(const char *configname) {
 	    read_config_double(fQuarantineCompliance, iss, "quarantine compliance probability", 0.0, 1.0);
 	} else if (param.compare("liberalleave")==0) {
 	    read_config_double(fLiberalLeaveCompliance, iss, "liberal leave compliance probability", 0.0, 1.0);
-	} else if (param.compare("preexistingimmunitylevel")==0) {
-	    read_config_double(fPreexistingImmunityLevel, iss, "protection for those with pre-existing immunity", 0.0, 1.0);
+	} else if (param.compare("preexistingimmunityprotection")==0) {
+	    read_config_double(fPreexistingImmunityProtection, iss, "protection for those with pre-existing immunity", 0.0, 1.0);
 	} else if (param.compare("preexistingimmunitybyage")==0) {
 	  read_config_double(fPreexistingImmunityFraction[0], iss, "fraction of pre-schoolers with pre-existing immunity", 0.0, 1.0);
 	  read_config_double(fPreexistingImmunityFraction[1], iss, "fraction of school-age children with pre-existing immunity", 0.0, 1.0);

@@ -64,7 +64,7 @@ EpiModel::EpiModel(EpiModelParameters &params) {
   memcpy(seasonality, params.getSeasonality(), MAXRUNLENGTH*sizeof(double));
 
   nRunLength = params.getRunLength();
-  fPreexistingImmunityLevel = params.getPreexistingImmunityLevel();
+  fPreexistingImmunityProtection = params.getPreexistingImmunityProtection();
   memcpy(fPreexistingImmunityFraction, params.getPreexistingImmunityByAge(), TAG*sizeof(double));
   memcpy(fBaselineVESByAge, params.getBaselineVESByAge(), TAG*sizeof(double));
 
@@ -215,7 +215,7 @@ EpiModel::EpiModel(EpiModelParameters &params) {
        it++) {
     Person &p = *it;
     if (fPreexistingImmunityFraction[p.age]>0.0 && get_rand_double<fPreexistingImmunityFraction[p.age])
-      p.fBaselineVES = fPreexistingImmunityLevel;
+      p.fBaselineVES = fPreexistingImmunityProtection;
     else
       p.fBaselineVES = fBaselineVESByAge[p.age];
     if (ePrevaccinationStrategy==PRIMEBOOSTRANDOM || // everyone is eligible when PRIMEBOOSTRANDOM
@@ -1893,7 +1893,7 @@ void EpiModel::summary(void) {
       outfile << "Seeded daily" << endl;
     else
       outfile << "Seeded once" << endl;
-    outfile << "Pre-existing immunity level: " << fPreexistingImmunityLevel << endl;
+    outfile << "Protection from pre-existing immunity: " << fPreexistingImmunityProtection << endl;
     outfile << "Pre-existing immunity fraction by age: ";
     for (int i=0; i<TAG; i++)
       outfile << fPreexistingImmunityFraction[i] << ",";

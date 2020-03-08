@@ -478,7 +478,7 @@ class EpiModel {
   int  nSeedAirports;          // seed n/10000 infected people at major airports
   bool bTravel;                // is short-term travel allowed?
   double fPreexistingImmunityFraction[TAG];  // fraction with pre-existing (sterilizing) immunity by age group
-  double fPreexistingImmunityLevel; // protection against infection for those with pre-existing immunity (like VES)
+  double fPreexistingImmunityProtection; // protection against infection for those with pre-existing immunity (like VES)
   double fBaselineVESByAge[TAG];    // default VES by age group
 
   int nSchoolOpeningDays[56];  // day of the simulation on which the state's schools open. Values of <=0 indicate that the schools are open from the first day. Array indices correspond to the FIPS code of the state-1, starting with Alabama ("01").
