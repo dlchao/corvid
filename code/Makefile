@@ -31,11 +31,11 @@ dSFMT19937.o: dSFMT.c dSFMT.h dSFMT-params19937.h Makefile
 bnldev.o: bnldev.c bnldev.h Makefile
 	$(CC) $(CFLAGS) $(OPTI) $(INCLUDES) $(DEFINES) -c bnldev.c -o bnldev.o
 
-zip: *.c *.cpp *.h Makefile README LICENSE HISTORY examples/*
-	cd ..; zip corvid/corvid.zip corvid/README corvid/LICENSE corvid/gpl.txt corvid/HISTORY corvid/Makefile corvid/*.cpp corvid/*.c corvid/*.h corvid/one-*dat corvid/seattle-*dat corvid/la-*dat corvid/usa-*dat corvid/examples/*
+zip: *.c *.cpp *.h Makefile
+	cd ../..; zip corvid/corvid.zip corvid/README corvid/LICENSE corvid/gpl.txt corvid/HISTORY corvid/code/Makefile corvid/code/*.cpp corvid/code/*.c corvid/code/*.h corvid/corviddata/one-*dat corvid/corviddata/seattle-*dat corvid/corviddata/la-*dat corvid/configfiles/*
 
 emacs:
-	emacs Makefile *.R *.h *.c *.cpp README HISTORY &
+	emacs Makefile *.h *.c *.cpp &
 
 clean:
 	rm -f *.o corvid R0corvid *~

@@ -1689,13 +1689,15 @@ void EpiModel::response(void) {
 	       !isSchoolClosed(t,3) || !isSchoolClosed(t,4) ||
 	       !isSchoolClosed(t,5) || !isSchoolClosed(t,6) ||
 	       !isSchoolClosed(t,7) || !isSchoolClosed(t,8))) { // close schools in this tract
+	    t.nSchoolClosureTimer=nSchoolClosureDays;
+	    cout << "Closing schools in tract " << t.id << " on day " << (nTimer/2) << endl;
 	    for (unsigned int i=t.nFirstCommunity; i<t.nLastCommunity; i++) {
 	      for (unsigned int pid=commvec[t.nFirstCommunity].nFirstPerson;
 		   pid<commvec[t.nLastCommunity-1].nLastPerson;
 		   pid++) {
 		if (isChild(pvec[pid]) && pvec[pid].nWorkplace>0 && pvec[pid].nWorkplace<9 && isAscertained(pvec[pid]) && !isSchoolClosed(t,pvec[pid].nWorkplace)) {
 		  setSchoolClosed(t,pvec[pid].nWorkplace);
-		  cout << "Closing school " << pvec[pid].nWorkplace << " in tract " << t.id << " on day " << (nTimer/2) << endl;
+		  //		  cout << "Closing school " << pvec[pid].nWorkplace << " in tract " << t.id << " on day " << (nTimer/2) << endl;
 		}
 	      }
 	    }

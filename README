@@ -200,7 +200,7 @@ responsedelay : integer
 Number of days to wait before initiating reactive strategies. A values of -1 would deploy reactive strategies on day 0, the first day of the simulation. this differs from the pre-strategy option because pre-vaccination assumes that you can vaccinate people early enough such that they have full protection on day 0. With a responsedelay of -1, they might get vaccine on day 0. Default is 1. 
 
 responseday : integer
-Sets the response to begin on specified day instead of waiting for ascertained cases.
+Sets the reactive responses to begin on specified day instead of waiting for ascertained cases (instead of using responsethreshhold and responsedelay).
 
 ascertainmentdelay : integer
 Number of days it takes medical personnel to ascertain a symptomatic individual. Default is 1 day. 
@@ -236,7 +236,7 @@ antiviralpolicy : string
 Indicates which persons get antivirals. Can be one of four possible values, none, treatmentonly, HHTAP (household members all get drugs if one member is ascertained), or HHTAP100 (Special option for LA county: drugs can go to first 100 households that have a member ascertained). Default is none. 
 
 schoolclosurepolicy : string
-Identify which schools to close. Can take one of three possible values, none, all, or bytractandage. An epidemic is detected after the responsethreshold and responsedelay variable criteria are met. At this point, either no schools close (none), all schools close (all) or the schools in a single tract that correspond to a single age group (e.g., elementary, middle, or high) can be closed (bytractandage). Default is none.
+Identify which schools to close. Can take one of three possible values, none, all, or bytractandage. After reactive responses have started, either no schools close (none), all schools close (all) or the schools in a single tract that correspond to a single age group (e.g., elementary, middle, or high) can be closed (bytractandage). Default is none.
 
 schoolclosuredays : integer
 Number of days to close schools ranging from 0 to the value of runlength. The default is 0, no school closure. A value larger than runlength would close the schools permanently.
