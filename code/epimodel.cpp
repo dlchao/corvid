@@ -19,7 +19,7 @@ extern "C" {
 using namespace std;
 
 const int nVersionMajor = 0;
-const int nVersionMinor = 1;
+const int nVersionMinor = 2;
 
 #define get_rand_double dsfmt_genrand_close_open(&dsfmt)
 #define get_rand_uint32 dsfmt_genrand_uint32(&dsfmt)
@@ -101,6 +101,11 @@ EpiModel::EpiModel(EpiModelParameters &params) {
   nTriggerDelay=params.getTriggerDelay();
   if (nTriggerDelay<0) {
     nTriggerTime=1;  // so that the response will start on the first evening of the simulation
+    bTrigger=true;
+  }
+  int temp=params.getTriggerDay();
+  if (temp>=0) {
+    nTriggerTime = 2*temp; // force the response to occur on specified day
     bTrigger=true;
   }
   nAscertainmentDelay = params.getAscertainmentDelay();

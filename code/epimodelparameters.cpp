@@ -48,6 +48,8 @@ EpiModelParameters::EpiModelParameters(const char *configname) {
   AVEp = 0.6;  // less likely to become sick given infection
   AVEi = 0.62; // less likely to infect others
 
+  //  nTriggerTime=-1; // not set
+  nTriggerDay=-1; // not set
   nTriggerDelay=1;
   bTrigger=false;
   eAntiviralPolicy=NOAV;
@@ -378,6 +380,8 @@ bool EpiModelParameters::readConfigFile(const char *configname) {
 	    read_config_double(fResponseThreshhold, iss, "response threshhold", 0.0, 1.0);
 	} else if (param.compare("responsedelay")==0) {
 	    read_config_int(nTriggerDelay, iss, "response delay");
+	} else if (param.compare("responseday")==0) {
+	    read_config_int(nTriggerDay, iss, "response day");
 	} else if (param.compare("ascertainmentdelay")==0) {
 	    read_config_int(nAscertainmentDelay, iss, "ascertainment delay");
 	} else if (param.compare("ascertainmentfraction")==0) {

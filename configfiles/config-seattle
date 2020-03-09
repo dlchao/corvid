@@ -1,8 +1,12 @@
-# small configuration file for metro seattle
+# basic configuration file for metro seattle
 label example-seattle
 datafile seattle
 R0 2.6
+runlength 180
+summaryfilename Summary-seattle26.txt
+logfilename Log-seattle26.txt
+tractfilename Tracts-seattle26.txt
 seed 1
-seedinfected 10
+seedinfected 1
 seedinfecteddaily 0
-
+responsethreshhold 1
