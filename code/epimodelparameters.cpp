@@ -448,7 +448,7 @@ bool EpiModelParameters::readConfigFile(const char *configname) {
 		schoolClosurePolicy=0;
 	      else if (s.compare("all")==0)
 		schoolClosurePolicy=1;
-	      else if (s.compare("bytractandage")==0)
+	      else if (s.compare("bytract")==0)
 		schoolClosurePolicy=2;
 	      else {
 		cerr << "WARNING: " << s << " is not a valid school closure strategy." << endl;

@@ -12,11 +12,7 @@ using namespace std;
 
 class EpiModelParameters {
  public:
-#ifdef PARALLEL
-  EpiModelParameters(int, int, const char *configname);
-#else
   EpiModelParameters(const char *configname);
-#endif
   ~EpiModelParameters() { }
 
   // run parameters
@@ -130,8 +126,7 @@ class EpiModelParameters {
 
   // intervention parameters
   int bTrigger;                     // has the trigger for response been reached
-  int nTriggerDay;                  // day when reactive strategies are deployed everywhere
-  //  int nTriggerTime;                 // time when reactive strategies are deployed everywhere
+  int nTriggerDay;                  // day when reactive strategies will be deployed everywhere
   int nTriggerDelay;                // days between trigger and response
   double fResponseThreshhold;       // fraction of ever infecteds before reaction
   int nAscertainmentDelay;          // days between symptomatic and ascertainment
@@ -169,9 +164,4 @@ class EpiModelParameters {
   double fIsolationCompliance;      // probability of voluntary home isolation compliance (set to 0 for no isolation)?
   double fQuarantineCompliance;     // probability of individual compliance (set to 0 for no quarantine)
   double fLiberalLeaveCompliance;   // probability of individual compliance (set to 0 for no liberal leave)
-
-#ifdef PARALLEL
-  int size;
-  int rank;
-#endif
 };

@@ -236,7 +236,7 @@ antiviralpolicy : string
 Indicates which persons get antivirals. Can be one of four possible values, none, treatmentonly, HHTAP (household members all get drugs if one member is ascertained), or HHTAP100 (Special option for LA county: drugs can go to first 100 households that have a member ascertained). Default is none. 
 
 schoolclosurepolicy : string
-Identify which schools to close. Can take one of three possible values, none, all, or bytractandage. After reactive responses have started, either no schools close (none), all schools close (all) or the schools in a single tract that correspond to a single age group (e.g., elementary, middle, or high) can be closed (bytractandage). Default is none.
+Identify which schools to close. Can take one of three possible values, none, all, or bytractandage. After reactive responses have started, either no schools close (none), all schools close (all) or the schools in a single tract can be closed (bytractand). Default is none.
 
 schoolclosuredays : integer
 Number of days to close schools ranging from 0 to the value of runlength. The default is 0, no school closure. A value larger than runlength would close the schools permanently.

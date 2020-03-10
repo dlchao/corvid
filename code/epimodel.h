@@ -175,10 +175,6 @@ struct Person {
   unsigned char nQuarantineTimer; // quarantine timer (number of days left)
   char nTravelTimer;	// travel time left
   char nDayNeighborhood; // ID of work neighborhood
-#ifdef PARALLEL
-  int nHomeRank;        // node of home community
-  int nWorkRank;        // node of work community
-#endif
   unsigned int nDayTract;        // ID of daytime (work, school) tract
   unsigned int nDayComm;         // ID of daytime (work, school) community
   int nWorkplace;	// work or school group
@@ -187,9 +183,6 @@ struct Person {
 
   char sourcetype;      // in which setting infection took place
   unsigned int sourceid;// keeping track of the source of infection
-#ifdef PARALLEL
-  int sourcerank;       // keeping track of the source of infection
-#endif
 
   int family;	        // family ID
   unsigned char nFamilySize; // family size
@@ -278,43 +271,6 @@ struct Person {
   friend inline unsigned char getVaccinePriority(Person &p) { return p.nVaccinePriority; }
 };
 
-#ifdef PARALLEL
-typedef struct PStub { // The first few members of struct Person
-  unsigned int id;	// agent id
-  unsigned char age;	// age group
-  unsigned char status;	// infection status
-  unsigned char nWhichVload; //
-  char iday;            // infected days
-  unsigned char ibits;  // state info for infection
-  unsigned char vbits;  // state info for vaccine
-  unsigned char vday;   // vaccination timer (number of days elapsed)
-  char nAVTimer;        // antiviral timer (number of tablets left)
-  unsigned char nQuarantineTimer; // quarantine timer (number of days left)
-  char nTravelTimer;	// travel time left
-  char nDayNeighborhood; // ID of work neighborhood
-  int nHomeRank;        // node of home community
-  int nWorkRank;        // node of work community
-  unsigned int nDayTract;        // tract of work community
-  unsigned int nDayComm;         // ID of work community
-  int nWorkplace;	// work group
-  double fBaselineVES; // baseline VES before vaccination
-} PersonStub; // for setting up people who work on different nodes
-
-typedef struct PStatusStub {
-  unsigned int id;	// agent id
-  int nHomeRank;        // node of home community
-  unsigned int nDayComm;// ID of work community
-  unsigned char status;	// infection status
-  char iday;            // infected days
-  unsigned char ibits;  // state info for infection
-  unsigned char vbits;  // state info for vaccine
-  unsigned char vday;   // vaccination timer (number of days elapsed)
-  char nTravelTimer;	// travel time left
-  char sourcetype;
-  unsigned int sourceid;
-} PersonStatusStub; // for updating the status of workers across nodes
-#endif
-
 struct Community {
   const static int TARGETCOMMUNITYSIZE=2000;
   const static int FAMILIESPERCLUSTER = 4;
@@ -325,9 +281,6 @@ struct Community {
   // new communities, families, workgroups, etc.
   // Just keep the ID and the home rank intact.
   list <Person> visitors;           // list of short-term travelers to this community
-#ifdef PARALLEL
-  vector <Person> immigrantworkers; // vector of workers from other nodes
-#endif
   unsigned int id;	 // unique community ID
   int nTractID;          // ID of its tract
   int nNumResidents;	 // number of residents (population size)
@@ -342,6 +295,7 @@ struct Community {
   int nEverInfected[TAG];// number of residents ever infected
   int nEverSymptomatic[TAG]; // number of residents ever symptomatic
   int nEverAscertained[TAG]; // number of residents ever ascertained
+  int nRecentlyAscertained[TAG]; // number of residents "recently" ascertained
   double cpcm[5];        // community-specific community contact rates
   double cpnh[5];        // community-specific neighborhood contact rates
   double daycpcm[5];     // community-specific daytime community contact rates
@@ -385,11 +339,7 @@ struct Tract {
 
 class EpiModel {
  public:
-#ifdef PARALLEL
-  EpiModel(int, int, EpiModelParameters &params);
-#else
   EpiModel(EpiModelParameters &params);
-#endif
   virtual ~EpiModel() { 
     if (tractToFIPStract)
       delete(tractToFIPStract);
@@ -397,14 +347,6 @@ class EpiModel {
       delete(tractToFIPScounty);
     if (tractToFIPSstate)
       delete(tractToFIPSstate);
-#ifdef PARALLEL
-    if (tractToCPU)
-      delete(tractToCPU);
-    if (numTractsPerNode)
-      delete(numTractsPerNode);
-    if (numPeoplePerNode)
-      delete(numPeoplePerNode);
-#endif
   }
   virtual void prerun(void);
   virtual void run(void);
@@ -422,6 +364,7 @@ class EpiModel {
   virtual void infect(Person& p);
   void vaccinate(Person& p);
   void vaccinate(Tract& t);
+  void resetAscertained(Tract &t, int agegroup);
   void TAP(Person& p);
   void dayinfectsusceptibles(const Person &infected, Community &comm);
   void nightinfectsusceptibles(const Person &infected, Community &comm);
@@ -434,10 +377,6 @@ class EpiModel {
   virtual void summary(void);
   virtual void outputIndividuals(void);
   bool isEligible(const Person &p, int nVacNum);
-
-#ifdef PARALLEL
-  void sync(void);
-#endif
 
  protected:
   int nRunLength;	        // total time of simulation in days
@@ -546,20 +485,4 @@ class EpiModel {
   double fIsolationCompliance;      // probability of voluntary home isolation compliance (set to 0 for no isolation)?
   double fQuarantineCompliance;     // probability of individual compliance (set to 0 for no quarantine)
   double fLiberalLeaveCompliance;   // probability of individual compliance (set to 0 for no liberal leave)
-
-#ifdef PARALLEL
-  int rank;                         // region(processor) number
-  int size;                         // total regions(processors)
-  int *tractToCPU;                  // tract id->CPU mapping
-  int *numTractsPerNode;            // number of tracts on each node
-  unsigned int *numPeoplePerNode;            // number of people on each node
-  vector <unsigned int> emigrantworkers;     // IDs of residents working on other nodes
-  vector <unsigned int> emigrantupdates;     // emigrants who were recently infected
-  vector <Person> immigrantupdates; // immigrants who were recently infected
-  unsigned int nNumPeopleTotal;     // number of people across all nodes
-  unsigned int nNumVaccineDosesUsedTotal[NUMVACCINES];// number of vaccine doses used across all nodes
-  unsigned int nNumAntiviralsUsedTotal;// number of antiviral doses used across all nodes
-  MPI_Datatype PersonStubType;
-  MPI_Datatype PersonStatusStubType;
-#endif
 };

@@ -563,6 +563,7 @@ void EpiModel::create_families(Community& comm, int nTargetSize) {
   memset(comm.nEverInfected, 0, TAG*sizeof(int));
   memset(comm.nEverSymptomatic, 0, TAG*sizeof(int));
   memset(comm.nEverAscertained, 0, TAG*sizeof(int));
+  memset(comm.nRecentlyAscertained, 0, TAG*sizeof(int));
   memset(comm.nNumAge, 0, TAG*sizeof(int));
   comm.nFirstPerson=nNumPerson;
   playgroup[0] = 9;
@@ -891,7 +892,7 @@ void EpiModel::initPopulation(void) {
  * isAscertained - has this person been ascertained as ill?
  */
 bool EpiModel::isAscertained(const Person &p) {
-  return isInfectious(p) && getWillBeSymptomatic(p) && p.iday>=getIncubationDays(p)+nAscertainmentDelay;
+  return isInfectious(p) && getWillBeSymptomatic(p) && getWillBeAscertained(p) && p.iday>=getIncubationDays(p)+nAscertainmentDelay;
 }
 
 /*
@@ -1003,6 +1004,22 @@ void EpiModel::vaccinate(Person& p) {
     p.bWantVac=true;
     nNumWantVaccine++;
     assert(p.nTravelTimer<=0);
+  }
+}
+
+/*
+ * resetAscertained
+ * reset the number of "ascertained" people in tract t to 0
+ */
+void EpiModel::resetAscertained(Tract& t, int agegroup=-1) {
+  for (unsigned int commid=t.nFirstCommunity; commid<t.nLastCommunity; commid++) {
+    for (unsigned int commid=t.nFirstCommunity; commid<t.nLastCommunity; commid++) {
+      Community &comm = commvec[commid];
+      if (agegroup>=0)
+	comm.nRecentlyAscertained[agegroup] = 0;
+      else
+	memset(comm.nRecentlyAscertained, 0, TAG*sizeof(int));
+    }
   }
 }
 
@@ -1375,6 +1392,7 @@ void EpiModel::night(void) {
 	  if (isSymptomatic(p)) {
 	    if (p.iday==getIncubationDays(p)+nAscertainmentDelay && getWillBeAscertained(p)) { // person becomes ascertained
 	      ++commvec[p.nHomeComm].nEverAscertained[p.age];
+	      ++commvec[p.nHomeComm].nRecentlyAscertained[p.age];
 	      // call TAP when cases are ascertained in this tract
 	      if (getAVPolicy(tractvec[comm.nTractID-nFirstTract])!=NOAV)
 		TAP(p);
@@ -1575,27 +1593,35 @@ void EpiModel::response(void) {
        it++) {
     Tract &t = *it;
     if (isSchoolClosed(t,1) && nSchoolOpeningDays[t.fips_state-1]-1==nTimer/2) {
-      for (int i=0; i<9; i++)
+      for (int i=0; i<9; i++) {
 	setSchoolOpen(t,i);// schools open today
+      }
       t.nSchoolClosureTimer=0;
+      resetAscertained(t,1); // reset school-aged children
     }
   }
 
   // 1. Count cumulative number of ascertained cases
   if (!bTrigger) {
-    int nNumAscertained=0; // number of people ever ascertained
+    int nNumRecentlyAscertained=0; // number of people recently ascertained
     vector< Community >::iterator cend = commvec.end();
     for (vector< Community >::iterator it = commvec.begin();
 	 it != cend;
 	 it++) {
       Community &c = *it;
       for (int j=0; j<TAG; j++)
-	nNumAscertained += c.nEverAscertained[j];
+	nNumRecentlyAscertained += c.nRecentlyAscertained[j];
     }
-    if (nNumAscertained/(double)nNumPerson>fResponseThreshhold) { // trigger reached
+    if (nNumRecentlyAscertained/(double)nNumPerson>fResponseThreshhold) { // trigger reached
       bTrigger=true;
       nTriggerTime=nTimer+nTriggerDelay*2;
-      cout << "Response starts on day " << (nTriggerTime/2) << ": ascertained: " << nNumAscertained << "/" << nNumPerson << "=" << nNumAscertained/(double)nNumPerson << " on day " << (nTimer/2) << endl;
+      cout << "Response starts on day " << (nTriggerTime/2) << ": ascertained: " << nNumRecentlyAscertained << "/" << nNumPerson << "=" << nNumRecentlyAscertained/(double)nNumPerson << " on day " << (nTimer/2) << endl;
+      for (vector< Tract >::iterator it = tractvec.begin();
+	   it != tractvec.end();
+	   it++) {
+	Tract &t = *it;
+	resetAscertained(t);
+      }
     }
   }
 
@@ -1616,7 +1642,6 @@ void EpiModel::response(void) {
 	  t.nSchoolClosureTimer=nSchoolClosureDays;
 	}
       }
-
       if (eVaccinationStrategy==MASSVAC && !isVaccinated(t))
 	vaccinate(t);
     }
@@ -1665,42 +1690,34 @@ void EpiModel::response(void) {
 	   it++) {
 	Tract &t = *it;
 	if (!isVaccinated(t)) {
-	  int nNumAscertained=0; // number of people ascertained in this tract
+	  int nNumRecentlyAscertained=0; // number of people ascertained in this tract
 	  for (unsigned int i=t.nFirstCommunity; i<t.nLastCommunity; i++)
 	    for (int j=0; j<TAG; j++)
-	      nNumAscertained += commvec[i].nEverAscertained[j];
-	  if (nNumAscertained>0) { // case found in tract
+	      nNumRecentlyAscertained += commvec[i].nRecentlyAscertained[j];
+	  if (nNumRecentlyAscertained>0) { // case found in tract
 	    vaccinate(t);
 	  }
 	}
       }
     }
-    if (nSchoolClosureDays>0) {
+    if (nSchoolClosureDays>0) { // is school closure an option?
       if (nSchoolClosurePolicy==2) { // close schools by ascertainment
 	for (vector< Tract >::iterator it = tractvec.begin();
 	     it != tractvec.end();
 	     it++) {
 	  Tract &t = *it;
-	  int nNumAscertained=0; // number of children ascertained in this tract
+	  int nNumRecentlyAscertained=0; // number of children ascertained in this tract
 	  for (unsigned int i=t.nFirstCommunity; i<t.nLastCommunity; i++)
-	    nNumAscertained += commvec[i].nEverAscertained[0]+commvec[i].nEverAscertained[1];
-	  if (nNumAscertained>0 && 
+	    nNumRecentlyAscertained += commvec[i].nRecentlyAscertained[1]; // count school-aged children only
+	  if (nNumRecentlyAscertained>0 && 
 	      (!isSchoolClosed(t,1) || !isSchoolClosed(t,2) ||
 	       !isSchoolClosed(t,3) || !isSchoolClosed(t,4) ||
 	       !isSchoolClosed(t,5) || !isSchoolClosed(t,6) ||
-	       !isSchoolClosed(t,7) || !isSchoolClosed(t,8))) { // close schools in this tract
+	       !isSchoolClosed(t,7) || !isSchoolClosed(t,8))) { // close schools in this tract if any are still open
 	    t.nSchoolClosureTimer=nSchoolClosureDays;
 	    cout << "Closing schools in tract " << t.id << " on day " << (nTimer/2) << endl;
-	    for (unsigned int i=t.nFirstCommunity; i<t.nLastCommunity; i++) {
-	      for (unsigned int pid=commvec[t.nFirstCommunity].nFirstPerson;
-		   pid<commvec[t.nLastCommunity-1].nLastPerson;
-		   pid++) {
-		if (isChild(pvec[pid]) && pvec[pid].nWorkplace>0 && pvec[pid].nWorkplace<9 && isAscertained(pvec[pid]) && !isSchoolClosed(t,pvec[pid].nWorkplace)) {
-		  setSchoolClosed(t,pvec[pid].nWorkplace);
-		  //		  cout << "Closing school " << pvec[pid].nWorkplace << " in tract " << t.id << " on day " << (nTimer/2) << endl;
-		}
-	      }
-	    }
+	    for (int i=0; i<9; i++) // close all schools in the tract
+	      setSchoolClosed(t,i);
 	  }
 	}
       }
@@ -1712,9 +1729,10 @@ void EpiModel::response(void) {
 	if (isSchoolClosed(t,1) &&                       // school is closed
 	    --t.nSchoolClosureTimer<=0 &&                // school closure is not in effect anymore
 	    nSchoolOpeningDays[t.fips_state-1]-1<=nTimer/2) { // school should be open
-	  cout << "School open on day " << nTimer/2 << ", time " << nTimer << endl;
+	  cout << "School open in tract " << t.id << " on day " << nTimer/2 << endl;
 	  for (int i=0; i<9; i++)
 	    setSchoolOpen(t,i);// school is open again
+	  resetAscertained(t,1); // reset school-aged children
 	}
       }
     }
@@ -1951,7 +1969,7 @@ void EpiModel::summary(void) {
     else if (nSchoolClosurePolicy==1)
       outfile << "School closure policy: all" << endl;
     else if (nSchoolClosurePolicy==2)
-      outfile << "School closure policy: bytractandage" << endl;
+      outfile << "School closure policy: bytract" << endl;
     else
       outfile << "School closure policy: " << nSchoolClosurePolicy << endl;
     outfile << "School closure days: " << nSchoolClosureDays << endl;
