@@ -103,9 +103,10 @@ enum {
 };      // status bits for persons (ibits). Note: the first few bits of ibits are used to keep track of incubation and withdrawal timers
 
 enum {
-  //  VACCINE2       = 0x1u, // first 4 bits for vaccine ID
-  WITHDRAWN      = 0x20u,
-  QUARANTINED    = 0x40u,
+  //  VACCINE2       = 0x1u, // first 3 bits for vaccine ID
+  WITHDRAWN      = 0x10u,
+  ONWORKFROMHOME   = 0x20u,
+  ISQUARANTINED    = 0x40u,
   AVPROPHYLAXIS  = 0x80u  // given antivirals for prophylaxis (not symptomatic)
   //  ONLIBERALLEAVE = 0x8u (not needed)
   //  ISOLATED       = 0x4u, (not needed)
@@ -121,9 +122,10 @@ enum vrestrictionbits {
 enum tractstatusbits {
   TRACTAV1 = 0x1u,         // AV policy used in tract (low order bit)
   TRACTAV2 = 0x2u,         // AV policy used in tract (low order bit)
-  LIBERALLEAVE = 0x4u,     // liberal leave policy for workers
-  TRACTVACCINATED = 0x8u, // tract-wide vaccination
-  TRACTQUARANTINE = 0x10u  // household quarantine active in this tract
+  TRACTLIBERALLEAVE = 0x4u,     // liberal leave policy for workers
+  TRACTWORKFROMHOME = 0x8u,     // work from home policy for workers
+  TRACTVACCINATED = 0x10u, // tract-wide vaccination
+  TRACTQUARANTINE = 0x20u  // household quarantine active in this tract
   //  TRAVELRESTRICTED = 0x20u, // reduced long-distance travel
 };      // status bits for census tracts
 
@@ -148,8 +150,8 @@ enum {
   FROMAIRPORT      = 21
 }; // source of infection
 
-// number of possible vaccines
-#define NUMVACCINES 16
+// number of possible vaccine types
+#define NUMVACCINES 8
 
 // information required for each vaccine
 struct vaccinedatastruct {
@@ -251,9 +253,11 @@ struct Person {
   friend inline unsigned char whichVaccine(const Person &p) { return p.vbits&0x0F; }	// which vaccine did this person get?
   friend inline bool isWithdrawn(const Person &p) { return p.vbits&WITHDRAWN; }
   friend inline void setWithdrawn(Person &p) {p.vbits|=WITHDRAWN;}
-  friend inline bool isQuarantined(const Person &p) { return p.vbits&QUARANTINED; }
-  friend inline void setQuarantined(Person &p) {p.vbits|=QUARANTINED;}
-  friend inline void clearQuarantined(Person &p) {p.vbits&=(~QUARANTINED);}
+  friend inline bool isQuarantined(const Person &p) { return p.vbits&ISQUARANTINED; }
+  friend inline void setQuarantined(Person &p) {p.vbits|=ISQUARANTINED;}
+  friend inline bool isWorkingFromHome(const Person &p) { return p.vbits&ONWORKFROMHOME; }
+  friend inline void setWorkingFromHome(Person &p) {p.vbits|=ONWORKFROMHOME;}
+  friend inline void clearQuarantined(Person &p) {p.vbits&=(~ISQUARANTINED);}
   friend inline bool isAVProphylaxis(const Person &p) { return p.vbits&AVPROPHYLAXIS; }
   friend inline void setAVProphylaxis(Person &p) {p.vbits|=AVPROPHYLAXIS;}
   friend inline void clearAVProphylaxis(Person &p) {p.vbits&=~AVPROPHYLAXIS;}
@@ -329,11 +333,13 @@ struct Tract {
   friend inline enum antiviralPolicy getAVPolicy(const Tract &t) { return (enum antiviralPolicy)(t.status&0x03); }
   friend inline void setAVPolicy(Tract &t, enum antiviralPolicy p) { t.status|=p;} 
   friend inline bool isQuarantine(const Tract &t) { return t.status&TRACTQUARANTINE; }
+  friend inline bool isWorkFromHome(const Tract &t) { return t.status&TRACTWORKFROMHOME; }
   friend inline bool isVaccinated(const Tract &t) { return t.status&TRACTVACCINATED; } 
   friend inline bool isSchoolClosed(const Tract &t, int which) { return t.bSchoolClosed[which]; }
   friend inline void setSchoolClosed(Tract &t, int which) { t.bSchoolClosed[which]=true; }
   friend inline void setSchoolOpen(Tract &t, int which) { t.bSchoolClosed[which]=false; }
   friend inline void setQuarantine(Tract &t) {t.status|=TRACTQUARANTINE;}
+  friend inline void setWorkFromHome(Tract &t) {t.status|=TRACTWORKFROMHOME;}
   friend inline void setVaccinated(Tract &t) {t.status|=TRACTVACCINATED;}
 };
 
@@ -485,4 +491,5 @@ class EpiModel {
   double fIsolationCompliance;      // probability of voluntary home isolation compliance (set to 0 for no isolation)?
   double fQuarantineCompliance;     // probability of individual compliance (set to 0 for no quarantine)
   double fLiberalLeaveCompliance;   // probability of individual compliance (set to 0 for no liberal leave)
+  double fWorkFromHomeCompliance;   // probability of individual compliance (set to 0 for no work from home)
 };

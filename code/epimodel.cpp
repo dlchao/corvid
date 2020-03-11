@@ -105,7 +105,7 @@ EpiModel::EpiModel(EpiModelParameters &params) {
   }
   int temp=params.getTriggerDay();
   if (temp>=0) {
-    nTriggerTime = 2*temp; // force the response to occur on specified day
+    nTriggerTime = 2*temp+1; // force the response to occur on specified day. nTriggerTime needs to be an odd number because interventions are triggered during the day.
     bTrigger=true;
   }
   nAscertainmentDelay = params.getAscertainmentDelay();
@@ -126,6 +126,7 @@ EpiModel::EpiModel(EpiModelParameters &params) {
   fIsolationCompliance=params.getIsolationCompliance();
   fQuarantineCompliance=params.getQuarantineCompliance();
   fLiberalLeaveCompliance=params.getLiberalLeaveCompliance();
+  fWorkFromHomeCompliance=params.getWorkFromHomeCompliance();
 
   // make cumulative distribution for withdraw probabilities
   // convert from double to unsigned int for efficiency
@@ -1083,24 +1084,30 @@ void EpiModel::TAP(Person& p) {
 // dayinfectsusceptibles - called by "day" for daytime transmission
 void EpiModel::dayinfectsusceptibles(const Person &infected, Community &comm) {
   const double *cpf = (isChild(infected)?cpfc:cpfa); // probability of family transmission
-  bool bInfectedAtHome = (isWithdrawn(infected) ||
+  bool bInfectedIsAtHome = (isWithdrawn(infected) ||
 			  isQuarantined(infected) ||
+			  isWorkingFromHome(infected) ||
 			  infected.nWorkplace==0 ||
 			  (isChild(infected) && 
 			   infected.nWorkplace<9 &&
 			   isSchoolClosed(tractvec[infected.nDayTract-nFirstTract], infected.nWorkplace)));   // infected is at home during the day
-  bool bInfectedAtSchool = (isChild(infected) && 
+  bool bInfectedIsAtSchool = (isChild(infected) && 
 			    infected.nWorkplace>0 && 
 			    ((infected.age==0 && infected.nWorkplace>=9) ||
 			     !isSchoolClosed(tractvec[infected.nDayTract-nFirstTract], infected.nWorkplace))); // infected's school or playgroup is open (playgroups are always open)
-  bool bInfectedAtWork = (isWorkingAge(infected) && 
+  bool bInfectedIsAtWork = (isWorkingAge(infected) &&
+			  !isWithdrawn(infected) &&
+			  !isQuarantined(infected) &&
+			  !isWorkingFromHome(infected) &&
 			  infected.nWorkplace>0);  // infected works during the day
 
   vector< unsigned int >::iterator wend = comm.workers.end();
   list< Person >::iterator vend=comm.visitors.end();
   double casualmultiplier = 1.0; // casual contacts multiplier for children
-  if ((infected.age==1 || (infected.age==0 && infected.nWorkplace<9)) && isSchoolClosed(tractvec[infected.nDayTract-nFirstTract],infected.nWorkplace))
-    casualmultiplier = 2.0;      // casual contacts double for out-of-school children
+  if (((infected.age==1 || (infected.age==0 && infected.nWorkplace<9)) &&
+       isSchoolClosed(tractvec[infected.nDayTract-nFirstTract],infected.nWorkplace)) ||
+      (isWorkingFromHome(infected)))
+    casualmultiplier = 2.0;      // casual contacts double for out-of-school children and adults working from home
 
   // loop over susceptible residents
   for (unsigned int pid2=comm.nFirstPerson;
@@ -1109,8 +1116,9 @@ void EpiModel::dayinfectsusceptibles(const Person &infected, Community &comm) {
     Person &p2 = pvec[pid2];
     if (isSusceptible(p2) && p2.nDayComm==comm.id && p2.nTravelTimer<=0) {
       if (infected.family==p2.family && // daytime transmission within household
-	  bInfectedAtHome &&
+	  bInfectedIsAtHome &&
 	  (isQuarantined(p2) ||
+	   isWorkingFromHome(p2) ||
 	   p2.nWorkplace==0 ||
 	   (isChild(p2) && 
 	    p2.nWorkplace<9 &&
@@ -1119,32 +1127,33 @@ void EpiModel::dayinfectsusceptibles(const Person &infected, Community &comm) {
 	  continue;
       }
 
-      double casualmultiplier2 = casualmultiplier; // casual contacts multiplier for children
+      double casualmultiplier2 = casualmultiplier; // casual contacts multiplier when school is cancelled or workplace is closed
       if (casualmultiplier2==1.0 &&
-	  (p2.age==1 || (p2.age==0 && p2.nWorkplace<9)) && isSchoolClosed(tractvec[p2.nDayTract-nFirstTract],p2.nWorkplace))
-	casualmultiplier2 = 2.0;      // casual contacts double for out-of-school children
+	  (((p2.age==1 || (p2.age==0 && p2.nWorkplace<9)) && isSchoolClosed(tractvec[p2.nDayTract-nFirstTract],p2.nWorkplace)) ||
+	   isWorkingFromHome(p2)))
+	casualmultiplier2 = 2.0;      // susceptible's casual contacts double for out-of-school children and adults working from home
 
       if (!isQuarantined(p2) && !infect(p2,infected,comm.daycpcm[p2.age]*casualmultiplier2,FROMCOMMUNITY)) { // transmission within community
 	if (infected.nDayNeighborhood==p2.nDayNeighborhood)  // transmission within neighborhood
 	  if (infect(p2,infected,comm.daycpnh[p2.age]*casualmultiplier2,FROMNEIGHBORHOOD))
 	    continue;
 	if (isChild(infected)) {  // transmitter is child
-	  if (bInfectedAtSchool && isChild(p2) && infected.nWorkplace==p2.nWorkplace)
+	  if (bInfectedIsAtSchool && isChild(p2) && infected.nWorkplace==p2.nWorkplace)
 	    infect(p2,infected,(infected.nWorkplace>=9?cps[9]:comm.cps[infected.nWorkplace]),FROMSCHOOL); // transmission within school/daycare/playgroup
 	} else {           // transmitter is adult
-	  if (bInfectedAtWork && isWorkingAge(p2) && infected.nWorkplace==p2.nWorkplace)  // transmission within work group
+	  if (bInfectedIsAtWork && isWorkingAge(p2) && !isWorkingFromHome(p2) && infected.nWorkplace==p2.nWorkplace)  // transmission within work group
 	    infect(p2,infected,cpw,FROMWORK);
 	}
       }
     }
   }
 
-  // loop over susceptible workers visiting from other communities on this processor
+  // loop over susceptible workers visiting from other communities
   for (vector< unsigned int >::iterator it = comm.workers.begin(); 
        it != wend;
        it++) {
     Person &p2 = pvec[*it];
-    if (isSusceptible(p2) && !isQuarantined(p2) && p2.nTravelTimer<=0) {
+    if (isSusceptible(p2) && !isQuarantined(p2) && !isWorkingFromHome(p2) && p2.nTravelTimer<=0) {
       if (!infect(p2,infected,comm.daycpcm[p2.age]*casualmultiplier,FROMCOMMUNITY)) { // transmission within community
 	if (infected.nDayNeighborhood==p2.nDayNeighborhood)  // transmission within neighborhood
 	  if (infect(p2,infected,comm.daycpnh[p2.age]*casualmultiplier,FROMNEIGHBORHOOD))
@@ -1272,7 +1281,7 @@ void EpiModel::day(void) {
 	 it != wend;
 	 it++) {
       Person &p = pvec[*it];
-      if (isInfectious(p) && !isWithdrawn(p) && !isQuarantined(p) && p.nTravelTimer<=0)
+      if (isInfectious(p) && !isWithdrawn(p) && !isQuarantined(p) && !isWorkingFromHome(p) && p.nTravelTimer<=0)
 	dayinfectsusceptibles(p, comm);
     }
 
@@ -1625,7 +1634,7 @@ void EpiModel::response(void) {
     }
   }
 
-  // 2. Epidemic is detected, start reactive vaccination strategies
+  // 2. Epidemic is detected, start reactive strategies
   if (bTrigger && nTimer==nTriggerTime) {
     for (vector< Tract >::iterator it = tractvec.begin();
 	 it != tractvec.end();
@@ -1636,15 +1645,35 @@ void EpiModel::response(void) {
       if (fQuarantineCompliance>0.0 && !isQuarantine(t))
 	setQuarantine(t);  // activate household quarantine in tract
       if (nSchoolClosureDays>0 && nSchoolClosurePolicy==1) {
+	cout << "Closing schools in tract " << t.id << " on day " << (nTimer/2) << " for " << nSchoolClosureDays << " days" << endl;
 	if (!isSchoolClosed(t,1)) {
 	  for (int i=0; i<9; i++)
 	    setSchoolClosed(t,i);// activate school closures
 	  t.nSchoolClosureTimer=nSchoolClosureDays;
 	}
       }
+      if (fWorkFromHomeCompliance>0.0 && !isWorkFromHome(t)) {
+	setWorkFromHome(t);  // activate work from home in tract (not sure if we need to do this, but let's track it just in case)
+      }
       if (eVaccinationStrategy==MASSVAC && !isVaccinated(t))
 	vaccinate(t);
     }
+
+    if (fWorkFromHomeCompliance>0.0) { // choose which people will start working from home
+      vector< Person >::iterator pend=pvec.end();
+      for (vector< Person >::iterator it = pvec.begin(); 
+	   it != pend;
+	   it++) {
+	Person &p = *it;
+	if ((isWorkingAge(p)) && (p.nWorkplace>=0) &&
+	    (get_rand_double < fWorkFromHomeCompliance)) {
+	  setWorkingFromHome(p);
+	  p.nDayNeighborhood = p.nHomeNeighborhood; // spends time at home now. I will regret this code if we need to let them go back to work.
+	}
+      }
+    }
+  } else {
+    assert(nTriggerTime % 2==1); // make sure nTriggerTime is an odd number or else it might not work
   }
 
   // 3. change vaccine priorities if needed

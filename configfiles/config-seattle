@@ -6,7 +6,7 @@ runlength 180
 summaryfilename Summary-seattle26.txt
 logfilename Log-seattle26.txt
 tractfilename Tracts-seattle26.txt
-seed 1
-seedinfected 1
+randomnumberseed 1
+seedinfected 2
 seedinfecteddaily 0
 responsethreshhold 1

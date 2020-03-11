@@ -34,6 +34,7 @@ bnldev.o: bnldev.c bnldev.h Makefile
 zip: *.c *.cpp *.h Makefile
 	cd ../..; zip corvid/corvid.zip corvid/README corvid/LICENSE corvid/gpl.txt corvid/HISTORY corvid/code/Makefile corvid/code/*.cpp corvid/code/*.c corvid/code/*.h corvid/corviddata/one-*dat corvid/corviddata/seattle-*dat corvid/corviddata/la-*dat corvid/configfiles/*
 
+# using emacs makes me feel old
 emacs:
 	emacs Makefile *.h *.c *.cpp &
 

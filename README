@@ -111,10 +111,10 @@ R0 : real
 Basic reproductive number, which is internally converted to beta. 
 
 symptomaticfraction : real
-Fraction of cases who will become symptomatic. This parameter affects the relationship between beta and R0, which is hard-coded into epimodelparameters.cpp assuming the default of 0.5. So change with caution.
+Fraction of cases who will become symptomatic. This parameter affects the relationship between beta and R0, which is hard-coded into epimodelparameters.cpp assuming the default of 0.5. If you use this option, use beta to set transmissibility, not R0. You should probably not change this parameter.
 
-seed : integer
-Random number seed.
+randomnumberseed : integer
+Random number generator seed.
 
 runlength : integer
 Number of days the simulation should run. Default is 180. 
@@ -233,7 +233,7 @@ travel : binary
 enable short-term long-distance travel. Value of 1 enables travel, 0 indicates no travel. Default is 0, but should be set to 1 if simulating the continental US.
 
 antiviralpolicy : string
-Indicates which persons get antivirals. Can be one of four possible values, none, treatmentonly, HHTAP (household members all get drugs if one member is ascertained), or HHTAP100 (Special option for LA county: drugs can go to first 100 households that have a member ascertained). Default is none. 
+Indicates which persons get antivirals. Can be one of four possible values, none, treatmentonly, or HHTAP (household members all get drugs if one member is ascertained). Default is none. 
 
 schoolclosurepolicy : string
 Identify which schools to close. Can take one of three possible values, none, all, or bytractandage. After reactive responses have started, either no schools close (none), all schools close (all) or the schools in a single tract can be closed (bytractand). Default is none.
@@ -252,7 +252,11 @@ quarantine : real
 Voluntary household quarantine compliance probability. This is the probability that the members of a household stay home if one of the family members gets sick. Default is 0, no quarantine. 
 
 liberalleave : real
-Liberal leave compliance probability. The probability that people will take off from work if they get sick. Default is 0, no liberal leave. 
+Liberal leave compliance probability. The probability that people will take off from work if they get sick (in addition to the usual probably of staying home when sick). Default is 0, no liberal leave. 
+
+workfromhome : real
+Working from home compliance probability. The probability that a person who normally goes to work will work from home instead. Default is 0, no work from home.
+
 
 --------------------------
 4. Running corvid
@@ -303,8 +307,17 @@ Comma-separated value files with a header row.  Can be an enormous file.
 6. Sample configuration files
 
 config-minimal - A basic configuration file.  Simulates an epidemic with
-R_0=1.6 in a single community of 2000 people (using data from "one-*")
+R_0=1.3 in a single community of 2000 people (using data from "one-*")
 with 10 initial infecteds.  Uses a random number seed of "1".
+
+config-seattle - Simulates an epidemic with R_0=2.6 in metropolitan
+Seattle (using data from "seattle-*") with 2 initial infecteds.  Uses a
+random number seed of "1".
+
+config-seattle26-closeallschools - Simulates an epidemic with R_0=2.6 in
+metropolitan Seattle (using data from "seattle-*") with 5 initial
+infecteds. All schools close on day 60 for 14 days before reopening.
+Uses a random number seed of "1".
 
 config-laiv-vs-tiv - Vaccination of 50% of children enrolled in 
 school with two different vaccines in Los Angeles County.  Vaccine "0" 

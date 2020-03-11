@@ -2,7 +2,7 @@
 label example-twodose
 datafile seattle
 R0 1.8
-seed 1
+randomnumberseed 1
 seedinfected 10
 seedinfecteddaily 0
 prestrategy none

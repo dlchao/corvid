@@ -59,6 +59,7 @@ EpiModelParameters::EpiModelParameters(const char *configname) {
   fIsolationCompliance=0.0;
   fQuarantineCompliance=0.0;
   fLiberalLeaveCompliance=0.0;
+  fWorkFromHomeCompliance=0.0;
   nAscertainmentDelay = 1;
   fSymptomaticAscertainment=0.8;
   fAdultEssentialFraction = 0.0;
@@ -268,7 +269,7 @@ bool EpiModelParameters::readConfigFile(const char *configname) {
 	      cerr << "  " << MAXRUNLENGTH << " is the maximum runlength (" << nRunLength << " is too high)." << endl;
 	      exit(-1);
 	    }
-	} else if (param.compare("seed")==0) {
+	} else if (param.compare("randomnumberseed")==0) {
 	    read_config_int(seeddisp, iss, "random seed");
 	} else if (param.compare("prestrategy")==0) {
 	  string s;
@@ -460,6 +461,8 @@ bool EpiModelParameters::readConfigFile(const char *configname) {
 	    read_config_double(fQuarantineCompliance, iss, "quarantine compliance probability", 0.0, 1.0);
 	} else if (param.compare("liberalleave")==0) {
 	    read_config_double(fLiberalLeaveCompliance, iss, "liberal leave compliance probability", 0.0, 1.0);
+	} else if (param.compare("workfromhome")==0) {
+	    read_config_double(fWorkFromHomeCompliance, iss, "work from home compliance probability", 0.0, 1.0);
 	} else if (param.compare("preexistingimmunityprotection")==0) {
 	    read_config_double(fPreexistingImmunityProtection, iss, "protection for those with pre-existing immunity", 0.0, 1.0);
 	} else if (param.compare("preexistingimmunitybyage")==0) {
