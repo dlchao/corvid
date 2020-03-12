@@ -6,7 +6,7 @@ runlength 180
 summaryfilename Summary-seattle26-closeallschools.txt
 logfilename Log-seattle26-closeallschools.txt
 tractfilename Tracts-seattle26-closeallschools.txt
-seed 1
+randomnumberseed 1
 seedinfected 5
 seedinfecteddaily 0
 responseday 60

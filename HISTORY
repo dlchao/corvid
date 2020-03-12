@@ -1,6 +1,6 @@
 Corvid version history
 
-Version 1.0 - March 5, 2020
+Version 0.3 - March 11, 2020
 
 Corvid is based on FluTE (https://github.com/dlchao/FluTE).
 
@@ -11,4 +11,6 @@ Several parameters were adjusted to adapt the FluTE flu transmission
 to Corvid coronavirus transmission. Incubation period, symptomatic fraction, 
 viral load trajectories.
 The parallel computing version was removed, so populations of more than 10,000,000 will probably not run on a laptop.
+
+Implemented a "work from home" policy.
 

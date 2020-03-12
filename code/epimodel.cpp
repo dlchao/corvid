@@ -19,7 +19,7 @@ extern "C" {
 using namespace std;
 
 const int nVersionMajor = 0;
-const int nVersionMinor = 2;
+const int nVersionMinor = 3;
 
 #define get_rand_double dsfmt_genrand_close_open(&dsfmt)
 #define get_rand_uint32 dsfmt_genrand_uint32(&dsfmt)

@@ -10,7 +10,8 @@ time steps per simulation day, representing day and night.
 
 The Makefile can be used on Linux systems to compile corvid (standard 
 simulator) and R0corvid (version of corvid in which only a single index case
-is infectious).
+is infectious). You can also make "demo", which will compile corvid and
+run it in a new directory "corviddemo" using the Seattle configuration files.
 
 The source files are:
   epimodel.cpp - model implementation
@@ -318,6 +319,25 @@ config-seattle26-closeallschools - Simulates an epidemic with R_0=2.6 in
 metropolitan Seattle (using data from "seattle-*") with 5 initial
 infecteds. All schools close on day 60 for 14 days before reopening.
 Uses a random number seed of "1".
+
+config-seattle26-isolation - Simulates an epidemic with R_0=2.6 in
+metropolitan Seattle (using data from "seattle-*") with 5 initial
+infecteds. Voluntary home isolation starts on day 60 with a compliance
+of 60%.
+
+config-seattle26-liberalleave - Simulates an epidemic with R_0=2.6 in
+metropolitan Seattle (using data from "seattle-*") with 5 initial
+infecteds. Workplace liberal leave starts on day 60 with a compliance
+of 60%.
+
+config-seattle26-quarantine - Simulates an epidemic with R_0=2.6 in
+metropolitan Seattle (using data from "seattle-*") with 5 initial
+infecteds. Home quarantine starts on day 60 with a compliance of 60%.
+
+config-seattle26-workfromhome - Simulates an epidemic with R_0=2.6 in
+metropolitan Seattle (using data from "seattle-*") with 5 initial
+infecteds. 60% of people start working from home instead of going to
+work starting on day 60.
 
 config-laiv-vs-tiv - Vaccination of 50% of children enrolled in 
 school with two different vaccines in Los Angeles County.  Vaccine "0" 

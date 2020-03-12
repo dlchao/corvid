@@ -34,6 +34,13 @@ bnldev.o: bnldev.c bnldev.h Makefile
 zip: *.c *.cpp *.h Makefile
 	cd ../..; zip corvid/corvid.zip corvid/README corvid/LICENSE corvid/gpl.txt corvid/HISTORY corvid/code/Makefile corvid/code/*.cpp corvid/code/*.c corvid/code/*.h corvid/corviddata/one-*dat corvid/corviddata/seattle-*dat corvid/corviddata/la-*dat corvid/configfiles/*
 
+# makes directory ../corviddemo/ and runs several Seattle scenarios
+demo: corvid
+	rm -rf ../corviddemo
+	mkdir ../corviddemo
+	cd ../corviddemo; ln -s ../code/corvid .; ln -s ../corviddata/seattle* .; ln -s ../configfiles/config-seattle26* .
+	cd ../corviddemo; ./corvid config-seattle26; ./corvid config-seattle26-closeallschools; ./corvid config-seattle26-isolation;  ./corvid config-seattle26-liberalleave; ./corvid config-seattle26-quarantine; ./corvid config-seattle26-workfromhome
+
 # using emacs makes me feel old
 emacs:
 	emacs Makefile *.h *.c *.cpp &
