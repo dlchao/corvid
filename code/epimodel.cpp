@@ -208,7 +208,7 @@ EpiModel::EpiModel(EpiModelParameters &params) {
     logfile = params.getLogFile();
     if ((*logfile) && (*logfile).good()) {
       ostream &out = *logfile;
-      out << "time,TractID,sym0-4,sym5-18,sym19-29,sym30-64,sym65+,cumsym0-4,cumsym5-18,cumsym19-29,cumsym30-64,cumsym65+" << endl;
+      out << "time,TractID,sym0-4,sym5-18,sym19-29,sym30-64,sym65+,cumsym0-4,cumsym5-18,cumsym19-29,cumsym30-64,cumsym65+,inf0-4,inf5-18,inf19-29,inf30-64,inf65+,cuminf0-4,cuminf5-18,cuminf19-29,cuminf30-64,cuminf65+" << endl;
     }
     individualsfile = params.getIndividualsFile();
     sumfile = params.getSummaryFile();
@@ -1893,12 +1893,18 @@ void EpiModel::log(void) {
        it++) {
     Tract& t = *it;
     out << int(nTimer/2) << "," << t.id;
-    int nsym[TAG],      // current symptomatic prevalence
+    int ninf[TAG],      // current infected prevalence
+      ncinf[TAG],	// cumulative infected attack rate
+      nsym[TAG],      // current symptomatic prevalence
       ncsym[TAG];	// cumulative symptomatic attack rate
+    memset(ninf, 0, sizeof(int)*TAG);
+    memset(ncinf, 0, sizeof(int)*TAG);
     memset(nsym, 0, sizeof(int)*TAG);
     memset(ncsym, 0, sizeof(int)*TAG);
     for (unsigned int i=t.nFirstCommunity; i<t.nLastCommunity; i++) {
       for (int j=0; j<TAG; j++) {
+	ninf[j] += commvec[i].ninf[j];
+	ncinf[j] += commvec[i].nEverInfected[j];
 	nsym[j] += commvec[i].nsym[j];
 	ncsym[j] += commvec[i].nEverSymptomatic[j];
       }
@@ -1907,6 +1913,10 @@ void EpiModel::log(void) {
       out << "," << nsym[j];
     for (int j=0; j<TAG; j++)
       out << "," << ncsym[j];
+    for (int j=0; j<TAG; j++)
+      out << "," << ninf[j];
+    for (int j=0; j<TAG; j++)
+      out << "," << ncinf[j];
     out << endl;
   }
 }

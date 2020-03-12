@@ -311,7 +311,7 @@ config-minimal - A basic configuration file.  Simulates an epidemic with
 R_0=1.3 in a single community of 2000 people (using data from "one-*")
 with 10 initial infecteds.  Uses a random number seed of "1".
 
-config-seattle - Simulates an epidemic with R_0=2.6 in metropolitan
+config-seattle26 - Simulates an epidemic with R_0=2.6 in metropolitan
 Seattle (using data from "seattle-*") with 2 initial infecteds.  Uses a
 random number seed of "1".
 
