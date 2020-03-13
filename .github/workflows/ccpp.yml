@@ -13,9 +13,11 @@ jobs:
     
     steps:
     - uses: actions/checkout@v2
-    - name: configure
-      run: ./configure
-      working-directory: code
     - name: make
       run: make
       working-directory: code
+    - name: Archive production artifacts
+      uses: actions/upload-artifact@v1
+      with:
+        name: corvid.linux.amd64
+        path: code/corvid
