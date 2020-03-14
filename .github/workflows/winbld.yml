@@ -1,0 +1,46 @@
+name: C/C++ CI - Windows
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: gcc vercheck
+      run: gcc --version
+    - name: g++ vercheck
+      run: g++ --version
+    - name: make vercheck
+      run: mingw32-make --version
+
+    - name: make
+      run: mingw32-make
+      working-directory: code
+
+    - name: copy static libraries
+      run: foreach ($libname in @('libgcc_s_seh-1.dll','libstdc++-6.dll')) { foreach ( $libpath in cmd /c where $libname | select -first 1 ) { copy $libpath . } }
+      working-directory: code
+
+    - name: archive binary
+      uses: actions/upload-artifact@v1
+      with:
+        name: corvid.exe
+        path: code/corvid.exe
+    - name: archive static libraries
+      uses: actions/upload-artifact@v1
+      with:
+        name: libgcc_s_seh-1.dll
+        path: code/libgcc_s_seh-1.dll
+    - name: archive static libraries
+      uses: actions/upload-artifact@v1
+      with:
+        name: libstdc++-6.dll
+        path: code/libstdc++-6.dll
