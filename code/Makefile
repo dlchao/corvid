@@ -5,8 +5,8 @@ CLINKER  = gcc
 CCLINKER = g++
 MAKE     = make --no-print-directory
 SHELL    = /bin/sh
-CFLAGS		= -Wall -pedantic -DDSFMT_MEXP=19937 -msse2 -DHAVE_SSE2 
-OPTI            = -O3 -march=native
+CFLAGS   = -Wall -pedantic -DDSFMT_MEXP=19937 -msse2 -DHAVE_SSE2 
+OPTI     = -O1
 #OPTI = -pg # for profiling
 LDFLAGS	= -lm
 INCLUDES	= 
