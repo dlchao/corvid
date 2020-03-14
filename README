@@ -289,6 +289,9 @@ All output files are in ascii text format.
 
 Summary(n) - outputs the settings used for the simulation, final attack 
 rates, vaccines used, daily totals of symptomatic individuals.
+Note that the "Number symptomatic" is the symptomatic prevalence, or the
+number of people who are symptomatic on a given day - it is not the
+number who become symptomatic that day.
 
 Log(n) - The number of symptomatics per tract each day (prevalence and 
 cumulative). Each line has: the day, a unique numeric tract id, the 

@@ -1,0 +1,12 @@
+# Seattle configuration for CDC Modeling Team
+# no interventions
+label seattlePRINTR0-cdc-2020-03-13
+datafile seattle
+R0 PARAMR0
+runlength 240
+summaryfilename Summary-seattlePRINTR0-cdc-2020-03-13
+logfilename Log-seattlePRINTR0-cdc-2020-03-13
+tractfilename Tracts-seattlePRINTR0-cdc-2020-03-13
+randomnumberseed 1
+seedinfected 5
+seedinfecteddaily 0

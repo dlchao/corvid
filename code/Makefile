@@ -41,10 +41,18 @@ demo: corvid
 	cd ../corviddemo; ln -s ../code/corvid .; ln -s ../corviddata/seattle* .; ln -s ../configfiles/config-seattle26* .
 	cd ../corviddemo; ./corvid config-seattle26; ./corvid config-seattle26-closeallschools; ./corvid config-seattle26-isolation;  ./corvid config-seattle26-liberalleave; ./corvid config-seattle26-quarantine; ./corvid config-seattle26-workfromhome
 
+# makes directory ../cdcmarch2020/ and runs several Seattle scenarios in response to the CDC coronavirus Modeling Team
+# The runs will take hours. You might want to customize the run script to take advantage of computer resources better than my own.
+cdcmarch2020: corvid
+	rm -rf ../cdcmarch2020 # hope you didn't want to keep all these files
+	mkdir ../cdcmarch2020
+	cd ../cdcmarch2020; ln -s ../code/corvid .; ln -s ../corviddata/seattle* .; ln -s ../scripts/run-cdc-2020-03-13.sh .; ln -s ../scripts/template*cdc-2020-03-13* .; chmod +x run-*.sh
+
 # using emacs makes me feel old
 emacs:
 	emacs Makefile *.h *.c *.cpp &
 
+# does not clear out the demo or cdcmarch2020 directories
 clean:
 	rm -f *.o corvid R0corvid *~
 	rm -f Summary? Tracts? Log? Individuals?

@@ -129,7 +129,7 @@ class EpiModelParameters {
   int bTrigger;                     // has the trigger for response been reached
   int nTriggerDay;                  // day when reactive strategies will be deployed everywhere
   int nTriggerDelay;                // days between trigger and response
-  double fResponseThreshhold;       // fraction of ever infecteds before reaction
+  double fResponseThreshhold;       // fraction of ever ascertained before reaction
   int nAscertainmentDelay;          // days between symptomatic and ascertainment
   double fAdultEssentialFraction;   // fraction of working-age adults who are "essential workers"
   double fPregnantFraction[TAG];    // fraction of people who are pregnant, by age
