@@ -8,10 +8,12 @@ time steps per simulation day, representing day and night.
 --------------------------
 1. Compilation
 
+The source code and Makefile are in the "code" directory.
 The Makefile can be used on Linux systems to compile corvid (standard 
 simulator) and R0corvid (version of corvid in which only a single index case
 is infectious). You can also make "demo", which will compile corvid and
-run it in a new directory "corviddemo" using the Seattle configuration files.
+run it in a new directory "corviddemo" using sample configuration files
+for a Seattle-like population.
 
 The source files are:
   epimodel.cpp - model implementation

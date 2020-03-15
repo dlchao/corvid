@@ -1646,10 +1646,10 @@ void EpiModel::response(void) {
 	setQuarantine(t);  // activate household quarantine in tract
       if (nSchoolClosureDays>0 && nSchoolClosurePolicy==1) {
 	cout << "Closing schools in tract " << t.id << " on day " << (nTimer/2) << " for " << nSchoolClosureDays << " days" << endl;
+	t.nSchoolClosureTimer=nSchoolClosureDays;
 	if (!isSchoolClosed(t,1)) {
 	  for (int i=0; i<9; i++)
 	    setSchoolClosed(t,i);// activate school closures
-	  t.nSchoolClosureTimer=nSchoolClosureDays;
 	}
       }
       if (fWorkFromHomeCompliance>0.0 && !isWorkFromHome(t)) {

@@ -46,7 +46,8 @@ demo: corvid
 cdcmarch2020: corvid
 	rm -rf ../cdcmarch2020 # hope you didn't want to keep all these files
 	mkdir ../cdcmarch2020
-	cd ../cdcmarch2020; ln -s ../code/corvid .; ln -s ../corviddata/seattle* .; ln -s ../scripts/run-cdc-2020-03-13.sh .; ln -s ../scripts/template*cdc-2020-03-13* .; chmod +x run-*.sh
+	cd ../cdcmarch2020; ln -s ../code/corvid .; ln -s ../corviddata/seattle* .; cp ../scripts/run-cdc-2020-03-13.sh .; cp ../scripts/template*cdc-2020-03-13* .; chmod +x run-*.sh
+	cd ../cdcmarch2020; ./run-cdc-2020-03-13.sh # run all the simulations for hours
 
 # using emacs makes me feel old
 emacs:
