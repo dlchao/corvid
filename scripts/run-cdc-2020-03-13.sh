@@ -8,6 +8,11 @@
 # Users might want to modify it to take advantage of multi-core systems 
 # or clusters.
 
+./corvid config-seattle20-heavylogging-cdc-2020-03-13
+./corvid config-seattle25-heavylogging-cdc-2020-03-13
+./corvid config-seattle25-libleavewfh50-trigger0.001-cdc-2020-03-13
+./corvid config-seattle25-school-libleavewfh50-trigger0.001-cdc-2020-03-13
+
 # no intervention
 for r0 in 2.5 2.0 3.0; do
     printr0=${r0//./}

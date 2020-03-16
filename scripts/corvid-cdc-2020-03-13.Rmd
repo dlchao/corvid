@@ -40,12 +40,14 @@ It is not clear when is the best time to close schools.
 We therefore simulated school closures when 0.01%, 0.1%, 1%, and 10% of the population has developed symptoms of COVID-19, which mimics the school closure thresholds tested in Germann et al 2019.
 These thresholds are based on the total number of people with COVID-19, not the number who test positive.
 
-In general, school closures delayed but did not reduce the epidemic peak.
+In general, school closures alone delayed but did not reduce the epidemic peak.
 The peak could be reduced when school closures spanned the peak of the epidemic, which requires either very long school closures or rather late school closures that start while the epidemic has already ramped up.
+
 Other social distancing policies, such as liberal leave and work from home policies, may have a more durable effect since we assume workplaces that comply with these policies can do so for the duration of the epidemic (workplaces do not re-open during the epidemic in our simulations).
 Combining both school closures and workplace-enacted social distancing policies can delay and reduce the epidemic peak.
+Sufficient simultaneous intervenions could drive R_effective below 1.
 However, Corvid is a new model under active development, so results must be interpreted with caution.
-These results suggest that sustainable interventions be enacted widely to reduce transmission, while school closures can be used to "buy time".
+These results suggest that sustainable interventions be enacted widely to reduce transmission, while school closures can be used to "buy time" or to help drive R_effective below 1 when combined with other interventions.
 
 
 \clearpage
@@ -389,17 +391,17 @@ ymax <- 1100
     symp <- list()
     csymp <- list()
     nsymp <- list()
-    palsocialdistancing <- c("black","red","brown","blue")
-    scenarios <- c("schoolonly", "wfhlibleave", "both")
+    palsocialdistancing <- c("black","red","orange","blue")
+    scenarios <- c("school closure only", "wfh/ll only", "school closure + wfh/ll")
     names(palsocialdistancing) <- c("no intervention",scenarios)
     plot(x=days, y=newlysymptomatic.seattle[[as.character(r0)]]*denominator/popsize.seattle, xlab="days since introduction", ylab=paste("newly symptomatic/",as.integer(denominator)," pop", sep=""), main=paste("R0=",r0,", thresh=",format(trigger,scientific=FALSE), " (",as.integer(trigger*popsize.seattle)," cases)", sep=""), type="l", col="black", lwd=2, cex.main=1.0, cex.axis=1.0, cex.lab=1.0, ylim=c(0,ymax))
     polygon(x=c(days,max(days), 0), y=c(newlysymptomatic.seattle[[as.character(r0)]],0,0)*denominator/popsize.seattle, col="gray92", lwd=0.5)
 
     for (scenario in scenarios) {
-	filename <- paste("results/Summary-seattle",r0*10,"-cdc-schoolclosure-",duration,"-",format(trigger,scientific=FALSE),"-2020-03-13",sep="")
-	if (scenario=="wfhlibleave") {
+	filename <- paste("results/Summary-seattle",r0*10,"-cdc-schoolclosure-",duration,"-",format(trigger,scientific=FALSE),"-2020-03-13",sep="")	
+	if (scenario=="wfh/ll only") {
 	    filename <- paste("results/Summary-seattle",r0*10,"-cdc-libleavewfh50-",format(trigger,scientific=FALSE),"-2020-03-13",sep="")
-	} else if (scenario=="both") {
+	} else if (scenario=="school closure + wfh/ll") {
 	    filename <- paste("results/Summary-seattle",r0*10,"-cdc-libleavewfh50-schoolclosure-",duration,"-",format(trigger,scientific=FALSE),"-2020-03-13",sep="")
 	}
         temp <- readLines(filename)
@@ -413,7 +415,7 @@ ymax <- 1100
 	    points(x=duration+delay+triggerday[[scenario]], y=0, pch=25, bg=palduration[duration], cex=1.5)
         }
     }
-    legend("topleft", legend=c("no intervention", scenarios), fill=c("black", palsocialdistancing[scenarios]), cex=0.7, inset=0.01, bg="white")
+    legend("topleft", legend=c("no intervention", scenarios), fill=c("black", palsocialdistancing[scenarios]), cex=0.55, inset=0.01, bg="white")
 
     ymax <- 45
     plot(x=days, y=csymptomatic.seattle[[as.character(r0)]]*100/popsize.seattle, xlab="days since introduction", ylab="cumulative symptomatic, %", main=paste("R0=",r0,", thresh=",format(trigger,scientific=FALSE), " (",as.integer(trigger*popsize.seattle)," cases)", sep=""), type="l", col="black", lwd=2, cex.main=1.0, cex.axis=1.0, cex.lab=1.0, ylim=c(0,ymax))
@@ -424,9 +426,121 @@ ymax <- 1100
             lines(x=rep(delay+triggerday[[scenario]],2), y=c(-100,ymax*1.2), lty="dashed")
         }
     }
-    legend("topleft", legend=c("no intervention", scenarios), fill=c("black", palsocialdistancing[scenarios]), cex=0.7, inset=0.01, bg="white")
-
+    legend("topleft", legend=c("no intervention", scenarios), fill=c("black", palsocialdistancing[scenarios]), cex=0.55, inset=0.01, bg="white")
 ```
+
+\clearpage
+
+```{r seattle-source, fig.width=7, fig.height=3.25, fig.cap="Major source of infections with no interventions, R0=2.5. Results from one stochastic simulation.", echo=FALSE}
+individuals.seattle25 <- read.csv("results/Individuals-seattle25-heavylogging-cdc-2020-03-13", header=TRUE)
+individuals.seattle25$SOURCETYPE <- ifelse(individuals.seattle25$sourcetype==0, NA,
+                   ifelse(individuals.seattle25$sourcetype==1, "daytime.family",
+                   ifelse(individuals.seattle25$sourcetype==2, "daytime.comm",
+                   ifelse(individuals.seattle25$sourcetype==3, "daytime.nh",
+                   ifelse(individuals.seattle25$sourcetype==4, "daytime.school",
+                   ifelse(individuals.seattle25$sourcetype==5, "daytime.work",
+                   ifelse(individuals.seattle25$sourcetype==10, "nighttime.family",
+                   ifelse(individuals.seattle25$sourcetype==11, "nighttime.comm",
+                   ifelse(individuals.seattle25$sourcetype==12, "nighttime.nh",
+                   ifelse(individuals.seattle25$sourcetype==13, "nighttime.hhcluster",
+                   ifelse(individuals.seattle25$sourcetype==20, "seeded",
+		   ifelse(individuals.seattle25$sourcetype==21, "airport", "error"))))))))))))
+individuals.seattle25$generationtime <- (individuals.seattle25$infectedtime-individuals.seattle25$infectedtime[match(individuals.seattle25$sourceid,individuals.seattle25$id)])/2 # how many days ago was the infecter infected?
+individuals.seattle25$generationtime[individuals.seattle25$infectedtime<=0] <- NA # remove people never infected or infected on day 0
+
+individuals.seattle20 <- read.csv("results/Individuals-seattle20-heavylogging-cdc-2020-03-13", header=TRUE)
+individuals.seattle20$SOURCETYPE <- ifelse(individuals.seattle20$sourcetype==0, NA,
+                   ifelse(individuals.seattle20$sourcetype==1, "daytime.family",
+                   ifelse(individuals.seattle20$sourcetype==2, "daytime.comm",
+                   ifelse(individuals.seattle20$sourcetype==3, "daytime.nh",
+                   ifelse(individuals.seattle20$sourcetype==4, "daytime.school",
+                   ifelse(individuals.seattle20$sourcetype==5, "daytime.work",
+                   ifelse(individuals.seattle20$sourcetype==10, "nighttime.family",
+                   ifelse(individuals.seattle20$sourcetype==11, "nighttime.comm",
+                   ifelse(individuals.seattle20$sourcetype==12, "nighttime.nh",
+                   ifelse(individuals.seattle20$sourcetype==13, "nighttime.hhcluster",
+                   ifelse(individuals.seattle20$sourcetype==20, "seeded",
+		   ifelse(individuals.seattle20$sourcetype==21, "airport", "error"))))))))))))
+individuals.seattle20$generationtime <- (individuals.seattle20$infectedtime-individuals.seattle20$infectedtime[match(individuals.seattle20$sourceid,individuals.seattle20$id)])/2 # how many days ago was the infecter infected?
+individuals.seattle20$generationtime[individuals.seattle20$infectedtime<=0] <- NA # remove people never infected or infected on day 0
+
+par(mfrow=c(1,2),
+    mar=c(3.5,3.5,1,3), #bottom, left, top, and right.
+    mgp=c(2.0, 0.6, 0))
+timesteps <- 0:max(individuals.seattle25$infectedtime)
+plot(x=timesteps/2, y=sapply(timesteps, function(t) {sum(individuals.seattle25$infectedtime>0 & individuals.seattle25$infectedtime<=t)}), xlab="simulation day", ylab="cumulative infections", type="l", cex.axis=0.8)
+axis(4, at=seq(0,1,0.25)*nrow(individuals.seattle25), lab=paste(100*seq(0,1,0.25),"%",sep=""), las=2)
+polygon(x=c(timesteps/2,max(timesteps)/2,0), y=c(sapply(timesteps, function(t) {sum(individuals.seattle25$infectedtime>0 & individuals.seattle25$SOURCETYPE %in% c("daytime.family","nighttime.family") & individuals.seattle25$infectedtime<=t)}),0,0), col="salmon", border="darkred", lwd=0.2)
+polygon(x=c(timesteps/2,rev(timesteps/2)), y=c(sapply(timesteps, function(t) {sum(individuals.seattle25$infectedtime>0 & individuals.seattle25$SOURCETYPE %in% c("daytime.family","nighttime.family") & individuals.seattle25$infectedtime<=t)}),
+  sapply(rev(timesteps), function(t) {sum(individuals.seattle25$infectedtime>0 & individuals.seattle25$SOURCETYPE %in% c("daytime.family","nighttime.family","daytime.work") & individuals.seattle25$infectedtime<=t)})),
+ col="lightblue", border="darkblue", lwd=0.2)
+polygon(x=c(timesteps/2,rev(timesteps/2)), y=c(sapply(timesteps, function(t) {sum(individuals.seattle25$infectedtime>0 & individuals.seattle25$SOURCETYPE %in% c("daytime.family","nighttime.family","daytime.work") & individuals.seattle25$infectedtime<=t)}),
+  sapply(rev(timesteps), function(t) {sum(individuals.seattle25$infectedtime>0 & individuals.seattle25$SOURCETYPE %in% c("daytime.family","nighttime.family","daytime.work","daytime.school") & individuals.seattle25$infectedtime<=t)})),
+ col="orchid", border="purple", lwd=0.2)
+legend("topleft", legend=c("family","workplace","school","other"), fill=c("salmon","lightblue","orchid","white"), cex=0.8, inset=0.01)
+
+plot(x=NA, y=NA, xlim=c(0,max(timesteps)/2), ylim=c(0,1), xlab="simulation day", ylab="cumulative proportion by source", cex.lab=0.95, cex.axis=0.8, type="l")
+tot <- sapply(timesteps, function(t) {sum(individuals.seattle25$infectedtime>0 & individuals.seattle25$infectedtime<=t)})
+lines(x=timesteps/2, y=sapply(timesteps, function(t) {sum(individuals.seattle25$infectedtime>0 & individuals.seattle25$SOURCETYPE %in% c("daytime.family","nighttime.family") & individuals.seattle25$infectedtime<=t)})/tot, col="red", lwd=1.5)
+lines(x=timesteps/2, y=sapply(timesteps, function(t) {sum(individuals.seattle25$infectedtime>0 & individuals.seattle25$SOURCETYPE=="daytime.work" & individuals.seattle25$infectedtime<=t)})/tot, col="blue", lwd=1.5)
+lines(x=timesteps/2, y=sapply(timesteps, function(t) {sum(individuals.seattle25$infectedtime>0 & individuals.seattle25$SOURCETYPE=="daytime.school" & individuals.seattle25$infectedtime<=t)})/tot, col="purple", lwd=1.5)
+legend("topright", legend=c("family","workplace","school"), fill=c("red","blue","purple"), inset=0.01)
+
+temp <- data.frame(setting=c("school","work","home","community","total"),
+                   infected25=c(sum(individuals.seattle25$SOURCETYPE=="daytime.school",na.rm=TRUE),
+           sum(individuals.seattle25$SOURCETYPE=="daytime.work",na.rm=TRUE),
+	   sum(individuals.seattle25$SOURCETYPE %in% c("daytime.family","nighttime.family"),na.rm=TRUE),
+	   sum(individuals.seattle25$SOURCETYPE %in% c("daytime.comm","daytime.nh","nighttime.comm","nighttime.nh"),na.rm=TRUE),
+	   sum(!is.na(individuals.seattle25$SOURCETYPE) & individuals.seattle25$SOURCETYPE!="seeded")),
+                   infected20=c(sum(individuals.seattle20$SOURCETYPE=="daytime.school",na.rm=TRUE),
+           sum(individuals.seattle20$SOURCETYPE=="daytime.work",na.rm=TRUE),
+	   sum(individuals.seattle20$SOURCETYPE %in% c("daytime.family","nighttime.family"),na.rm=TRUE),
+	   sum(individuals.seattle20$SOURCETYPE %in% c("daytime.comm","daytime.nh","nighttime.comm","nighttime.nh"),na.rm=TRUE),
+	   sum(!is.na(individuals.seattle20$SOURCETYPE) & individuals.seattle20$SOURCETYPE!="seeded")))
+temp$infected25 <- 100*temp$infected25/temp$infected25[nrow(temp)]
+temp$infected20 <- 100*temp$infected20/temp$infected20[nrow(temp)]
+#temp$infected25 <- 100*temp$infected25/nrow(individuals.seattle25)
+#temp$infected20 <- 100*temp$infected20/nrow(individuals.seattle20)
+kable(temp, digits=1, caption="Proportion of infections by settings for R0=2.5 and R0=2.0")
+```
+
+Corvid models the spread of disease in a few major settings that individuals go to daily.
+In an epidemic with R0=2.5 and no interventions,
+`r round(100*sum(!is.na(individuals.seattle25$SOURCETYPE) & individuals.seattle25$SOURCETYPE!="seeded")/nrow(individuals.seattle25),1)`% of the population was infected.
+A large proportion of infections were from household contacts, and approximately equal numbers from work and school.
+`r round(100*sum(individuals.seattle25$SOURCETYPE %in% c("daytime.comm","daytime.nh","nighttime.comm","nighttime.nh"),na.rm=TRUE)/nrow(individuals.seattle25),1)`% were infected by general community contacts (neighborhood + community).
+These proportions can be compared with those found across different agent-based models for R0=1.9 in Halloran et al 2008.
+This may be useful when considering the potential impact of interventions targeted to one of these settings
+The first few infections may occur in either schools or workplaces (depending on the index case's age, I think), then families.
+
+
+```{r seattle-generationtime, fig.width=7, fig.height=3.25, fig.cap="Generation time, R0=2.5. On the left, the distribution of generation times. On the right, median and interquartile ranges over time. We considered the people infected grouped in 2-week time bins. The generation times were computed by a) measuring how long ago these people's infectors were infected (black) or b) how far in the future until these people infect someone (red). Results from one stochastic simulation.", echo=FALSE}
+par(mfrow=c(1,2),
+    mar=c(3.5,3.5,1,1), #bottom, left, top, and right.
+    mgp=c(2.0, 0.6, 0))
+hist(individuals.seattle25$generationtime, breaks=seq(0,max(individuals.seattle25$generationtime,na.rm=TRUE)+0.5,1), xlab="generation time, days", main="generation time distribution")
+
+binsize <- 28 # in timesteps, not days!
+starts <- seq(0,max(individuals.seattle25$infectedtime),binsize)
+plot(x=starts+binsize/2, y=sapply(starts, function(t) {mean(individuals.seattle25$generationtime[individuals.seattle25$infectedtime>=t & individuals.seattle25$infectedtime<t+binsize],na.rm=TRUE)}), xlim=c(0,7+max(starts)), ylim=c(0,15), ylab="generation time, days", xlab="day since introduction", lwd=2, axes=FALSE)
+for (t in starts) {
+  lines(x=rep(t+binsize/2,2), y=quantile(x=individuals.seattle25$generationtime[individuals.seattle25$infectedtime>=t & individuals.seattle25$infectedtime<t+binsize],probs=c(0.25,0.75),na.rm=TRUE), col="gray10", lwd=1.1)
+
+  temp <- match(individuals.seattle25$sourceid, individuals.seattle25$id)
+  points(x=starts+binsize/2+5, y=sapply(starts, function(t) {mean(individuals.seattle25$generationtime[individuals.seattle25$infectedtime[temp]>=t & individuals.seattle25$infectedtime[temp]<t+binsize],na.rm=TRUE)}), xlim=c(0,7+max(starts)), col="red", pch=4)
+  lines(x=rep(t+binsize/2,2)+5, y=quantile(x=individuals.seattle25$generationtime[individuals.seattle25$infectedtime[temp]>=t & individuals.seattle25$infectedtime[temp]<t+binsize],probs=c(0.25,0.75),na.rm=TRUE), col="salmon")
+}
+axis(1, at=starts, lab=starts/2, cex.axis=0.7)
+axis(2, las=2, cex.axis=0.9)
+legend("topleft", legend=c("measuring back to infector","measuring forward to next infectee"), col=c("black","red"), pch=c(1,4), cex=0.6, inset=0.01)
+```
+
+The average generation time was `r round(mean(individuals.seattle25$generationtime, na.rm=TRUE),2)` days, median=`r round(median(individuals.seattle25$generationtime, na.rm=TRUE),2)`, but this value increases after the epidemic peak if the generation time is measured "back" to when the infector was infected.
+If you measure "forward" to when a person will infect someone, the the generation time is basically constant throughout the epidemic.
+I need to re-read Kenah et al 2008 to understand this.
+The maximum infectious period allowed by the model was 21 days.
+
+
 
 \clearpage
 # Model description
@@ -441,15 +555,16 @@ Synthetic populations for US locations are created by generating enough communit
 Unfortunately, more recent censuses did not offer the commuting data.
 Individuals are in 5 age bins: pre-school (0-4y), school-aged (5-18y), young adult (19-29y), older adult (30-64y), and elderly (>65y).
 Individuals are generated by populating the communities with families with the household sizes and age distribution drawn from the 1% public use microdata sample of the 2000 Census.
+
 The model runs in discrete half-day time steps, representing day and night.
 During the day, people go to institutions (mixing groups) appropriate to their age, and at night they return to their families (where ages mix).
 Working-age adults may commute to different census tracts during the day.
 Susceptible people become infected when then are in the same setting as infected people. Susceptibles also have a small chance of infection if they are in the same community at the same time as an infectious person.
+Children and adults are equally susceptible to infection, but children tend to have stronger "contacts" in the model so are more likely to infect and become infected than adults.
 Upon infection, a person may become infectious starting the next day (regardless of symptom status) and their level of infectiousness can change daily (e.g., exponential, log-normal, etc). A fraction of infectious people become symptomatic after an incubation period, which is specified as a CDF for flexible parameterization (e.g., can be fixed incubation time, normal, Weibull, etc). Symptomatic people may choose to stop going to work or school because of illness. Public health interventions, such as home quarantine or school closures, may be based on the presence of detected symptomatic cases.
 Social distancing is implemented by closing settings, like schools, to stop transmission but this is partially offset by individuals going elsewhere.
-Much more detail about model structure is in the 2010 publication:
+Much more detail about the community structure and infection process in the model is in the 2010 publication:
 doi:10.1371/journal.pcbi.1000656.
-Updates to the model since that publication are described at the end of this document in "Implementation notes".
 
 
 ## Calibration
@@ -520,6 +635,9 @@ points(x=tractlocs$longitude, y=tractlocs$latitude, col="red", cex=0.01*sqrt(tra
   Mitigation strategies for pandemic influenza in the United States.
   Proc Natl Acad Sci U S A. 2006 Apr 11;103(15):5935-40.
 * Germann TC, Gao H, Gambhir M, Plummer A, Biggerstaff M, Reed C, Uzicanin A. School dismissal as a pandemic influenza response: When, where and for how long? Epidemics. 2019 Sep;28:100348. doi: 10.1016/j.epidem.2019.100348.
+* Halloran ME, Ferguson NM, Eubank S, Longini IM Jr, Cummings DA, Lewis B, Xu S, Fraser C, Vullikanti A, Germann TC, Wagener D, Beckman R, Kadau K, Barrett C, Macken CA, Burke DS, Cooley P.
+  Modeling targeted layered containment of an influenza pandemic in the United States. Proc Natl Acad Sci U S A. 2008 Mar 25;105(12):4639-44. doi: 10.1073/pnas.0706849105. 
+* Kenah E, Lipsitch M, Robins JM. Generation interval contraction and epidemic data analysis. Math Biosci. 2008 May;213(1):71-9. doi: 10.1016/j.mbs.2008.02.007.
 * Lauer SA, Grantz KH, Bi Q, Jones FK, Zheng Q, Meredith HR, Azman AS, Reich NG, Lessler J.
   The Incubation Period of Coronavirus Disease 2019 (COVID-19) From Publicly Reported Confirmed Cases: Estimation and Application.
   Ann Intern Med. 2020 Mar 10. doi: 10.7326/M20-0504.
