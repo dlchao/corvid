@@ -3,7 +3,7 @@ on:
     types: [created]
 name: Handle Release
 jobs:
-  generate:
+  generate-linux:
     name: Create release-artifacts
     runs-on: ubuntu-latest
     steps:
@@ -17,3 +17,37 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         args: 'code/corvid'
+  generate-windows:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: gcc vercheck
+      run: gcc --version
+    - name: g++ vercheck
+      run: g++ --version
+    - name: make vercheck
+      run: mingw32-make --version
+    - name: make
+      run: mingw32-make
+      working-directory: code
+    - name: copy static libraries
+      run: foreach ($libname in @('libgcc_s_seh-1.dll','libstdc++-6.dll')) { foreach ( $libpath in cmd /c where $libname | select -first 1 ) { copy $libpath . } }
+      working-directory: code
+    - name: Upload corvid.exe
+      uses: skx/github-action-publish-binaries@master
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        args: 'code/corvid.exe'
+    - name: Upload the libgcc_s_seh dll
+      uses: skx/github-action-publish-binaries@master
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        args: 'code/libstdc++-6.dll'
+    - name: Upload the libgcc_s_seh dll
+      uses: skx/github-action-publish-binaries@master
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        args: 'code/libstdc++-6.dll'
