@@ -34,20 +34,23 @@ jobs:
       run: foreach ($libname in @('libgcc_s_seh-1.dll','libstdc++-6.dll')) { foreach ( $libpath in cmd /c where $libname | select -first 1 ) { copy $libpath . } }
       working-directory: code
     - name: Upload corvid.exe
-      uses: skx/github-action-publish-binaries@master
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      uses: svenstaro/upload-release-action@v1-release
       with:
-        args: 'code/corvid.exe'
-    - name: Upload the libgcc_s_seh dll
-      uses: skx/github-action-publish-binaries@master
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: code/corvid.exe
+        asset_name: corvid.exe
+        tag: ${{ github.ref }}
+    - name: Upload libstdc++-6.dll
+      uses: svenstaro/upload-release-action@v1-release
       with:
-        args: 'code/libstdc++-6.dll'
-    - name: Upload the libgcc_s_seh dll
-      uses: skx/github-action-publish-binaries@master
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: 'code/libstdc++-6.dll'
+        asset_name: 'libstdc++-6.dll'
+        tag: ${{ github.ref }}
+    - name: Upload libgcc_s_seh-1.dll
+      uses: svenstaro/upload-release-action@v1-release
       with:
-        args: 'code/libstdc++-6.dll'
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: 'code/libgcc_s_seh-1.dll'
+        asset_name: 'libgcc_s_seh-1.dll'
+        tag: ${{ github.ref }}
