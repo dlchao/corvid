@@ -31,7 +31,7 @@ jobs:
       run: mingw32-make
       working-directory: code
     - name: copy static libraries
-      run: foreach ($libname in @('libgcc_s_seh-1.dll','libstdc++-6.dll')) { foreach ( $libpath in cmd /c where $libname | select -first 1 ) { copy $libpath . } }
+      run: foreach ($libname in @('libgcc_s_seh-1.dll','libstdc++-6.dll','libwinpthread-1.dll')) { foreach ( $libpath in cmd /c where $libname | select -first 1 ) { copy $libpath . } }
       working-directory: code
     - name: Upload corvid.exe
       uses: svenstaro/upload-release-action@v1-release
@@ -46,11 +46,17 @@ jobs:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
         file: 'code/libstdc++-6.dll'
         asset_name: 'libstdc++-6.dll'
+    - name: Upload libstdc++-6.dll
+      uses: svenstaro/upload-release-action@v1-release
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: 'code/libstdc++-6.dll'
+        asset_name: 'libstdc++-6.dll'
         tag: ${{ github.ref }}
     - name: Upload libgcc_s_seh-1.dll
       uses: svenstaro/upload-release-action@v1-release
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: 'code/libgcc_s_seh-1.dll'
-        asset_name: 'libgcc_s_seh-1.dll'
+        file: 'code/libwinpthread-1.dll'
+        asset_name: 'libwinpthread-1.dll'
         tag: ${{ github.ref }}
