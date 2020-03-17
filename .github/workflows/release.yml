@@ -46,6 +46,7 @@ jobs:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
         file: 'code/libstdc++-6.dll'
         asset_name: 'libstdc++-6.dll'
+        tag: ${{ github.ref }}
     - name: Upload libstdc++-6.dll
       uses: svenstaro/upload-release-action@v1-release
       with:
