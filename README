@@ -93,7 +93,7 @@ logfile : integer
 Number that indicates how often, in days, output is written to the Log file. If 0, no Log file is generated. Default is 1 for daily output. 
 
 individualfile : binary
-Specifies if an "Individuals" file should be generated. The file will contain one row of simulation-specific data for each individual and can be very large. If 1, file is generated. The default is 0, no file generated. 
+Specifies if an "Individuals" file should be generated. The file will contain one row of simulation-specific data for each individual and can be very large. If 1, file is generated. The default is 0, no file generated even if you specifiy "individualfilename". 
 
 summaryfilename : string
 Specify a name for the "Summary" file. The default name is "Summary(n)", where (n) is the number in the run-number file.
