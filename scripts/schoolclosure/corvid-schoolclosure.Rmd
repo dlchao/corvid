@@ -42,13 +42,13 @@ Combining both school closures and workplace-enacted social distancing policies 
 However, Corvid is a new model under active development, so results must be interpreted with caution.
 These results suggest that sustainable interventions be enacted widely to reduce transmission, while school closures can be used to "buy time".
 
-We believe that a combination of social distancing policies should and will be enacted to slow the spread of COVID-19.
+We believe that a combination of social distancing policies should and will be enacted to slow or even stop the spread of COVID-19.
 In the Corvid model, we implemented "liberal leave" (workers have an elevated probability of staying home when sick) and "work from home" (workers stay home instead of going to work but still have some interaction with people in their home community).
 We ran simulations in which 50% of the adult population complied with these measures, though the real number might be lower since many adults will not have these options available.
 We believe that these other social distancing policies will be implemented on an ad-hoc basis, and school closure may force some parents to stay home anyways (de facto "work from home").
 We believe that school closures generally delay the peak, but do not usually reduce the peak or total cases because they are temporary.
 More sustainable measures, like workplace liberal leave and work from home policies, can flatten the epidemic curve and reduce the total number of cases.
-Combining school closures with these other social policies may be synergistic, but we only tested a limited number of scenarios (one).
+Combining school closures with these other social policies may be synergistic, but we only tested a limited number of scenarios.
 With concurrent effective policies enacted, the epidemic can be "suppressed."
 
 \clearpage
@@ -56,7 +56,7 @@ With concurrent effective policies enacted, the epidemic can be "suppressed."
 # Results
 
 ```{r load-seattle, echo=FALSE}
-tractlocs <- read.csv("../corviddata/seattle-tracts.dat", header=FALSE, col.names=c("fipsstate", "fipscounty", "fipstract", "population", "latitude", "longitude"))
+tractlocs <- read.csv("seattle-tracts.dat", header=FALSE, col.names=c("fipsstate", "fipscounty", "fipstract", "population", "latitude", "longitude"))
 tracts.seattle <- read.csv("results/Tracts-seattle20-60-school-none-0-llwfh-0.txt", header=TRUE)
 tracts.seattle$pop <- rowSums(tracts.seattle[5:9])
 popsize.seattle <- sum(tracts.seattle$pop)
@@ -74,42 +74,14 @@ for (r0 in c(2.0,2.6)) {
 }
 ```
 
-We show sample plots with no interventions to show the dynamics of the epidemic for R0=2.0 and 2.6.
-Finally, we test combining other social distancing measures with school closure.
-Population of `r popsize.seattle`.
-Seeded 5 people.
+We model the impact of school closures combined with workplace-based policies on the epidemic peak and final size.
+The model was run using a synthetic population of `r as.integer(popsize.seattle)`, beginning with 5 infected people on day 0.
 
-
-## No intervention
-
-We initialize the model by infecting five people on day 0, then run the model for 180 simulated days.
-We ran the model with R_0=2.0 and 2.6.
-
-```{r cases-seattle, fig.width=7, fig.height=3.25, fig.cap="Symptomatic people over time in Seattle with no interventions. On the right, cumulative symptomatic people over time. The axis on the right is the percent of the total population.", echo=FALSE}
-par(mfrow=c(1,2),
-    mar=c(3.5,3.5,1,2), #bottom, left, top, and right.
-    mgp=c(2.0, 0.6, 0))
-ymax <- 7000
-plot(x=NA, y=NA, xlim=c(0,180), ylim=c(0,ymax), xlab="days since introduction", ylab="newly symptomatic per day", type="l", col=palr0["3.0"], lwd=2, cex.axis=0.8)
-for (r0 in c(2.0,2.6)) {
-    days <- 1:length(newlysymptomatic.seattle[[as.character(r0)]])
-  lines(x=days, y=newlysymptomatic.seattle[[as.character(r0)]], lwd=2, col=palr0[as.character(r0)])
-}
-legend("topleft", legend=c("R0=2.6", "R0=2.0"), fill=palr0[c("2.6","2.0")], inset=0.01, cex=0.8)
-
-ymax <- popsize.seattle*0.45
-plot(x=NA, y=NA, xlim=c(0,180), ylim=c(0,ymax), xlab="days since introduction", ylab="cumulative symptomatic", type="l", col=palr0[as.character(r0)], lwd=2, cex.axis=0.8)
-axis(4, at=sum(tracts.seattle$pop) * seq(0,100,10)/100, lab=paste(seq(0,100,10),"%",sep=""), las=2, col="gray", col.axis="darkgray")
-for (r0 in c(2.0,2.6)) {
-  lines(x=1:length(csymptomatic.seattle[[as.character(r0)]]), y=csymptomatic.seattle[[as.character(r0)]], lwd=2, col=palr0[as.character(r0)])
-}
-legend("topleft", legend=c("R0=2.6", "R0=2.0"), fill=palr0[c("2.6","2.0")], inset=0.01, cex=0.8)
-```
 
 \clearpage
 ## Effect of school closures and other social distancing policies
 
-We believe that a combination of social distancing policies should and will be enacted to slow the spread of COVID-19.
+We believe that a combination of social distancing policies should and will be enacted to slow or even stop the spread of COVID-19.
 
 When schools close in Corvid, children no longer transmit in schools, but they do interact with anyone present in their households during the day as well as a low level of interaction with everyone in their local community.
 In this section, we assume that school closures are implemented without other social distancing measures.
@@ -183,7 +155,7 @@ for (startday in c(60,74,100)) {
 \clearpage
 ## Reducing the epidemic peak with school closures
 
-```{r cases-seattle-peak, fig.width=7, fig.height=6.5, fig.cap="Timing school closures to reduce the epidemic peak. School closures with different start dates and duration were simulated, shown in different colors. The days when schools are closed are shown as color-coded horizontal lines near the x-axis. The top left plot shows number of newly symptomatic people per day per 100,000 population, and the top right shows cumulative % of the population symptomatic. The bottom plot is R_effective over time. Dashed gray horizontal lines are at 2.6 (R0) and 1.0. One stochastic run per scenario.", echo=FALSE}
+```{r cases-seattle-peak, fig.width=7, fig.height=6.5, fig.cap="Timing school closures to reduce the epidemic peak. School closures with different start dates and duration were simulated, shown in different colors. The days when schools are closed are shown as color-coded horizontal lines near the x-axis. The top left plot shows number of newly symptomatic people per day per 100,000 population, and the top right shows cumulative % of the population symptomatic. The bottom plot is R_effective over time computed for every 15-day window. Dashed gray horizontal lines are at 2.6 (R0) and 1.0. One stochastic run per scenario.", echo=FALSE}
 r0 <- 2.6
 denominator <- 100000 # scale results to standard pop size
 par(mfrow=c(2,2),
@@ -279,13 +251,13 @@ If you close schools for only 42 days a couple of weeks really late, right befor
 Closing schools late in the epidemic and keeping them closed through the peak may prevent a "bounceback" of transmission when schools reopen.
 Though the peak is reduced by this late shorter school closure, it does not reduce the total number of cases (right plot, blue curve vs black curve).
 
-For these school closure scenarios, we plotted R_effective over time.
-This can help us understand why the epidemic peaks when it does under different interventions.
+Plotting R_effective over time can help us these dynamics.
 For a set of individuals, we computed R_effective taking the number of people infected by that set and dividing by the number in that set. We plotted R_effective for each 15-day interval of the epidemic by computing R_effective for people who were infected during that 15-day interval.
-
+R_effective declines over time as susceptibles are consumed and become immune, and dives below 1.0 at the peak of transmission before this decline slows down.
+School closures reduce transmission and drop R_effective.
+The late school closure (blue) brings R_effective below 1.0, but the closure is in effect long enough to prevent bounce-back by allowing more people to get infected. When schools re-open, R_effective is still below 1.0 but a substantial number of cases will be generated, nearly catching up to the no-closure scenario.
 
 We are not suggesting that these strategies are practical, nor should school closures alone be used to combat community-wide outbreaks, but it does illustrate how the timing of school closures can reduce or delay the epidemic peak by changing the transmissibility of the pathogen in the population.
-
 
 
 \clearpage

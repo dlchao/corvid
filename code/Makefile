@@ -46,14 +46,22 @@ demo: corvid
 cdcmarch2020: corvid
 	rm -rf ../cdcmarch2020 # hope there was nothing important in this directory...
 	mkdir ../cdcmarch2020
-	cd ../cdcmarch2020; ln -s ../code/corvid .; ln -s ../corviddata/seattle* .; cp ../scripts/run-cdc-2020-03-13.sh .; cp ../scripts/template*cdc-2020-03-13 .; cp ../scripts/config*cdc-2020-03-13 .; cp ../scripts/corvid-cdc-2020-03-13.Rmd .; chmod +x run-*.sh
+	cd ../cdcmarch2020; ln -s ../code/corvid .; ln -s ../corviddata/seattle* .; cp ../scripts/cdcmodelingteam/run-cdc-2020-03-13.sh .; cp ../scripts/cdcmodelingteam/template*cdc-2020-03-13 .; cp ../scripts/cdcmodelingteam/config*cdc-2020-03-13 .; cp ../scripts/cdcmodelingteam/corvid-cdc-2020-03-13.Rmd .; chmod +x run-*.sh
 	cd ../cdcmarch2020; ./run-cdc-2020-03-13.sh # run all the simulations for hours
+
+# makes directory ../schoolclosuremarch2020/ and runs school closure
+# The runs will take hours. You might want to customize the run script to take advantage of computer resources better than my own.
+schoolclosuremarch2020: corvid
+#	rm -rf ../schoolclosuremarch2020 # hope there was nothing important in this directory...
+	mkdir ../schoolclosuremarch2020
+	cd ../schoolclosuremarch2020; ln -s ../code/corvid .; ln -s ../corviddata/seattle* .; cp ../scripts/schoolclosuremodelingteam/* .; chmod +x run-*.sh
+	cd ../schoolclosuremarch2020; ./run-schoolclosures-2020-03.sh # run all the simulations for hours
 
 # using emacs makes me feel old
 emacs:
 	emacs Makefile *.h *.c *.cpp &
 
-# does not clear out the demo or cdcmarch2020 directories
+# does not clear out the demo or other directories
 clean:
 	rm -f *.o corvid R0corvid *~
 	rm -f Summary? Tracts? Log? Individuals?

@@ -1,0 +1,17 @@
+# metro seattle with liberal leave, work from home, and school closures
+# close all schools at the desired time
+label seattlePRINTR0-RESPONSEDAY-school-SCHOOLPOLICY-DURATION-llwfh-PRINTCOMPLIANCE
+datafile seattle
+R0 PARAMR0
+runlength 180
+summaryfilename Summary-seattlePRINTR0-RESPONSEDAY-school-SCHOOLPOLICY-DURATION-llwfh-PRINTCOMPLIANCE.txt
+logfilename Log-seattlePRINTR0-RESPONSEDAY-school-SCHOOLPOLICY-DURATION-llwfh-PRINTCOMPLIANCE.txt
+tractfilename Tracts-seattlePRINTR0-RESPONSEDAY-school-SCHOOLPOLICY-DURATION-llwfh-PRINTCOMPLIANCE.txt
+randomnumberseed 1
+seedinfected 5
+seedinfecteddaily 0
+responseday RESPONSEDAY
+schoolclosurepolicy SCHOOLPOLICY
+schoolclosuredays DURATION
+liberalleave PARAMCOMPLIANCE
+workfromhome PARAMCOMPLIANCE
