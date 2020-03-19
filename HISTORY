@@ -10,7 +10,7 @@ symptomatic fraction, and viral load trajectories.
 The parallel computing version was removed, so populations of more than
 10,000,000 will probably not run on a laptop.
 
-Implemented a "work from home" policy.
-
+Version 0.1 or 0.2 added a "work from home" policy.
 Version 0.3 is the first version the outside world has seen.
+Version 0.4 fixes bug in "liberal leave" that made it happen before the policy was supposed to start and a huge bug in incubation time.
 

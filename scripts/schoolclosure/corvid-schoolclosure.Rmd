@@ -1,5 +1,5 @@
 ---
-title: "Preliminary Corvid results for King County/Seattle public schools"
+title: "Preliminary Corvid results on the effectiveness of school closures"
 author: "Dennis Chao (dennisc@idmod.org, Institute for Disease Modeling)"
 header-includes:
 - \usepackage{fancyhdr}
@@ -32,7 +32,7 @@ The Corvid model was based on FluTE (Chao et al 2010), which was based on
 the EpiCast model described in Germann et al 2006.
 We describe the Corvid model near the end of this document.
 In the Results, we run the model on a synthetic population based on 2000 Census data for metropolitan Seattle.
-We consider this population represents a moderately large American city, though it is not an accurate representation of present-day Seattle.
+We consider this population to represent a moderately large American city, though it is not an accurate representation of present-day Seattle.
 
 In general, school closures alone delayed but did not reduce the epidemic peak.
 The peak could be reduced when school closures spanned the peak of the epidemic, which requires either very long school closures or rather late school closures that start while the epidemic has already ramped up.
@@ -57,7 +57,7 @@ With concurrent effective policies enacted, the epidemic can be "suppressed."
 
 ```{r load-seattle, echo=FALSE}
 tractlocs <- read.csv("seattle-tracts.dat", header=FALSE, col.names=c("fipsstate", "fipscounty", "fipstract", "population", "latitude", "longitude"))
-tracts.seattle <- read.csv("results/Tracts-seattle20-60-school-none-0-llwfh-0.txt", header=TRUE)
+tracts.seattle <- read.csv("results/Tracts-seattle26-60-school-none-0-llwfh-0.txt", header=TRUE)
 tracts.seattle$pop <- rowSums(tracts.seattle[5:9])
 popsize.seattle <- sum(tracts.seattle$pop)
 
@@ -109,7 +109,7 @@ If the threshold at which you start school closures is very low (0.0001), then s
 Basically, the interventions end too early in the course of the outbreak when you start "too early".
 Almost any long (more than 28 days) early school closure seems to delay the peak.
 
-```{r cases-seattle-socialdistancing, fig.width=7, fig.height=8.25, fig.cap="Impact of social distancing, R0=2.6. The dashed vertical line is the start of social distancing policies, including school closures, liberal leave, and work from home. We test school closures alone, work from home/liberal leave (25% compliance) without school closures, and a combination of all three policies. Triangles near the x-axis mark when the schools re-open. The workplace policies (liberal leave and working from home) continue indefinitely. On the left, daily new symptomatic cases per 100,000 population. On the right, cumulative % of the population symptomatic.", echo=FALSE}
+```{r cases-seattle-socialdistancing, fig.width=7, fig.height=8.25, fig.cap="Impact of social distancing, R0=2.6. The dashed vertical line is the start of social distancing policies, including school closures, liberal leave, and work from home. We test school closures alone, work from home/liberal leave (25% compliance) without school closures, and a combination of all three policies. The red line near the x-axis indicates when schools are closed. The workplace policies (liberal leave and working from home) continue indefinitely. On the left, daily new symptomatic cases per 100,000 population. On the right, cumulative % of the population symptomatic.", echo=FALSE}
 r0 <- 2.6
 duration <- 42 # school closures
 denominator <- 100000 # scale results
@@ -117,15 +117,17 @@ scenarios <- c("school closure only", "wfh/ll only", "school closure + wfh/ll")
 palscenario <- c("black","red","orange","blue")
 names(palscenario) <- c("no intervention",scenarios)
 par(mfrow=c(3,2),
-    mar=c(3.5,3.5,2,2.2), #bottom, left, top, and right.
-    mgp=c(2.0, 0.6, 0))
+    mar=c(3.6,3.6,2,2.2), #bottom, left, top, and right.
+    mgp=c(2.2, 0.6, 0))
 days <- 1:length(newlysymptomatic.seattle[[as.character(r0)]])
     compliance <- 25
 for (startday in c(60,74,100)) {
-    ymax <- 1200
-    plot(x=days, y=newlysymptomatic.seattle[[as.character(r0)]]*denominator/popsize.seattle, xlab="days since introduction", ylab=paste("symptomatic /", as.integer(denominator)), main=paste("R0=",r0,", start day=",startday, ", compliance=",compliance,"%",sep=""), type="l", col="black", lwd=2, cex.main=1.3, cex.axis=1.1, cex.lab=1.2, xlim=c(0,180), ylim=c(0,ymax))
+    ymax <- 1100
+    xmax <- 181
+    plot(x=days, y=newlysymptomatic.seattle[[as.character(r0)]]*denominator/popsize.seattle, xlab="days since introduction", ylab=paste("symptomatic /", as.integer(denominator)), main=paste("policies start on day ",startday,sep=""), type="l", col="black", lwd=2, cex.main=1.3, cex.axis=1.2, cex.lab=1.2, xlim=c(0,xmax), ylim=c(-ymax/200,ymax))
     polygon(x=c(days,max(days), 0), y=c(newlysymptomatic.seattle[[as.character(r0)]],0,0)*denominator/popsize.seattle, col="gray92", lwd=0.5)
-    lines(x=rep(startday,2), y=c(-100,ymax*1.1), lty="dashed")    
+    lines(x=rep(startday,2), y=c(-100,ymax*1.1), lty="dashed", col="darkgreen")
+#    text(x=startday, y=ymax/10, lab="policies start", srt=90, col="darkgreen", cex=1.1, adj=c(0,-0.3))
     symp <- list()
     csymp <- list()
     nsymp <- list()
@@ -137,25 +139,25 @@ for (startday in c(60,74,100)) {
         csymp[[scenario]] <- as.numeric(strsplit(gsub("^.*: ","",temp[grep("Cumulative symptomatic", temp)]),",")[[1]])
         nsymp[[scenario]] <- c(symp[[scenario]][1], diff(csymp[[scenario]]))
         lines(x=1:length(nsymp[[scenario]]), y=nsymp[[scenario]]*denominator/popsize.seattle, col=palscenario[scenario], lwd=1.5)
-        points(x=duration+startday, y=0, pch=25, bg="red", cex=1.5) # school re-opening date
+        lines(x=startday+c(0,duration), y=rep(-ymax/50,2), col="red", lwd=4) # school closure dates
     }
-    legend("topleft", legend=c("nothing", scenarios), fill=c(palscenario), cex=0.75, inset=0.01, bg="white")
+    legend("topleft", legend=c("nothing", scenarios), fill=c(palscenario), cex=01, inset=0.01, bg="white")
 
-    ymax <- 45
-    plot(x=1:length(csymptomatic.seattle[[as.character(r0)]]), y=csymptomatic.seattle[[as.character(r0)]]*100/popsize.seattle, xlab="days since introduction", ylab="cumulative symptomatic, %", main=paste("R0=",r0,", start day=",startday, sep=""), type="l", col="black", lwd=2, cex.main=1.3, cex.axis=1.1, cex.lab=1.2, xlim=c(0,180), ylim=c(0,ymax))
-    lines(x=rep(startday,2), y=c(-100,ymax*1.1), lty="dashed")
+    ymax <- 42
+    plot(x=1:length(csymptomatic.seattle[[as.character(r0)]]), y=csymptomatic.seattle[[as.character(r0)]]*100/popsize.seattle, xlab="days since introduction", ylab="cumulative symptomatic, %", main=paste("policies start on day ",startday,sep=""), type="l", col="black", lwd=2, cex.main=1.3, cex.axis=1.2, cex.lab=1.2, xlim=c(0,xmax), ylim=c(0,ymax))
+    lines(x=rep(startday,2), y=c(-100,ymax*1.1), lty="dashed", col="darkgreen")
     for (scenario in scenarios) {
         lines(x=1:length(csymp[[scenario]]), y=csymp[[scenario]]*100/popsize.seattle, col=palscenario[scenario], lwd=1.5)
-        points(x=duration+startday, y=0, pch=25, bg="red", cex=1.5) # school re-opening date
+        lines(x=startday+c(0,duration), y=rep(-ymax/100,2), col="red", lwd=4) # school closure dates
     }
-    legend("topleft", legend=c("nothing", scenarios), fill=c(palscenario), cex=0.75, inset=0.01, bg="white")
+    legend("topleft", legend=c("nothing", scenarios), fill=c(palscenario), cex=1, inset=0.01, bg="white")
 }
 ```
 
 \clearpage
 ## Reducing the epidemic peak with school closures
 
-```{r cases-seattle-peak, fig.width=7, fig.height=6.5, fig.cap="Timing school closures to reduce the epidemic peak. School closures with different start dates and duration were simulated, shown in different colors. The days when schools are closed are shown as color-coded horizontal lines near the x-axis. The top left plot shows number of newly symptomatic people per day per 100,000 population, and the top right shows cumulative % of the population symptomatic. The bottom plot is R_effective over time computed for every 15-day window. Dashed gray horizontal lines are at 2.6 (R0) and 1.0. One stochastic run per scenario.", echo=FALSE}
+```{r cases-seattle-peak, fig.width=7, fig.height=6.5, fig.cap="Timing school closures to reduce the epidemic peak. School closures with different start dates and duration were simulated, shown in different colors. The days when schools are closed are shown as color-coded horizontal lines near the x-axis. The top left plot shows number of newly symptomatic people per day per 100,000 population, and the top right shows cumulative % of the population symptomatic. The bottom plot is R_effective over time computed for every 15-day window. Dashed gray horizontal lines are at 2.6 (R0) and 1.0. One stochastic run per scenario. Bottom right is number of daily newly symptomatic older adults (ages 30 years and older) per 100,000 older adults.", echo=FALSE}
 r0 <- 2.6
 denominator <- 100000 # scale results to standard pop size
 par(mfrow=c(2,2),
@@ -239,23 +241,68 @@ xmax <- 239
 	}
     }
     legend("topright", legend=c("no closures", paste("closed ", closureduration, "days starting day", responseday)), col=c(palscenario), pch=1:length(filenames), lwd=1.5, cex=0.75, inset=0.01, bg="white")
+
+# Symptomatic older adults over time
+r0 <- 2.6
+filenames <- c("Log-seattle26.txt",
+               "Log-seattle26-1-school-all-365-llwfh-0-runlength240.txt",
+               "Log-seattle26-60-school-all-365-llwfh-0-runlength240.txt",
+	       "Log-seattle26-60-school-all-42-llwfh-0-runlength240.txt",
+	       "Log-seattle26-90-school-all-42-llwfh-0-runlength240.txt")
+symptomaticbydayandage <- list()
+for (filenum in 1:length(filenames)) {
+      logfile <- read.csv(paste("results/",filenames[filenum],sep=""))
+      cumsym <- matrix(NA, nrow=max(logfile$time)+1, ncol=5)
+      for (day in 0:max(logfile$time)) {
+          s <- colSums(logfile[logfile$time==day,])
+          cumsym[day+1,] <- s[grep("cumsym",names(s))]
+      }
+      sym <- matrix(NA, nrow=max(logfile$time)+1, ncol=5)
+      colnames(sym) <- names(s)[grep("cumsym",colnames(logfile))]
+      colnames(sym) <- gsub(pattern="cum",replacement="",x=colnames(sym))
+      sym[1,] <- cumsym[1,]
+      for (i in 1:ncol(sym)) {
+          sym[-1,i] <- diff(cumsym[,i])
+      }
+      symptomaticbydayandage[[filenum]] <- sym
+}
+
+popsize.seattle.older <- sum(tracts.seattle$pop30.64 +tracts.seattle$pop65.) # pop >=30y    
+palscenario <- c("black","firebrick","seagreen","orangered","royalblue")
+ymax <- 1000
+plot(x=NA, y=NA, xlab="days since introduction", ylab="newly symptomatic / 100000, >=30y", main=paste("Newly symptomatatic adults per day", ", R0=",r0,sep=""), type="l", col="black", lwd=2, cex.main=1, cex.lab=1.01, xlim=c(0,240), ylim=c(-120,ymax), axes=FALSE)
+axis(1, at=seq(0,365,30), cex.axis=0.8)
+axis(2, at=seq(0,ymax,200), cex.axis=0.9)
+for (filenum in 1:length(filenames)) {
+  y <- (symptomaticbydayandage[[filenum]][,"sym30.64"] + symptomaticbydayandage[[filenum]][,"sym65."]) * denominator / popsize.seattle.older
+  lines(1:length(y), y, col=palscenario[filenum], lwd=2)
+  if (filenum>1) {
+       lines(x=responseday[filenum-1]+c(0,closureduration[filenum-1]), y=rep(-filenum*30+20,2), col=palscenario[filenum], lwd=4) # school closure dates
+  }
+}
+#legend("topright", legend=c("no closures", paste("closed ", closureduration, "days starting day", responseday)), col=c(palscenario), pch=1:length(filenames), lwd=1.5, cex=0.75, inset=0.01, bg="white")
 ```
 
-We believe that you can lower the peak of an epidemic by closing schools for a few weeks around peak, as we noted above.
+We believe that you can lower the peak of an epidemic by closing schools for a few weeks around the peak, as we noted above.
 Here, we model school closures (with no other interventions) with different start times and durations to illustrate this.
 
-In the plot above, we can see that closing schools for 42 days when the epidemic starts ramping up simply pushes the epidemic peak back (compare black and orange curves).
+In the plots below, we can see that closing schools for 42 days when the epidemic starts ramping up simply pushes the epidemic peak back (compare black and orange curves in the top left plot).
 If you never open schools throughout the entire epidemic, from when the first case was infected on day 1 of the epidemic for a whole year, the peak is obviously reduced and pushed back (dark red curve).
-If you close schools a little later in the epidemic on day 60 and never re-open them, the peak is not delayed much (green curve), but it is reduced just as much as if school closures had started on day 1 (red curve) and the impact on total cases is about the same (right plot, green vs red curves).
-If you close schools for only 42 days a couple of weeks really late, right before the epidemic peaks, you do not delay the peak at all (blue curve), but it is reduced nearly as much as if you had never opened schools at all.
+If you close schools a little later in the epidemic on day 60 and never re-open them, the peak is not delayed much (green curve), but it is reduced just as much as if school closures had started on day 1 (red curve) and the impact on total cases is about the same (top right plot, green vs red curves).
+If you close schools for only 42 days a couple of weeks really late, right before the epidemic peaks, you do not delay the peak at all (blue curve, top left plot), but it is reduced nearly as much as if you had never opened schools at all.
 Closing schools late in the epidemic and keeping them closed through the peak may prevent a "bounceback" of transmission when schools reopen.
-Though the peak is reduced by this late shorter school closure, it does not reduce the total number of cases (right plot, blue curve vs black curve).
+Though the peak is reduced by this late shorter school closure, it does not reduce the total number of cases (top right plot, blue curve vs black curve).
 
-Plotting R_effective over time can help us these dynamics.
-For a set of individuals, we computed R_effective taking the number of people infected by that set and dividing by the number in that set. We plotted R_effective for each 15-day interval of the epidemic by computing R_effective for people who were infected during that 15-day interval.
-R_effective declines over time as susceptibles are consumed and become immune, and dives below 1.0 at the peak of transmission before this decline slows down.
+Plotting R_effective over time can help us understand these dynamics.
+We define R_effective for a set of individuals to be the average number of people they infect. We plotted R_effective for those infected during each 15-day interval of the epidemic in the bottom left.
+R_effective declines over time as susceptibles are infected and become immune,
+and dives below 1.0 at the peak of transmission and then approaches 0.
 School closures reduce transmission and drop R_effective.
-The late school closure (blue) brings R_effective below 1.0, but the closure is in effect long enough to prevent bounce-back by allowing more people to get infected. When schools re-open, R_effective is still below 1.0 but a substantial number of cases will be generated, nearly catching up to the no-closure scenario.
+The late school closure (blue) brings R_effective below 1.0, but the closure is in effect long enough to prevent bounce-back by allowing more people to get infected during the closure, though at a slower rate. When schools re-open, R_effective is still below 1.0 but a substantial number of cases will still be generated, nearly catching up to the no-closure scenario (top right plot).
+
+Finally, the lower right plot shows the impact of school closures on attack rates of older adults (30 years old and older), who are at greater risk of complications.
+School closures have a similar effect on the epi curves of this population as the general population, though school closures must reduce the attack rate in children a bit more than adults.
+One of the age bins in Corvid is ages 30 to 64 years, so we can't disaggregate within this age group.
 
 We are not suggesting that these strategies are practical, nor should school closures alone be used to combat community-wide outbreaks, but it does illustrate how the timing of school closures can reduce or delay the epidemic peak by changing the transmissibility of the pathogen in the population.
 
@@ -266,7 +313,7 @@ We are not suggesting that these strategies are practical, nor should school clo
 Corvid is a new agent-based model to simulate SARS-CoV-2 transmission in synthetic communities that represent typical American populations.
 It is based on an influenza model ("FluTE"), which is described in detail in doi:10.1371/journal.pcbi.1000656 and is available at https://github.com/dlchao/FluTE.
 FluTE was based on the EpiCast model described in Germann et al 2006.
-The new model is called "Corvid" and the C++ model code and the analysis scripts used to generate this report are available at https://github.com/dlchao/corvid. We use version 0.3 of Corvid for the runs described in this document.
+The new model is called "Corvid" and the C++ model code and the analysis scripts used to generate this report are available at https://github.com/dlchao/corvid. We used version 0.4 of Corvid for the runs described in this document.
 
 In brief, Corvid creates communities of about 2000 people, and to simulate larger populations, many such communities are created and connected through commuting patterns.
 Synthetic populations for US locations are created by generating enough communities to represent each census tract, with a population size matching the 2000 US Census data, and linking those communities using commuter data from that Census.

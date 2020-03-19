@@ -3,7 +3,7 @@
 label seattlePRINTR0-RESPONSEDAY-school-SCHOOLPOLICY-DURATION-llwfh-PRINTCOMPLIANCE
 datafile seattle
 R0 PARAMR0
-runlength 180
+runlength 240
 summaryfilename Summary-seattlePRINTR0-RESPONSEDAY-school-SCHOOLPOLICY-DURATION-llwfh-PRINTCOMPLIANCE.txt
 logfilename Log-seattlePRINTR0-RESPONSEDAY-school-SCHOOLPOLICY-DURATION-llwfh-PRINTCOMPLIANCE.txt
 tractfilename Tracts-seattlePRINTR0-RESPONSEDAY-school-SCHOOLPOLICY-DURATION-llwfh-PRINTCOMPLIANCE.txt

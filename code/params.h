@@ -42,7 +42,8 @@ extern const double fStopAntiviralTwoPills; // probability that individuals taki
 extern double fBaseSymptomaticProb;
 
 // cdf of duration for incubation period in days
-extern const double incubationcdf[14];
+#define INCUBATIONMAX 14
+extern const double incubationcdf[INCUBATIONMAX];
 
 // viral load trajectories
 // number of subjects

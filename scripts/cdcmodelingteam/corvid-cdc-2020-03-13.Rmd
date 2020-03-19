@@ -486,16 +486,16 @@ lines(x=timesteps/2, y=sapply(timesteps, function(t) {sum(individuals.seattle25$
 lines(x=timesteps/2, y=sapply(timesteps, function(t) {sum(individuals.seattle25$infectedtime>0 & individuals.seattle25$SOURCETYPE=="daytime.school" & individuals.seattle25$infectedtime<=t)})/tot, col="purple", lwd=1.5)
 legend("topright", legend=c("family","workplace","school"), fill=c("red","blue","purple"), inset=0.01)
 
-temp <- data.frame(setting=c("school","work","home","community","total"),
+temp <- data.frame(setting=c("school","work","home","community/neighbors","total"),
                    infected25=c(sum(individuals.seattle25$SOURCETYPE=="daytime.school",na.rm=TRUE),
            sum(individuals.seattle25$SOURCETYPE=="daytime.work",na.rm=TRUE),
 	   sum(individuals.seattle25$SOURCETYPE %in% c("daytime.family","nighttime.family"),na.rm=TRUE),
-	   sum(individuals.seattle25$SOURCETYPE %in% c("daytime.comm","daytime.nh","nighttime.comm","nighttime.nh"),na.rm=TRUE),
+	   sum(individuals.seattle25$SOURCETYPE %in% c("daytime.comm","daytime.nh","nighttime.comm","nighttime.nh","nighttime.hhcluster"),na.rm=TRUE),
 	   sum(!is.na(individuals.seattle25$SOURCETYPE) & individuals.seattle25$SOURCETYPE!="seeded")),
                    infected20=c(sum(individuals.seattle20$SOURCETYPE=="daytime.school",na.rm=TRUE),
            sum(individuals.seattle20$SOURCETYPE=="daytime.work",na.rm=TRUE),
 	   sum(individuals.seattle20$SOURCETYPE %in% c("daytime.family","nighttime.family"),na.rm=TRUE),
-	   sum(individuals.seattle20$SOURCETYPE %in% c("daytime.comm","daytime.nh","nighttime.comm","nighttime.nh"),na.rm=TRUE),
+	   sum(individuals.seattle20$SOURCETYPE %in% c("daytime.comm","daytime.nh","nighttime.comm","nighttime.nh","nighttime.hhcluster"),na.rm=TRUE),
 	   sum(!is.na(individuals.seattle20$SOURCETYPE) & individuals.seattle20$SOURCETYPE!="seeded")))
 temp$infected25 <- 100*temp$infected25/temp$infected25[nrow(temp)]
 temp$infected20 <- 100*temp$infected20/temp$infected20[nrow(temp)]
@@ -548,7 +548,7 @@ The maximum infectious period allowed by the model was 21 days.
 Corvid is a new agent-based model to simulate SARS-CoV-2 transmission in synthetic communities that represent typical American populations.
 It is based on an influenza model ("FluTE"), which is described in detail in doi:10.1371/journal.pcbi.1000656 and is available at https://github.com/dlchao/FluTE.
 FluTE was based on the EpiCast model described in Germann et al 2006.
-The new model is called "Corvid" and the C++ model code and the analysis scripts used to generate this report are available at https://github.com/dlchao/corvid. We use version 0.3 of Corvid for the runs described in this document.
+The new model is called "Corvid" and the C++ model code and the analysis scripts used to generate this report are available at https://github.com/dlchao/corvid. We use version 0.4 of Corvid for the runs described in this document.
 
 In brief, Corvid creates communities of about 2000 people, and to simulate larger populations, many such communities are created and connected through commuting patterns.
 Synthetic populations for US locations are created by generating enough communities to represent each census tract, with a population size matching the 2000 US Census data, and linking those communities using commuter data from that Census.

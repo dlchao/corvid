@@ -192,6 +192,7 @@ struct Person {
   unsigned char householdcluster;// household cluster
   unsigned char nVaccinePriority; // vaccine priority group (0 for no vaccine, 1 for highest priority, 2 for next-highest priority, etc). Also set to 0 if the person does not want vaccine.
   int nInfectedTime;	// keeping track of the time of infection
+  int nIncubationDays;  // length of the incubation period
   unsigned int nVaccineRestrictionBits; // for keeping track of vaccine restriction categories
   bool bVaccineEligible[NUMVACCINES];
 
@@ -201,7 +202,7 @@ struct Person {
   bool bWantVac; // Should be vaccinated now (if available)
   bool bWantAV;  // Should get antiviral now (if available)
   friend ostream& operator<<(ostream& os, Person& p) {
-    os << p.id << " " << (int)p.age << " " << p.nHomeComm << " " << p.nDayComm <<  " " << p.family << " " << (int)p.nWorkplace << " " << (int)p.nHomeNeighborhood << " " << (int)p.nFamilySize << " " << p.sourceid << " " << p.nInfectedTime << " " << (int)p.sourcetype << " ";
+    os << p.id << " " << (int)p.age << " " << p.nHomeComm << " " << p.nDayComm <<  " " << p.family << " " << (int)p.nWorkplace << " " << (int)p.nHomeNeighborhood << " " << (int)p.nFamilySize << " " << p.sourceid << " " << p.nInfectedTime << " " << p.nIncubationDays << " " << (int)p.sourcetype << " ";
     if (isSusceptible(p)) {
       os << "s";
     }
@@ -241,11 +242,11 @@ struct Person {
   // person.ibits accessor functions (response to infection)
   friend inline bool getWillBeSymptomatic(const Person &p) { return p.ibits&WILLBESYMPTOMATIC; }
   friend inline bool getWillBeAscertained(const Person &p) { return p.ibits&WILLBEASCERTAINED; }
-  friend inline int getIncubationDays(const Person &p) { return p.ibits&0x7u; }
+  friend inline int getIncubationDays(const Person &p) { return p.nIncubationDays; }
   friend inline unsigned int getWithdrawDays(const Person &p) { return (p.ibits>>3)&0x7u; } // if 0, then will not withdraw.  otherwise, withdraw this may days after infection
   friend inline void setWillBeSymptomatic(Person &p) {p.ibits|=WILLBESYMPTOMATIC; }
   friend inline void setWillBeAscertained(Person &p) {p.ibits|=WILLBEASCERTAINED; }
-  friend inline void setIncubationDays(Person &p, unsigned int x) {p.ibits=(p.ibits&0xF8u)|x; }
+  friend inline void setIncubationDays(Person &p, unsigned int x) { p.nIncubationDays=x; }
   friend inline void setWithdrawDays(Person &p, unsigned int x) {p.ibits=(p.ibits&0xC7u)|(x<<3); }
 
   // person.vbits accessor functions (miscellaneous state)

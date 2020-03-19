@@ -8,10 +8,10 @@
 # or clusters.
 
 # run main school closure/liberal leave/work from home combinations
-for r0 in 2.0 2.6; do
+for r0 in 2.6; do
     printr0=${r0//./}
     for responseday in 60 74 100; do
-	for printcompliance in 0 25 50; do
+	for printcompliance in 0 25; do
 	    compliance="0."${printcompliance}
 	    if test $compliance = "0.100"
 	    then

@@ -19,7 +19,7 @@ extern "C" {
 using namespace std;
 
 const int nVersionMajor = 0;
-const int nVersionMinor = 3;
+const int nVersionMinor = 4;
 
 #define get_rand_double dsfmt_genrand_close_open(&dsfmt)
 #define get_rand_uint32 dsfmt_genrand_uint32(&dsfmt)
@@ -534,6 +534,7 @@ void EpiModel::create_person(int nAgeGroup, int nFamilySize, int nFamily, int nH
   setSusceptible(p);
   p.sourceid = p.id;
   p.nInfectedTime = -1;
+  p.nIncubationDays = -1;
   p.nVaccinePriority=0;
   p.nWhichVload = get_rand_uint32%VLOADNSUB;
   p.nVaccineRestrictionBits = 0;
@@ -919,12 +920,12 @@ void EpiModel::infect(Person& p) {
   if (rn<fSymptomaticProb) {  // will be symptomatic
     setWillBeSymptomatic(p);
     double rn2 = get_rand_double;
-    if (rn2 < incubationcdf[0])
-      setIncubationDays(p,1);
-    else if (rn2 < incubationcdf[1])
-      setIncubationDays(p,2);
-    else
-      setIncubationDays(p,3);
+    for (int i=0; i<INCUBATIONMAX; i++) {
+      if (rn2 < incubationcdf[i]) {
+        setIncubationDays(p,i+1);
+	break;
+      }
+    }
     assert(getIncubationDays(p)>0);
     if (rn<fSymptomaticProb*fSymptomaticAscertainment) { // will be ascertained
       setWillBeAscertained(p);
@@ -940,14 +941,14 @@ void EpiModel::infect(Person& p) {
     else
       setWithdrawDays(p,0); // will not withdraw
 
-    if (bTrigger && (getWithdrawDays(p)==0 || // doesn't voluntarily withdraw
-		     getWithdrawDays(p)-getIncubationDays(p)>1)) { // would withdraw later
-      if ((fLiberalLeaveCompliance>0.0 && isWorkingAge(p) && p.nWorkplace>0 && get_rand_double<fLiberalLeaveCompliance) || // on liberal leave
+    if (bTrigger && nTimer>=nTriggerTime &&
+	(getWithdrawDays(p)==0 || // doesn't voluntarily withdraw
+	 getWithdrawDays(p)-getIncubationDays(p)>1)) { // would withdraw after more than one day
+      if ((fLiberalLeaveCompliance>0.0 && isWorkingAge(p) && p.nWorkplace>0 && get_rand_double<fLiberalLeaveCompliance) || // will take liberal leave
 	  (fIsolationCompliance>0.0 && get_rand_double<fIsolationCompliance)) { // voluntary isolation
-	setWithdrawDays(p,getIncubationDays(p)+1);
+	setWithdrawDays(p,getIncubationDays(p)+1); // stay home the day after symptom onset
       }
     }
-
     assert(getWillBeSymptomatic(p));
   } else {                // will NOT be symptomatic
     setIncubationDays(p,0);
@@ -2281,7 +2282,7 @@ void EpiModel::summary(void) {
 void EpiModel::outputIndividuals(void) {
   if (bIndividualsFile) {
     ostream &out = *individualsfile;
-    out << "id,age,familyid,homecomm,homeneighborhood,daycomm,dayneighborhood,workplace,infectedtime,sourceid,sourcetype,vacstatus" << endl;
+    out << "id,age,familyid,homecomm,homeneighborhood,daycomm,dayneighborhood,workplace,infectedtime,incubationdays,sourceid,sourcetype,vacstatus" << endl;
     for (vector< Person >::iterator it = pvec.begin();
        it != pvec.end();
        it++) {
@@ -2290,7 +2291,7 @@ void EpiModel::outputIndividuals(void) {
 	  << p.id << "," << (int)p.age << "," << p.family << ","
 	  << p.nHomeComm << "," << (int)p.nHomeNeighborhood << "," 
 	  << p.nDayComm <<  "," << (int)p.nDayNeighborhood << "," << (int)p.nWorkplace << "," 
-	<< p.nInfectedTime << "," << p.sourceid << "," << (int) p.sourcetype << "," <<  (int) isVaccinated(p) << endl; 
+	  << p.nInfectedTime << "," << p.nIncubationDays << "," << p.sourceid << "," << (int) p.sourcetype << "," <<  (int) isVaccinated(p) << endl; 
     }
     (*individualsfile).close();
   }
