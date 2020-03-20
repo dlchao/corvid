@@ -11,9 +11,8 @@ ifdef OPTI
 OPTI = $(OPTI)
 else
 OPTI     = -O3 -march=native
-endif
-
 #OPTI = -pg # for profiling
+endif
 LDFLAGS	= -lm
 INCLUDES	= 
 LIBS	= 
