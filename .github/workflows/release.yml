@@ -9,6 +9,8 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: make
+      env:
+        OPTI: -O3
       run: make
       working-directory: code
     - name: Upload corvid binary
@@ -30,6 +32,8 @@ jobs:
     - name: make vercheck
       run: mingw32-make --version
     - name: make
+      env:
+        OPTI: -O3
       run: mingw32-make
       working-directory: code
     - name: copy static libraries
