@@ -22,6 +22,8 @@ jobs:
       run: mingw32-make --version
 
     - name: make
+      env:
+        OPTI: -03
       run: mingw32-make
       working-directory: code
 
