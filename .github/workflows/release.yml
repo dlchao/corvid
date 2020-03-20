@@ -11,12 +11,13 @@ jobs:
     - name: make
       run: make
       working-directory: code
-    - name: Upload the release
-      uses: skx/github-action-publish-binaries@master
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Upload corvid binary
+      uses: svenstaro/upload-release-action@v1-release
       with:
-        args: 'code/corvid'
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: code/corvid
+        asset_name: corvid.ubuntu18.04.amd64
+        tag: ${{ github.ref }}
   generate-windows:
     name: Create Windows Release Artifacts
     runs-on: windows-latest
