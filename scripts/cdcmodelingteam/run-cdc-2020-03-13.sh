@@ -40,7 +40,7 @@ for r0 in 2.5 2.0 3.0; do
 done
 
 # move results to a subdirectory
-#mkdir results
-#mv Summary* Tract* Log* Individual* results
+mkdir results
+mv Summary* Tract* Log* Individual* results
 
 exit 0

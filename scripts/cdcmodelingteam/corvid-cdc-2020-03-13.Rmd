@@ -247,7 +247,8 @@ par(mfrow=c(4,2),
 days <- 1:length(newlysymptomatic.seattle[[as.character(r0)]])
 for (trigger in c(0.0001, 0.001, 0.01,0.1)) {
     ymax <- 1200
-    plot(x=days, y=newlysymptomatic.seattle[[as.character(r0)]]*denominator/popsize.seattle, xlab="days since introduction", ylab=paste("symptomatic /", as.integer(denominator)), main=paste("R0=",r0,", trigger=",format(trigger,scientific=FALSE), sep=""), type="l", col="black", lwd=2, cex.main=1.3, cex.axis=1.1, cex.lab=1.2, ylim=c(0,ymax))
+    xmax <- 235
+    plot(x=days, y=newlysymptomatic.seattle[[as.character(r0)]]*denominator/popsize.seattle, xlab="days since introduction", ylab=paste("symptomatic /", as.integer(denominator)), main=paste("R0=",r0,", trigger=",format(trigger,scientific=FALSE), sep=""), type="l", col="black", lwd=2, cex.main=1.3, cex.axis=1.1, cex.lab=1.2, xlim=c(0,xmax), ylim=c(0,ymax))
     polygon(x=c(days,max(days), 0), y=c(newlysymptomatic.seattle[[as.character(r0)]],0,0)*denominator/popsize.seattle, col="gray92", lwd=0.5)
 
     triggerday <- list()
@@ -271,7 +272,7 @@ for (trigger in c(0.0001, 0.001, 0.01,0.1)) {
     legend("topleft", legend=c("no closure", paste(durations,"days")), fill=c("black", palduration[durations]), cex=1, inset=0.01, bg="white")
 
     ymax <- 45
-    plot(x=days, y=csymptomatic.seattle[[as.character(r0)]]*100/popsize.seattle, xlab="days since introduction", ylab="cumulative symptomatic, %", main=paste("R0=",r0,", trigger=",format(trigger,scientific=FALSE), sep=""), type="l", col="black", lwd=2, cex.main=1.3, cex.axis=1.1, cex.lab=1.2, ylim=c(0,ymax))
+    plot(x=days, y=csymptomatic.seattle[[as.character(r0)]]*100/popsize.seattle, xlab="days since introduction", ylab="cumulative symptomatic, %", main=paste("R0=",r0,", trigger=",format(trigger,scientific=FALSE), sep=""), type="l", col="black", lwd=2, cex.main=1.3, cex.axis=1.1, cex.lab=1.2, xlim=c(0,xmax), ylim=c(0,ymax))
     for (duration in durations) {
         lines(x=days, y=csymp[[as.character(duration)]]*100/popsize.seattle, col=palduration[duration], lwd=1.5)
         points(x=duration+delay+triggerday[[as.character(duration)]], y=0, pch=25, bg=palduration[duration], cex=1.5)

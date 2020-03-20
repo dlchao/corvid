@@ -1087,21 +1087,23 @@ void EpiModel::TAP(Person& p) {
 void EpiModel::dayinfectsusceptibles(const Person &infected, Community &comm) {
   const double *cpf = (isChild(infected)?cpfc:cpfa); // probability of family transmission
   bool bInfectedIsAtHome = (isWithdrawn(infected) ||
-			  isQuarantined(infected) ||
-			  isWorkingFromHome(infected) ||
-			  infected.nWorkplace==0 ||
-			  (isChild(infected) && 
-			   infected.nWorkplace<9 &&
-			   isSchoolClosed(tractvec[infected.nDayTract-nFirstTract], infected.nWorkplace)));   // infected is at home during the day
+			    isQuarantined(infected) ||
+			    isWorkingFromHome(infected) ||
+			    infected.nWorkplace==0 ||
+			    (isChild(infected) && 
+			     infected.nWorkplace<9 &&
+			     isSchoolClosed(tractvec[infected.nDayTract-nFirstTract], infected.nWorkplace)));   // infected is at home during the day
   bool bInfectedIsAtSchool = (isChild(infected) && 
-			    infected.nWorkplace>0 && 
-			    ((infected.age==0 && infected.nWorkplace>=9) ||
-			     !isSchoolClosed(tractvec[infected.nDayTract-nFirstTract], infected.nWorkplace))); // infected's school or playgroup is open (playgroups are always open)
+			      !isWithdrawn(infected) &&
+			      !isQuarantined(infected) &&
+			      infected.nWorkplace>0 && 
+			      ((infected.age==0 && infected.nWorkplace>=9) ||
+			       !isSchoolClosed(tractvec[infected.nDayTract-nFirstTract], infected.nWorkplace))); // infected's school or playgroup is open (playgroups are always open)
   bool bInfectedIsAtWork = (isWorkingAge(infected) &&
-			  !isWithdrawn(infected) &&
-			  !isQuarantined(infected) &&
-			  !isWorkingFromHome(infected) &&
-			  infected.nWorkplace>0);  // infected works during the day
+			    !isWithdrawn(infected) &&
+			    !isQuarantined(infected) &&
+			    !isWorkingFromHome(infected) &&
+			    infected.nWorkplace>0);  // infected works during the day
 
   vector< unsigned int >::iterator wend = comm.workers.end();
   list< Person >::iterator vend=comm.visitors.end();
@@ -1412,7 +1414,7 @@ void EpiModel::night(void) {
 	      }
 	      
 	      // quarantine the family
-	      if (isQuarantine(tractvec[comm.nTractID-nFirstTract]) && p.iday==getIncubationDays(p)+1) {
+	      if (isQuarantine(tractvec[comm.nTractID-nFirstTract])) {
 		for (unsigned int pid2=comm.nFirstPerson;
 		     pid2<comm.nLastPerson;
 		     pid2++) {
