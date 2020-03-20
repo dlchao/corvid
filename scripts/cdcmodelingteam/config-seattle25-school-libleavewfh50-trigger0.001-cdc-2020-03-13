@@ -1,0 +1,22 @@
+# Seattle configuration for CDC Modeling Team
+# Liberal leave and work from home policies start at the desired threshold
+# Close all schools at the desired threshold
+label seattle25-cdc-libleavewfh50-schoolclosure-56-0.001-2020-03-13
+datafile seattle
+R0 2.5
+runlength 240
+summaryfilename Summary-seattle25-cdc-libleavewfh50-schoolclosure-56-0.001-2020-03-13
+logfilename Log-seattle25-cdc-libleavewfh50-schoolclosure-56-0.001-2020-03-13
+tractfilename Tracts-seattle25-cdc-libleavewfh50-schoolclosure-56-0.001-2020-03-13
+randomnumberseed 1
+seedinfected 5
+seedinfecteddaily 0
+ascertainmentdelay 3
+ascertainmentfraction 1.0
+responsedelay 0
+responsethreshold 0.001
+schoolclosurepolicy all
+schoolclosuredays 56
+liberalleave 0.5
+workfromhome 0.5
+

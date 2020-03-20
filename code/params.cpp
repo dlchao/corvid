@@ -29,7 +29,6 @@ const double withdrawprob[3][WITHDRAWDAYS] = {
 // self isolation probabilities by age
 const double isolationprob[TAG] = {0.8,0.75,0.5,0.5,0.5};
 
-const int nQuarantineLength = 7; // length of quarantine in days
 const int nAntiviralCourseSize = 10; // number of pills in one antiviral course (1 tablet/day for prophylaxis and 2 tablets/day for treatment)
 const double fStopAntiviralTwoPills = 0.05; // probability that individuals taking antivirals stop after exactly two pills
 
@@ -39,7 +38,7 @@ double fBaseSymptomaticProb=0.5; // half of infections are symptomatic
 // cdf of duration for incubation period in days
 //const double incubationcdf[14] = {0.0128885,0.06283671,0.1533217,0.2772347,0.4202624,0.5651,0.6961202,0.8029434,
 //				  0.8817976,0.9346127,0.9667359,0.9844785,0.9933733,1.0}; // Weibull from Hellewell et al 2020
-const double incubationcdf[14] = {0.000053,0.013218,0.105699,0.287229,0.488966,0.658552,0.781508,0.863625,
+const double incubationcdf[INCUBATIONMAX] = {0.000053,0.013218,0.105699,0.287229,0.488966,0.658552,0.781508,0.863625,
 				  0.91598,0.948511,0.968458,0.980622,0.988035,1.0}; // log normal from Lauer et al 2020
 
 // viral load trajectories (infectiousness)

@@ -34,7 +34,6 @@ extern const double withdrawprob[3][WITHDRAWDAYS];
 // self isolation probabilities by age
 extern const double isolationprob[TAG];
 
-extern const int nQuarantineLength; // length of quarantine in days
 extern const int nAntiviralCourseSize; // number of pills in one antiviral course (1 tablet/day for prophylaxis and 2 tablets/day for treatment)
 extern const double fStopAntiviralTwoPills; // probability that individuals taking antivirals stop after exactly two pills
 
@@ -42,7 +41,8 @@ extern const double fStopAntiviralTwoPills; // probability that individuals taki
 extern double fBaseSymptomaticProb;
 
 // cdf of duration for incubation period in days
-extern const double incubationcdf[14];
+#define INCUBATIONMAX 14
+extern const double incubationcdf[INCUBATIONMAX];
 
 // viral load trajectories
 // number of subjects

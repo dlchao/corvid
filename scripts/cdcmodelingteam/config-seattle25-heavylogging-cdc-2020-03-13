@@ -1,0 +1,16 @@
+# Seattle configuration for CDC Modeling Team
+# no interventions
+# same as other runs, but outputs more results
+# outputs the "Individuals" file so we can study sources of infection, transmission trees, etc
+label seattle25-heavylogging-cdc-2020-03-13
+datafile seattle
+R0 2.5
+runlength 240
+summaryfilename Summary-seattle25-heavylogging-cdc-2020-03-13
+logfilename Log-seattle25-heavylogging-cdc-2020-03-13
+tractfilename Tracts-seattle25-heavylogging-cdc-2020-03-13
+individualfilename Individuals-seattle25-heavylogging-cdc-2020-03-13
+individualfile 1
+randomnumberseed 1
+seedinfected 5
+seedinfecteddaily 0

@@ -5,8 +5,8 @@ CLINKER  = gcc
 CCLINKER = g++
 MAKE     = make --no-print-directory
 SHELL    = /bin/sh
-CFLAGS   = -Wall -pedantic -DDSFMT_MEXP=19937 -msse2 -DHAVE_SSE2 
-OPTI     = -O1
+CFLAGS	 = -Wall -Werror -pedantic -DDSFMT_MEXP=19937 -msse2 -DHAVE_SSE2
+OPTI     = -O3
 #OPTI = -pg # for profiling
 LDFLAGS	= -lm
 INCLUDES	= 
@@ -41,11 +41,28 @@ demo: corvid
 	cd ../corviddemo; ln -s ../code/corvid .; ln -s ../corviddata/seattle* .; ln -s ../configfiles/config-seattle26* .
 	cd ../corviddemo; ./corvid config-seattle26; ./corvid config-seattle26-closeallschools; ./corvid config-seattle26-isolation;  ./corvid config-seattle26-liberalleave; ./corvid config-seattle26-quarantine; ./corvid config-seattle26-workfromhome
 
+# makes directory ../cdcmarch2020/ and runs several Seattle scenarios in response to the CDC coronavirus Modeling Team
+# The runs will take hours. You might want to customize the run script to take advantage of computer resources better than my own.
+cdcmarch2020: corvid
+	rm -rf ../cdcmarch2020 # hope there was nothing important in this directory...
+	mkdir ../cdcmarch2020
+	cd ../cdcmarch2020; ln -s ../code/corvid .; ln -s ../corviddata/seattle* .; cp ../scripts/cdcmodelingteam/run-cdc-2020-03-13.sh .; cp ../scripts/cdcmodelingteam/template*cdc-2020-03-13 .; cp ../scripts/cdcmodelingteam/config*cdc-2020-03-13 .; cp ../scripts/cdcmodelingteam/corvid-cdc-2020-03-13.Rmd .; chmod +x run-*.sh
+	cd ../cdcmarch2020; ./run-cdc-2020-03-13.sh # run all the simulations for hours
+
+# makes directory ../schoolclosuremarch2020/ and runs school closure
+# The runs will take hours. You might want to customize the run script to take advantage of computer resources better than my own.
+schoolclosuremarch2020: corvid
+#	rm -rf ../schoolclosuremarch2020 # hope there was nothing important in this directory...
+	mkdir ../schoolclosuremarch2020
+	cd ../schoolclosuremarch2020; ln -s ../code/corvid .; ln -s ../corviddata/seattle* .; cp ../scripts/schoolclosuremodelingteam/* .; chmod +x run-*.sh
+	cd ../schoolclosuremarch2020; ./run-schoolclosures-2020-03.sh # run all the simulations for hours
+
 # using emacs makes me feel old
 emacs:
 	emacs Makefile *.h *.c *.cpp &
 
+# does not clear out the demo or other directories
 clean:
 	rm -f *.o corvid R0corvid *~
 	rm -f Summary? Tracts? Log? Individuals?
-	echo 0 > run-number
+

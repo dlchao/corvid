@@ -100,7 +100,7 @@ enum {
 enum {
   WILLBESYMPTOMATIC = 0x40u, // will become symptomatic if infected
   WILLBEASCERTAINED = 0x80u // will become ascertained if infected
-};      // status bits for persons (ibits). Note: the first few bits of ibits are used to keep track of incubation and withdrawal timers
+};      // status bits for persons (ibits). Note: the first few bits of ibits are used to keep track of withdrawal timers (removed incubation timer from first bits)
 
 enum {
   //  VACCINE2       = 0x1u, // first 3 bits for vaccine ID
@@ -125,7 +125,8 @@ enum tractstatusbits {
   TRACTLIBERALLEAVE = 0x4u,     // liberal leave policy for workers
   TRACTWORKFROMHOME = 0x8u,     // work from home policy for workers
   TRACTVACCINATED = 0x10u, // tract-wide vaccination
-  TRACTQUARANTINE = 0x20u  // household quarantine active in this tract
+  TRACTQUARANTINE = 0x20u,  // household quarantine active in this tract
+  TRACTAISOLATION = 0x40u  // ascertained isolation active in this tract
   //  TRAVELRESTRICTED = 0x20u, // reduced long-distance travel
 };      // status bits for census tracts
 
@@ -192,6 +193,7 @@ struct Person {
   unsigned char householdcluster;// household cluster
   unsigned char nVaccinePriority; // vaccine priority group (0 for no vaccine, 1 for highest priority, 2 for next-highest priority, etc). Also set to 0 if the person does not want vaccine.
   int nInfectedTime;	// keeping track of the time of infection
+  int nIncubationDays;  // length of the incubation period
   unsigned int nVaccineRestrictionBits; // for keeping track of vaccine restriction categories
   bool bVaccineEligible[NUMVACCINES];
 
@@ -201,7 +203,7 @@ struct Person {
   bool bWantVac; // Should be vaccinated now (if available)
   bool bWantAV;  // Should get antiviral now (if available)
   friend ostream& operator<<(ostream& os, Person& p) {
-    os << p.id << " " << (int)p.age << " " << p.nHomeComm << " " << p.nDayComm <<  " " << p.family << " " << (int)p.nWorkplace << " " << (int)p.nHomeNeighborhood << " " << (int)p.nFamilySize << " " << p.sourceid << " " << p.nInfectedTime << " " << (int)p.sourcetype << " ";
+    os << p.id << " " << (int)p.age << " " << p.nHomeComm << " " << p.nDayComm <<  " " << p.family << " " << (int)p.nWorkplace << " " << (int)p.nHomeNeighborhood << " " << (int)p.nFamilySize << " " << p.sourceid << " " << p.nInfectedTime << " " << p.nIncubationDays << " " << (int)p.sourcetype << " ";
     if (isSusceptible(p)) {
       os << "s";
     }
@@ -241,11 +243,11 @@ struct Person {
   // person.ibits accessor functions (response to infection)
   friend inline bool getWillBeSymptomatic(const Person &p) { return p.ibits&WILLBESYMPTOMATIC; }
   friend inline bool getWillBeAscertained(const Person &p) { return p.ibits&WILLBEASCERTAINED; }
-  friend inline int getIncubationDays(const Person &p) { return p.ibits&0x7u; }
-  friend inline unsigned int getWithdrawDays(const Person &p) { return (p.ibits>>3)&0x7u; } // if 0, then will not withdraw.  otherwise, withdraw this may days after infection
+  friend inline int getIncubationDays(const Person &p) { return p.nIncubationDays; }
+  friend inline unsigned int getWithdrawDays(const Person &p) { return (p.ibits>>3)&0x7u; } // if 0, then will not withdraw.  otherwise, withdraw this many days after symptoms
   friend inline void setWillBeSymptomatic(Person &p) {p.ibits|=WILLBESYMPTOMATIC; }
   friend inline void setWillBeAscertained(Person &p) {p.ibits|=WILLBEASCERTAINED; }
-  friend inline void setIncubationDays(Person &p, unsigned int x) {p.ibits=(p.ibits&0xF8u)|x; }
+  friend inline void setIncubationDays(Person &p, unsigned int x) { p.nIncubationDays=x; }
   friend inline void setWithdrawDays(Person &p, unsigned int x) {p.ibits=(p.ibits&0xC7u)|(x<<3); }
 
   // person.vbits accessor functions (miscellaneous state)
@@ -333,12 +335,14 @@ struct Tract {
   friend inline enum antiviralPolicy getAVPolicy(const Tract &t) { return (enum antiviralPolicy)(t.status&0x03); }
   friend inline void setAVPolicy(Tract &t, enum antiviralPolicy p) { t.status|=p;} 
   friend inline bool isQuarantine(const Tract &t) { return t.status&TRACTQUARANTINE; }
+  friend inline bool isAscertainedIsolation(const Tract &t) { return t.status&TRACTAISOLATION; }
   friend inline bool isWorkFromHome(const Tract &t) { return t.status&TRACTWORKFROMHOME; }
   friend inline bool isVaccinated(const Tract &t) { return t.status&TRACTVACCINATED; } 
   friend inline bool isSchoolClosed(const Tract &t, int which) { return t.bSchoolClosed[which]; }
   friend inline void setSchoolClosed(Tract &t, int which) { t.bSchoolClosed[which]=true; }
   friend inline void setSchoolOpen(Tract &t, int which) { t.bSchoolClosed[which]=false; }
   friend inline void setQuarantine(Tract &t) {t.status|=TRACTQUARANTINE;}
+  friend inline void setAscertainedIsolation(Tract &t) {t.status|=TRACTAISOLATION;}
   friend inline void setWorkFromHome(Tract &t) {t.status|=TRACTWORKFROMHOME;}
   friend inline void setVaccinated(Tract &t) {t.status|=TRACTVACCINATED;}
 };
@@ -443,7 +447,7 @@ class EpiModel {
   int bTrigger;                     // has the trigger for response been reached
   int nTriggerTime;                 // time when reactive strategies are deployed everywhere
   int nTriggerDelay;                // days between trigger and response
-  double fResponseThreshhold;       // fraction of ever infecteds before reaction
+  double fResponseThreshold;       // fraction of ever infecteds before reaction
   int nAscertainmentDelay;          // days between symptomatic and ascertainment
   double fAdultEssentialFraction;   // fraction of working-age adults who are prioritized to receive vaccine
   double fPregnantFraction[TAG];    // fraction of working-age adults who are pregnant
@@ -488,8 +492,10 @@ class EpiModel {
   // non-pharmaceutical intervention parameters
   int nSchoolClosurePolicy;         // 1 for county-wide, 2 for ascertained
   int nSchoolClosureDays;           // number of days to close schools (0 for no school closure)
-  double fIsolationCompliance;      // probability of voluntary home isolation compliance (set to 0 for no isolation)?
+  double fVoluntaryIsolationCompliance;      // probability of voluntary home isolation compliance (set to 0 for no isolation)?
+  double fAscertainedIsolationCompliance;      // probability of home isolation after ascertainment compliance (set to 0 for no isolation)?
   double fQuarantineCompliance;     // probability of individual compliance (set to 0 for no quarantine)
+  double nQuarantineLength;         // length of quarantine in days
   double fLiberalLeaveCompliance;   // probability of individual compliance (set to 0 for no liberal leave)
   double fWorkFromHomeCompliance;   // probability of individual compliance (set to 0 for no work from home)
 };

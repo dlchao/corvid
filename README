@@ -2,16 +2,34 @@ Instructions for Corvid, a stochastic coronavirus epidemic simulation model
 by Dennis Chao
 March 2020
 
-Corvid is an individual-based model that runs in discrete time, with two 
-time steps per simulation day, representing day and night. 
+Corvid is an individual-based model that simulates the spread of SARS-CoV-2
+in synthetic populations that represent communities in the United States.
+
+Corvid is based on the influenza model FluTE (https://github.com/dlchao/FluTE).
+
+Several parameters were adjusted to adapt the FluTE flu transmission 
+to SARS-CoV-2 transmission, such as incubation period, symptomatic fraction,
+and viral load trajectories.
+
+This model only supports single-core (unlike FluTE, which had a parallel
+computing version), so populations of more than 10,000,000 will probably
+not run on a laptop.
+
+We include several scripts that we use for reports in the "scripts"
+directory. There are Makefile targets for setting up directories and
+running these scripts. When these runs are completed, you should be
+able to compile the R Markdown scripts (*.Rmd) to generate reports
+based on these results.
 
 --------------------------
 1. Compilation
 
+The source code and Makefile are in the "code" directory.
 The Makefile can be used on Linux systems to compile corvid (standard 
 simulator) and R0corvid (version of corvid in which only a single index case
 is infectious). You can also make "demo", which will compile corvid and
-run it in a new directory "corviddemo" using the Seattle configuration files.
+run it in a new directory "corviddemo" using sample configuration files
+for a Seattle-like population.
 
 The source files are:
   epimodel.cpp - model implementation
@@ -91,7 +109,7 @@ logfile : integer
 Number that indicates how often, in days, output is written to the Log file. If 0, no Log file is generated. Default is 1 for daily output. 
 
 individualfile : binary
-Specifies if an "Individuals" file should be generated. The file will contain one row of simulation-specific data for each individual and can be very large. If 1, file is generated. The default is 0, no file generated. 
+Specifies if an "Individuals" file should be generated. The file will contain one row of simulation-specific data for each individual and can be very large. If 1, file is generated. The default is 0, no file generated even if you specifiy "individualfilename". 
 
 summaryfilename : string
 Specify a name for the "Summary" file. The default name is "Summary(n)", where (n) is the number in the run-number file.
@@ -194,14 +212,14 @@ Antiviral vaccine efficacy for infectiousness (VE_I). Default is 0.62
 AVEp : real
 Antiviral vaccine efficacy for illness given infection (VE_P). Default is 0.6.
 
-responsethreshhold : real
+responsethreshold : real
 Fraction of the population ascertained that results in initiating reactive strategies. Reactive strategies include vaccinations, deploying antivirals, and non-pharmaceutical interventions like liberal leave. For example, 0.01 would set this trigger at 1% of the population. The default is 0.0 which initiates reactive strategies after the first person is ascertained. 
 
 responsedelay : integer
 Number of days to wait before initiating reactive strategies. A values of -1 would deploy reactive strategies on day 0, the first day of the simulation. this differs from the pre-strategy option because pre-vaccination assumes that you can vaccinate people early enough such that they have full protection on day 0. With a responsedelay of -1, they might get vaccine on day 0. Default is 1. 
 
 responseday : integer
-Sets the reactive responses to begin on specified day instead of waiting for ascertained cases (instead of using responsethreshhold and responsedelay).
+Sets the reactive responses to begin on specified day instead of waiting for ascertained cases (instead of using responsethreshold and responsedelay).
 
 ascertainmentdelay : integer
 Number of days it takes medical personnel to ascertain a symptomatic individual. Default is 1 day. 
@@ -246,11 +264,17 @@ schoolopening : integer[56]
 School opening day for each state after the start of the simulation. Values of 0 or -1 indicate that the state's schools are open when the simulation starts, while other values indicate that the state's schools start after n days. The parameter takes 56 arguments, which correspond to the FIPS codes of the states. The values are for the states in the following order ("-" indicates that the value is not used):
 Alabama, Alaska, -, Arizona, Arkansas, California, -, Colorado, Connecticut, Delaware, District of Columbia, Florida, Georgia, -, Hawaii, Idaho, Illinois, Indiana, Iowa, Kansas, Kentucky, Louisiana, Maine, Maryland, Massachusetts, Michigan, Minnesota, Mississippi, Missouri, Montana, Nebraska, Nevada, New Hampshire, New Jersey, New Mexico, New York, North Carolina, North Dakota, Ohio, Oklahoma, Oregon, Pennsylvania, -, Rhode Island, South Carolina, South Dakota, Tennessee, Texas, Utah, Vermont, Virginia, -, Washington, West Virginia, Wisconsin, Wyoming
 
-isolation : real
-Voluntary isolation compliance probability. This is the probability that a sick person stays home voluntarily. Default is 0, no isolation. 
+voluntaryisolation : real
+Voluntary isolation compliance probability. This is the probability that a sick person stays home voluntarily one day after symptoms. Default is 0, no isolation.
+
+ascertainedisolation : real
+Ascertained isolation compliance probability. This is the probability that a sick person stays after being ascertained. Default is 0, no isolation.
 
 quarantine : real
 Voluntary household quarantine compliance probability. This is the probability that the members of a household stay home if one of the family members gets sick. Default is 0, no quarantine. 
+
+quarantinelength : integer
+Length of household quarantine in days. Default is 14.
 
 liberalleave : real
 Liberal leave compliance probability. The probability that people will take off from work if they get sick (in addition to the usual probably of staying home when sick). Default is 0, no liberal leave. 
@@ -289,6 +313,9 @@ All output files are in ascii text format.
 
 Summary(n) - outputs the settings used for the simulation, final attack 
 rates, vaccines used, daily totals of symptomatic individuals.
+Note that the "Number symptomatic" is the symptomatic prevalence, or the
+number of people who are symptomatic on a given day - it is not the
+number who become symptomatic that day.
 
 Log(n) - The number of symptomatics per tract each day (prevalence and 
 cumulative). Each line has: the day, a unique numeric tract id, the 

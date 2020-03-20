@@ -1,0 +1,646 @@
+---
+title: "Preliminary Corvid results for CDC COVID-19 March 6 Scenarios"
+author: "Dennis Chao (dennisc@idmod.org, Institute for Disease Modeling)"
+header-includes:
+- \usepackage{fancyhdr}
+- \pagestyle{fancy}
+- \fancyhead[RO]{\today}
+- \fancyfoot[CO]{IDM}
+- \fancyfoot[R]{\thepage}
+output:
+  pdf_document: 
+    fig_caption: yes
+    fig_width: 6.5
+    fig_height: 5.5
+---
+
+```{r initialize, echo=FALSE}
+library(knitr)
+library(RColorBrewer)
+palr0 <- c("black", "red", "blue", "black", "red", "blue")
+names(palr0) <- c("2.5", "3.0", "2.0", "2.5","3","2")
+
+palage <- c("lightblue", "blue", "tan", "brown", "red")
+nameage <- c("<5y", "5-18y", "19-29", "30-64", "65+")
+durations <- c(14,28,56,140)
+```
+
+# Introduction
+
+We ran school closure Scenarios in response to a request by the COVID-19 Modeling Team on March 6 using Corvid, a newly developed  agent-based model of COVID-19 transmission.
+The Corvid model was based on FluTE (Chao et al 2010), which was based on
+the EpiCast model described in Germann et al 2006.
+We describe the Corvid model near the end of this document.
+In the Results, we run the model on a synthetic population based on 2000 Census data for metropolitan Seattle. We consider this population represents a moderately large American city, though it is not an accurate representation of present-day Seattle.
+
+The CDC COVID-19 Modeling Team request specified several scenarios, with different assumptions about the transmissibility, speed of spread, and severity of COVID-19.
+We were unable to match the requirements exactly, but we were able to run scenarios closely corresponding to the "best guess" severity assumptions and tested the robustness of results by varying transmissibility (R0).
+We tested the impact of closing all schools simultaneously for 2, 4, 8, and 20 weeks, in response to a request from Matt Biggerstaff.
+It is not clear when is the best time to close schools.
+We therefore simulated school closures when 0.01%, 0.1%, 1%, and 10% of the population has developed symptoms of COVID-19, which mimics the school closure thresholds tested in Germann et al 2019.
+These thresholds are based on the total number of people with COVID-19, not the number who test positive.
+
+In general, school closures alone delayed but did not reduce the epidemic peak.
+The peak could be reduced when school closures spanned the peak of the epidemic, which requires either very long school closures or rather late school closures that start while the epidemic has already ramped up.
+
+Other social distancing policies, such as liberal leave and work from home policies, may have a more durable effect since we assume workplaces that comply with these policies can do so for the duration of the epidemic (workplaces do not re-open during the epidemic in our simulations).
+Combining both school closures and workplace-enacted social distancing policies can delay and reduce the epidemic peak.
+Sufficient simultaneous intervenions could drive R_effective below 1.
+However, Corvid is a new model under active development, so results must be interpreted with caution.
+These results suggest that sustainable interventions be enacted widely to reduce transmission, while school closures can be used to "buy time" or to help drive R_effective below 1 when combined with other interventions.
+
+
+\clearpage
+
+# Results
+
+We show sample plots with no interventions to show the dynamics of the epidemic for R0=2.0, 2.5, and 3.0.
+We then apply mortality and hospitalization rates and plot the number of deaths over time as well as the hospital demand needed over time by age group when there is no intervention. Hospital demand is a function of hospitalization ratios for symptomatic cases and hospitalization duration estimates.
+We then present tables of deaths, hospital peak needs, and total hospital demand using different thresholds and durations for school closures.
+Finally, we test combining other social distancing measures with school closure.
+
+We used "moderate" disease severity assumptions and incubation/serial intervals, but tested moderate to high R0 (R_0 of 2.0, 2.5, and 3.0).
+We used parameters from "Proposed Outbreak Scenarios COVID 19 20200306_academic.docx" as a guide.
+Our results might be most relevant to the requested Scenario 5 ("Best Guess") but do not follow it exactly.
+It is difficult to quickly adjust the model to accommodate all the requested parameter values.
+In Corvid, the doubling time is currently hard-coded to about 8 days, the proportion of infections that are asymptomatic is hard-coded to 50%, and the relative infectiousness of asymptomatic infections is 50% compared to symptomatic.
+We will re-calibrate our model to adjust these when there is better evidence and when time permits.
+Our model uses different bins for adult age groups than the request: 19-29, 30-64, and 65+, while the COVID-19 Modeling Team is requesting 18-49, 50-64, and 65+.
+We are reporting using the age bins used in Corvid, so we assume that those 30-64 years old have the same hospitalization and fatality rates as specified for 50-64 by the COVID-19 Modeling Team.
+So our older adult hospitalization and fatality estimates will be higher than they should be, but this does not affect disease transmission dynamics.
+There is no hospitalization or death in Corvid - those are computed in post-processing since we assume that epidemic dynamics are not significantly affected by hospitalization or death.
+
+Note that we only computed mortality and hospitalization burden for "best guess" severity paramters from Scenario 5.
+
+
+```{r load-seattle, echo=FALSE}
+tractlocs <- read.csv("../corviddata/seattle-tracts.dat", header=FALSE, col.names=c("fipsstate", "fipscounty", "fipstract", "population", "latitude", "longitude"))
+tracts.seattle <- read.csv("results/Tracts-seattle20-cdc-2020-03-13", header=TRUE)
+tracts.seattle$pop <- rowSums(tracts.seattle[5:9])
+popsize.seattle <- sum(tracts.seattle$pop)
+
+# load the "no intervention" outputs
+symptomatic.seattle <- list()
+csymptomatic.seattle <- list()
+newlysymptomatic.seattle <- list()
+for (r0 in c(2.0,2.5,3.0)) {
+  temp <- readLines(paste("results/Summary-seattle",r0*10,"-cdc-2020-03-13",sep=""))
+  symptomatic.seattle[[as.character(r0)]] <- as.numeric(strsplit(gsub("^.*: ","",temp[grep("Number symptomatic", temp)]),",")[[1]])
+  csymptomatic.seattle[[as.character(r0)]] <- as.numeric(strsplit(gsub("^.*: ","",temp[grep("Cumulative symptomatic", temp)]),",")[[1]])
+  newlysymptomatic.seattle[[as.character(r0)]] <- c(symptomatic.seattle[[as.character(r0)]][1], diff(csymptomatic.seattle[[as.character(r0)]]))
+}
+```
+
+## No intervention
+
+We initialize the model by infecting five people on day 1, then run the model for 240 simulated days.
+We ran the model with R_0=2.0, 2.5, and 3.0.
+We use the conservative suggested symptomatic case hospitalization and fatality ratios, and the long estimates for hospitalization times.
+Almost all deaths and hospitalizations come from older adults.
+
+```{r cases-seattle, fig.width=7, fig.height=3.25, fig.cap="Symptomatic people over time in Seattle with no interventions. On the right, cumulative symptomatic people over time. The axis on the right is the percent of the total population.", echo=FALSE}
+par(mfrow=c(1,2),
+    mar=c(3.5,3.5,1,2.5), #bottom, left, top, and right.
+    mgp=c(2.0, 0.6, 0))
+ymax <- 7000
+plot(x=NA, y=NA, xlim=c(0,length(newlysymptomatic.seattle[[as.character(r0)]])), ylim=c(0,ymax), xlab="days since introduction", ylab="newly symptomatic per day", type="l", col=palr0["3.0"], lwd=2, cex.axis=0.8)
+for (r0 in c(2.0,2.5,3.0)) {
+    days <- 1:length(newlysymptomatic.seattle[[as.character(r0)]])
+  lines(x=days, y=newlysymptomatic.seattle[[as.character(r0)]], lwd=2, col=palr0[as.character(r0)])
+}
+legend("topleft", legend=c("R0=3.0", "R0=2.5", "R0=2.0"), fill=palr0[c("3.0","2.5","2.0")], inset=0.01, cex=0.8)
+
+ymax <- popsize.seattle*0.45
+plot(x=NA, y=NA, xlim=c(0,length(csymptomatic.seattle[[as.character(r0)]])), ylim=c(0,ymax), xlab="days since introduction", ylab="cumulative symptomatic", type="l", col=palr0[as.character(r0)], lwd=2, cex.axis=0.8)
+axis(4, at=sum(tracts.seattle$pop) * seq(0,100,10)/100, lab=paste(seq(0,100,10),"%",sep=""), las=2, col="gray", col.axis="darkgray")
+for (r0 in c(2.0,2.5,3.0)) {
+  lines(x=days, y=csymptomatic.seattle[[as.character(r0)]], lwd=2, col=palr0[as.character(r0)])
+}
+legend("topleft", legend=c("R0=3.0", "R0=2.5", "R0=2.0"), fill=palr0[c("3.0","2.5","2.0")], inset=0.01, cex=0.8)
+```
+
+```{r hospitalization-seattle, fig.width=7, fig.height=8, fig.cap="Deaths and hospital demand by age over time with no interventions. Note that the older adults hospitalizations and deaths may be over-estimated because Corvid defines older adults to be ages 30-64, not 50-64. The model uses the Seattle population of 563,000 people.", echo=FALSE}
+# symptomatic cases per day by age
+symptomaticbydayandage <- list()
+for (r0 in c(2.0,2.5,3.0)) {
+    logfile <- read.csv(paste("results/Log-seattle",as.integer(10*r0),"-cdc-2020-03-13",sep=""))
+    cumsym <- matrix(NA, nrow=max(logfile$time)+1, ncol=5)
+    for (day in 0:max(logfile$time)) {
+        s <- colSums(logfile[logfile$time==day,])
+        cumsym[day+1,] <- s[grep("cumsym",names(s))]
+    }
+    sym <- matrix(NA, nrow=max(logfile$time)+1, ncol=5)
+    colnames(sym) <- names(s)[grep("cumsym",colnames(logfile))]
+    colnames(sym) <- gsub(pattern="cum",replacement="",x=colnames(sym))
+    sym[1,] <- cumsym[1,]
+    for (i in 1:ncol(sym)) {
+        sym[-1,i] <- diff(cumsym[,i])
+    }
+    symptomaticbydayandage[[as.character(r0)]] <- sym
+}
+
+# case hospitalization
+#fatalityratio <- c(0.006,0.004,0.025,0.075,1)/100 # moderate
+fatalityratio <- c(0.01,0.0075,0.045,0.01,1.75)/100 # "best guess"
+fatalitydelay <- c(6,6,12,12,12) # based on flu
+#hospitalizationratio <- c(0.7,0.25,0.5,1.0,9.0)/100 # moderate
+hospitalizationratio <- c(1.25, 0.5, 1.25, 1.75, 16.0)/100 # "best guess"
+hospitalizationdelay <- c(3,3,3,3,3)
+hospitalizationlength <- c(8,8,9,10,10)
+totals.hospitalization <- NULL
+peaks.hospitalization <- NULL
+results.deaths <- NULL
+par(mfrow=c(3,2),
+    mar=c(3.5,3.5,2,2), #bottom, left, top, and right.
+    mgp=c(2.2, 0.6, 0))
+for (r0 in c(2.0,2.5,3.0)) {
+    days <- 1:nrow(symptomaticbydayandage[[as.character(r0)]])
+    ymax <- 20
+    plot(x=NA, y=NA, xlim=range(days), ylim=c(0,ymax), xlab="days", ylab="deaths per day", main=paste("Deaths, R0=",r0), cex.main=1.35, cex.lab=1.5, cex.axis=1.35)
+    total <- rep(0, max(days)+20)
+    for (i in 1:5) {
+        lines(x=days+fatalitydelay[i], y=fatalityratio[i]*symptomaticbydayandage[[as.character(r0)]][,i], col=palage[i], lwd=2)
+        total[(1+fatalitydelay[i]):(fatalitydelay[i]+nrow(symptomaticbydayandage[[as.character(r0)]]))] <- total[(1+fatalitydelay[i]):(fatalitydelay[i]+nrow(symptomaticbydayandage[[as.character(r0)]]))] + fatalityratio[i]*symptomaticbydayandage[[as.character(r0)]][,i]
+    }
+    lines(x=1:length(total), y=total, col="black", lwd=2, lty="dashed")
+    legend("topleft", legend=c("total",nameage), fill=c("black",palage), inset=0.01, cex=1.1)
+    text(240,ymax, paste(round(sum(total),1), " deaths",sep=""), adj=c(1,1), cex=1.5)
+    results.deaths[[as.character(r0)]] <- sum(total)
+
+    ymax <- 2200
+    plot(x=NA, y=NA, xlim=range(days), ylim=c(0,ymax), xlab="days", ylab="daily hospital demand", main=paste("Hospital demand, R0=",r0), cex.main=1.35, cex.lab=1.5, cex.axis=1.35)
+    total <- rep(0, max(days)+20)
+    for (i in 1:5) {
+        newhosp <- c(rep(0,hospitalizationdelay[i]),hospitalizationratio[i]*symptomaticbydayandage[[as.character(r0)]][,i])
+	occupancy <- newhosp # occupancy each day
+	for (hospday in 1:(hospitalizationlength[i]-1)) {
+	  occupancy <- occupancy + c(rep(0,hospday),newhosp[(1+hospday):length(newhosp)])
+	}
+        lines(x=1:length(occupancy), y=occupancy, col=palage[i], lwd=2)
+	total <- total+c(occupancy,rep(0,length(total)-length(occupancy)))
+    }
+    lines(x=1:length(total), y=total, col="black", lwd=2, lty="dashed")
+    totals.hospitalization[[as.character(r0)]] <- sum(total)
+    peaks.hospitalization[[as.character(r0)]] <- max(total)
+    legend("topleft", legend=c("total",nameage), fill=c("black",palage), inset=0.01, cex=1.1)
+    text(240,ymax, paste(round(sum(total),1), " hospitalization-days",sep=""), adj=c(1,1), cex=1.2)
+}
+```
+
+Assuming symptomatic case fatality ratios of `r paste(100*fatalityratio,"%",sep="")` for the age groups of `r nameage` (Scenarios 1 and 2),
+Corvid projected `r as.integer(results.deaths[["2"]])`, `r as.integer(results.deaths[["2.5"]])`, `r as.integer(results.deaths[["3"]])` deaths in our model for R0=2.0, 2.5, and 3.0, or
+`r round(100*results.deaths[["2"]]/popsize.seattle,3)`%,
+`r round(100*results.deaths[["2.5"]]/popsize.seattle,3)`%, and
+`r round(100*results.deaths[["3"]]/popsize.seattle,3)`% fatality in the general population.
+
+```{r paramtable, fig.width=7, fig.height=8, echo=FALSE}
+params <- matrix(NA, nrow=5, ncol=5)
+params[1,] <- fatalityratio*100
+params[2,] <- fatalitydelay
+params[3,] <- hospitalizationratio*100
+params[4,] <- hospitalizationdelay
+params[5,] <- hospitalizationlength
+rownames(params) <- c("% fatality, symptomatic", "fatality delay, days", "% hospitalized, symptomatic", "hospitalization delay, days", "hospitalization length, days")
+colnames(params) <- c("0-4y", "5-18y","19-29y","30-64y","65y+")
+kable(params, caption="COVID-19 severity parameters used for modeling results, based on CDC Modeling Team suggestions")
+```
+
+Assuming symptomatic case hospitalization ratios of `r paste(100*hospitalizationratio,"%",sep="")` (Scenarios 1 and 2)
+and hospital stays of  `r hospitalizationlength` days for the age groups of `r nameage` (LONG hospitalization scenario),
+Corvid projected `r as.integer(totals.hospitalization[["2"]])`, `r as.integer(totals.hospitalization[["2.5"]])`, `r as.integer(totals.hospitalization[["3"]])` hospital-days in our model for R0=2.0, 2.5, and 3.0, or
+`r round(100000*totals.hospitalization[["2"]]/popsize.seattle,0)`,
+`r round(100000*totals.hospitalization[["2.5"]]/popsize.seattle,0)`, and
+`r round(100000*totals.hospitalization[["3"]]/popsize.seattle,0)` hospital-days per 100,000 people in the general population.
+Peak hospital needs were `r round(100000*peaks.hospitalization[["2"]]/popsize.seattle,0)`,
+`r round(100000*peaks.hospitalization[["2.5"]]/popsize.seattle,0)`, and
+`r as.integer(100000*peaks.hospitalization[["3"]]/popsize.seattle,0)` hospitalized per 100,000 people in the general population.
+
+\clearpage
+## School closures only
+
+We implement school closures that begin 3 days (a short ascertainment delay) after 10%, 1%, 0.1%, and 0.01% of the population develop symptoms.
+These response thresholds correspond to `r as.integer(popsize.seattle*c(0.1,0.01,0.001,0.0001))` people becoming ill in a population of `r as.integer(popsize.seattle,0)`.
+We plot the number of sick people over time below for our synthetic Seattle population.
+When schools close in Corvid, children no longer transmit in schools, but they do interact with anyone present in their households during the day as well as a low level of interaction with everyone in their local community.
+In this section, we assume that school closures are implemented without other social distancing measures.
+
+The greatest impact of school closures is on reducing the peak of the epidemic, which can alleviate strain on hospitals.
+But school closures must be in effect right before cases peaking for maximum reduction of the peak of both cases and hospitalizations.
+Below are tables of the numbers of deaths, hospital demand (total hospital occupancy days), and peak hospital use (in units of "per 100,000 general population")
+for all combinations of R0, duration of school closure (0 for no closure), threshold for starting the school closures.
+These are followed by plots showing the relationship between total hospital demand vs hospital peak demand.
+
+There are some non-intuitive results concerning the impact of school closures.
+If the threshold at which you start school closures is very low (0.0001), then schools are shut down early and re-open before the epidemic dies out, which means there is almost no reduction in hospitalizations or deaths.
+Basically, the interventions end too early in the course of the outbreak when you start "too early".
+If the threshold is intermediate (0.001), the impact is a little larger since schools close a little later in the epidemic but re-open later as well. 
+If the threshold is high (0.01), then schools are closed while the epidemic is ramping up and the epidemic trajectory may bend the most.
+Almost any long (more than 28 days) early school closure seems to delay the peak.
+
+
+```{r casesplot-seattle-schoolclosures, fig.width=7, fig.height=8.6, fig.cap="Symptomatic people over time in Seattle with school closures, R0=2.5. The epi curves are daily new symptomatic per 100,000 population, and the cumulative curves are % of the population. The dashed vertical line is the start of school closures in response to detected cases. Triangles mark when the schools re-open. On the right, cumulative symptomatic people over time. The response is 'triggered' 3 days after the specified cumulative fraction (0.1, 0.01, 0.001, 0.0001) of the population develops coronavirus symptoms.", echo=FALSE}
+r0 <- 2.5
+denominator <- 100000 # scale results
+par(mfrow=c(4,2),
+    mar=c(3.5,3.5,2,2.2), #bottom, left, top, and right.
+    mgp=c(2.0, 0.6, 0))
+days <- 1:length(newlysymptomatic.seattle[[as.character(r0)]])
+for (trigger in c(0.0001, 0.001, 0.01,0.1)) {
+    ymax <- 1200
+    xmax <- 235
+    plot(x=days, y=newlysymptomatic.seattle[[as.character(r0)]]*denominator/popsize.seattle, xlab="days since introduction", ylab=paste("symptomatic /", as.integer(denominator)), main=paste("R0=",r0,", trigger=",format(trigger,scientific=FALSE), sep=""), type="l", col="black", lwd=2, cex.main=1.3, cex.axis=1.1, cex.lab=1.2, xlim=c(0,xmax), ylim=c(0,ymax))
+    polygon(x=c(days,max(days), 0), y=c(newlysymptomatic.seattle[[as.character(r0)]],0,0)*denominator/popsize.seattle, col="gray92", lwd=0.5)
+
+    triggerday <- list()
+    symp <- list()
+    csymp <- list()
+    nsymp <- list()
+    palduration <- c("black",rep("seagreen", 14), rep("blue",14), rep("red",30), rep("brown",100))
+    delay <- 3
+    for (duration in durations) {
+        temp <- readLines(paste("results/Summary-seattle",r0*10,"-cdc-schoolclosure-",duration,"-",format(trigger,scientific=FALSE),"-2020-03-13",sep=""))
+        triggerday[[as.character(duration)]] <- as.numeric(strsplit(gsub("^.*: ","",temp[grep("Reactive strategies deployed on day", temp)]),",")[[1]])
+        symp[[as.character(duration)]] <- as.numeric(strsplit(gsub("^.*: ","",temp[grep("Number symptomatic", temp)]),",")[[1]])
+        csymp[[as.character(duration)]] <- as.numeric(strsplit(gsub("^.*: ","",temp[grep("Cumulative symptomatic", temp)]),",")[[1]])
+        nsymp[[as.character(duration)]] <- c(symp[[as.character(duration)]][1], diff(csymp[[as.character(duration)]]))
+        lines(x=days, y=nsymp[[as.character(duration)]]*denominator/popsize.seattle, col=palduration[duration], lwd=1.5)
+        points(x=duration+delay+triggerday[[as.character(duration)]], y=0, pch=25, bg=palduration[duration], cex=1.5)
+        if (duration==min(durations)) {
+            lines(x=rep(delay+triggerday[[as.character(duration)]],2), y=c(-100,ymax+100), lty="dashed")
+        }
+    }
+    legend("topleft", legend=c("no closure", paste(durations,"days")), fill=c("black", palduration[durations]), cex=1, inset=0.01, bg="white")
+
+    ymax <- 45
+    plot(x=days, y=csymptomatic.seattle[[as.character(r0)]]*100/popsize.seattle, xlab="days since introduction", ylab="cumulative symptomatic, %", main=paste("R0=",r0,", trigger=",format(trigger,scientific=FALSE), sep=""), type="l", col="black", lwd=2, cex.main=1.3, cex.axis=1.1, cex.lab=1.2, xlim=c(0,xmax), ylim=c(0,ymax))
+    for (duration in durations) {
+        lines(x=days, y=csymp[[as.character(duration)]]*100/popsize.seattle, col=palduration[duration], lwd=1.5)
+        points(x=duration+delay+triggerday[[as.character(duration)]], y=0, pch=25, bg=palduration[duration], cex=1.5)
+        if (duration==min(durations)) {
+            lines(x=rep(delay+triggerday[[as.character(duration)]],2), y=c(-100,ymax*1.2), lty="dashed")
+        }
+    }
+    legend("topleft", legend=c("no closure", paste(durations,"days")), fill=c("black", palduration[durations]), cex=1, inset=0.01, bg="white")
+}
+```
+
+\clearpage
+
+```{r burden, fig.width=7, fig.height=7, fig.cap="Hospital peak vs total demand per 100,000 population for different school closure strategies. All combinations of school closure durations (color of the points) and response thresholds (shapes of the points, representing the cumulative fraction of the population symptomatic) are plotted. A separate plot is made for each value of R0. Results for 'no school closure' are plotted as a '0 day closure' in black.", echo=FALSE}
+computehosp <- function(inputs) {
+    days <- 1:nrow(inputs)
+    total <- rep(0, max(days)+20)
+    for (i in 1:5) {
+        total[(1+fatalitydelay[i]):(fatalitydelay[i]+nrow(inputs))] <- total[(1+fatalitydelay[i]):(fatalitydelay[i]+nrow(inputs))] + fatalityratio[i]*inputs[,i]
+    }
+    results.deaths <- sum(total)
+
+    total <- rep(0, max(days)+20)
+    for (i in 1:5) {
+        newhosp <- c(rep(0,hospitalizationdelay[i]),hospitalizationratio[i]*symptomaticbydayandage[[as.character(r0)]][,i])
+	occupancy <- newhosp # occupancy each day
+	for (hospday in 1:(hospitalizationlength[i]-1)) {
+	  occupancy <- occupancy + c(rep(0,hospday),newhosp[(1+hospday):length(newhosp)])
+	}
+	total <- total+c(occupancy,rep(0,length(total)-length(occupancy)))
+    }
+    totals.hospitalization <- sum(total)
+    peaks.hospitalization <- max(total)
+    data.frame(deaths=results.deaths, hospitalizationdays=totals.hospitalization, hospitalpeak=peaks.hospitalization)
+}
+par(mfrow=c(2,2),
+    mar=c(4,4,2,1), #bottom, left, top, and right.
+    mgp=c(2.1, 0.6, 0))
+for (r0 in c(2.0,2.5,3.0)) {
+    deaths <- matrix(NA, nrow=4, ncol=5)
+    rownames(deaths) <- c("0.0001","0.001","0.01","0.1") # triggers
+    colnames(deaths) <- c(0,14,28,56,140) # duration of school closure
+    hosppeak <- matrix(NA, nrow=4, ncol=5)
+    rownames(hosppeak) <- c("0.0001","0.001","0.01","0.1") # triggers
+    colnames(hosppeak) <- c(0,14,28,56,140) # duration of school closure
+    hospdays <- matrix(NA, nrow=4, ncol=5)
+    rownames(hospdays) <- c("0.0001","0.001","0.01","0.1") # triggers
+    colnames(hospdays) <- c(0,14,28,56,140) # duration of school closure
+
+    for (trigger in c(0.0001, 0.001, 0.01,0.1)) {
+        for (duration in c(0,14,28,56,140)) {
+            logfile <- NA
+            if (duration==0) {
+                logfile <- read.csv(paste("results/Log-seattle",as.integer(10*r0),"-cdc-2020-03-13",sep=""))
+                cumsym <- matrix(NA, nrow=max(logfile$time)+1, ncol=5)
+            } else {
+                logfile <- read.csv(paste("results/Log-seattle",as.integer(10*r0),"-cdc-schoolclosure-",duration,"-",format(trigger,scientific=FALSE),"-2020-03-13",sep=""))
+                cumsym <- matrix(NA, nrow=max(logfile$time)+1, ncol=5)
+            }
+            for (day in 0:max(logfile$time)) {
+                s <- colSums(logfile[logfile$time==day,])
+                cumsym[day+1,] <- s[grep("cumsym",names(s))]
+            }
+            sym <- matrix(NA, nrow=max(logfile$time)+1, ncol=5)
+            colnames(sym) <- names(s)[grep("cumsym",colnames(logfile))]
+            colnames(sym) <- gsub(pattern="cum",replacement="",x=colnames(sym))
+            sym[1,] <- cumsym[1,]
+            for (i in 1:ncol(sym)) {
+                sym[-1,i] <- diff(cumsym[,i])
+            }
+            symptomaticbydayandage[[as.character(r0)]] <- sym
+            results <-computehosp(symptomaticbydayandage[[as.character(r0)]])
+            hosppeak[as.character(format(trigger,scientific=FALSE)),as.character(duration)] <- results$hospitalpeak
+            hospdays[as.character(format(trigger,scientific=FALSE)),as.character(duration)] <- results$hospitalizationdays
+            deaths[as.character(format(trigger,scientific=FALSE)),as.character(duration)] <- results$deaths
+	}
+    }
+    
+    print(kable(deaths*100000/popsize.seattle, digits=1, caption=paste("deaths per 100,000 pop for different response thresholds, R0=",r0,sep="")))
+    print(kable(hospdays*100000/popsize.seattle, digits=0, caption=paste("hospital-days needed per 100,000 pop for different response thresholds, R0=",r0,sep="")))
+    print(kable(hosppeak*100000/popsize.seattle, digits=1, caption=paste("hospital demand peak per 100,000 pop for different response thresholds, R0=",r0,sep="")))
+
+    plot(x=as.vector(hospdays)*100000/popsize.seattle, y=as.vector(hosppeak)*100000/popsize.seattle, xlab="hospital-days/100000", ylab="peak hospital demand/100000", main=paste("R0=",r0,sep=""), bg=rep(palduration[c(0,durations)+1],each=nrow(hosppeak)), pch=rep(c(21,22,23,24),ncol(hosppeak)), cex=2, cex.main=1.3, cex.axis=1.1, cex.lab=1.2)
+}
+# put legend in a separate plot
+plot(x=NA, y=NA, xlab="", ylab="", xlim=c(0,1), ylim=c(0,1), axes=FALSE)
+    legend("topleft",legend=paste(c(0,durations), "day closure"), fill=palduration[c(0,durations)+1], cex=1.3)
+    legend("bottomleft",legend=paste("threshold:",c("0.0001","0.001","0.01","0.1")), col="black", pch=21:24, cex=1.3)
+```
+
+\clearpage
+
+# Simulating other social distancing measures
+
+We believe that a combination of social distancing policies should and will be enacted to slow the spread of COVID-19.
+In the Corvid model, we implemented "liberal leave" (workers have an elevated probability of staying home when sick) and "work from home" (workers stay home instead of going to work but still have some interaction with people in their home community).
+We ran simulations in which 50% of the adult population complied with these measures, though the real number might be lower since many adults will not have these options available.
+We believe that these other social distancing policies will be implemented on an ad-hoc basis, and school closure may force some parents to stay home anyways (de facto "work from home").
+We believe that school closures generally delay the peak, but do not usually reduce the peak or total cases because they are temporary.
+More sustainable measures, like workplace liberal leave and work from home policies, can flatten the epidemic curve and reduce the total number of cases.
+Combining school closures with these other social policies may be synergistic, but we only tested a limited number of scenarios (one).
+
+```{r cases-seattle-socialdistancing, fig.width=7, fig.height=3.5, fig.cap="Impact of social distancing, R0=2.5. The dashed vertical line is the start of social distancing policies in response to detected cases. We test school closures alone, work from home/liberal leave (50% compliance) without school closures, and a combination of all three policies. The red bar near the x-axis marks the days when schools are closed. The other policies (liberal leave and working from home) continue indefinitely. On the left, daily new symptomatic cases per 100,000 population. On the right, cumulative % of the population symptomatic.", echo=FALSE}
+par(mfrow=c(1,2),
+    mar=c(3.5,3.5,2,1), #bottom, left, top, and right.
+    mgp=c(2.0, 0.6, 0))
+days <- 1:length(newlysymptomatic.seattle[[as.character(r0)]])
+trigger <- 0.001
+duration <- 56
+compliance <- 50
+delay <- 3
+r0 = 2.5
+
+denominator <- 100000
+ymax <- 1100
+    triggerday <- list()
+    symp <- list()
+    csymp <- list()
+    nsymp <- list()
+    palsocialdistancing <- c("black","red","orange","blue")
+    scenarios <- c("school closure only", "wfh/ll only", "school closure + wfh/ll")
+    names(palsocialdistancing) <- c("no intervention",scenarios)
+    plot(x=days, y=newlysymptomatic.seattle[[as.character(r0)]]*denominator/popsize.seattle, xlab="days since introduction", ylab=paste("newly symptomatic/",as.integer(denominator)," pop", sep=""), main=paste("R0=",r0,", thresh=",format(trigger,scientific=FALSE), " (",as.integer(trigger*popsize.seattle)," cases)", sep=""), type="l", col="black", lwd=2, cex.main=1.0, cex.axis=1.0, cex.lab=1.0, ylim=c(0,ymax))
+    polygon(x=c(days,max(days), 0), y=c(newlysymptomatic.seattle[[as.character(r0)]],0,0)*denominator/popsize.seattle, col="gray92", lwd=0.5)
+
+    for (scenario in scenarios) {
+	filename <- paste("results/Summary-seattle",r0*10,"-cdc-schoolclosure-",duration,"-",format(trigger,scientific=FALSE),"-2020-03-13",sep="")	
+	if (scenario=="wfh/ll only") {
+	    filename <- paste("results/Summary-seattle",r0*10,"-cdc-libleavewfh50-",format(trigger,scientific=FALSE),"-2020-03-13",sep="")
+	} else if (scenario=="school closure + wfh/ll") {
+	    filename <- paste("results/Summary-seattle",r0*10,"-cdc-libleavewfh50-schoolclosure-",duration,"-",format(trigger,scientific=FALSE),"-2020-03-13",sep="")
+	}
+        temp <- readLines(filename)
+        triggerday[[scenario]] <- as.numeric(strsplit(gsub("^.*: ","",temp[grep("Reactive strategies deployed on day", temp)]),",")[[1]])
+        symp[[scenario]] <- as.numeric(strsplit(gsub("^.*: ","",temp[grep("Number symptomatic", temp)]),",")[[1]])
+        csymp[[scenario]] <- as.numeric(strsplit(gsub("^.*: ","",temp[grep("Cumulative symptomatic", temp)]),",")[[1]])
+        nsymp[[scenario]] <- c(symp[[scenario]][1], diff(csymp[[scenario]]))
+        lines(x=days, y=nsymp[[scenario]]*denominator/popsize.seattle, col=palsocialdistancing[scenario], lwd=1.8)
+        if (scenario=="school closure only") {
+            lines(x=rep(delay+triggerday[[scenario]],2), y=c(-100,ymax+100), lty="dashed")
+	    lines(x=delay+triggerday[[scenario]]+c(0,duration), y=rep(-ymax/200,2), col=palduration[duration], lwd=4)
+        }
+    }
+    legend("topleft", legend=c("no intervention", scenarios), fill=c("black", palsocialdistancing[scenarios]), cex=0.55, inset=0.01, bg="white")
+
+    ymax <- 45
+    plot(x=days, y=csymptomatic.seattle[[as.character(r0)]]*100/popsize.seattle, xlab="days since introduction", ylab="cumulative symptomatic, %", main=paste("R0=",r0,", thresh=",format(trigger,scientific=FALSE), " (",as.integer(trigger*popsize.seattle)," cases)", sep=""), type="l", col="black", lwd=2, cex.main=1.0, cex.axis=1.0, cex.lab=1.0, ylim=c(0,ymax))
+    for (scenario in scenarios) {
+        lines(x=days, y=csymp[[scenario]]*100/popsize.seattle, col=palsocialdistancing[scenario], lwd=1.8)
+        if (scenario=="school closure only") {
+            lines(x=rep(delay+triggerday[[scenario]],2), y=c(-100,ymax*1.2), lty="dashed")
+	    lines(x=delay+triggerday[[scenario]]+c(0,duration), y=rep(-ymax/200,2), col=palduration[duration], lwd=4)
+        }
+    }
+    legend("topleft", legend=c("no intervention", scenarios), fill=c("black", palsocialdistancing[scenarios]), cex=0.55, inset=0.01, bg="white")
+```
+
+\clearpage
+
+```{r seattle-source, fig.width=7, fig.height=3.25, fig.cap="Major source of infections with no interventions, R0=2.5. Results from one stochastic simulation.", echo=FALSE}
+individuals.seattle25 <- read.csv("results/Individuals-seattle25-heavylogging-cdc-2020-03-13", header=TRUE)
+individuals.seattle25$SOURCETYPE <- ifelse(individuals.seattle25$sourcetype==0, NA,
+                   ifelse(individuals.seattle25$sourcetype==1, "daytime.family",
+                   ifelse(individuals.seattle25$sourcetype==2, "daytime.comm",
+                   ifelse(individuals.seattle25$sourcetype==3, "daytime.nh",
+                   ifelse(individuals.seattle25$sourcetype==4, "daytime.school",
+                   ifelse(individuals.seattle25$sourcetype==5, "daytime.work",
+                   ifelse(individuals.seattle25$sourcetype==10, "nighttime.family",
+                   ifelse(individuals.seattle25$sourcetype==11, "nighttime.comm",
+                   ifelse(individuals.seattle25$sourcetype==12, "nighttime.nh",
+                   ifelse(individuals.seattle25$sourcetype==13, "nighttime.hhcluster",
+                   ifelse(individuals.seattle25$sourcetype==20, "seeded",
+		   ifelse(individuals.seattle25$sourcetype==21, "airport", "error"))))))))))))
+individuals.seattle25$generationtime <- (individuals.seattle25$infectedtime-individuals.seattle25$infectedtime[match(individuals.seattle25$sourceid,individuals.seattle25$id)])/2 # how many days ago was the infecter infected?
+individuals.seattle25$generationtime[individuals.seattle25$infectedtime<=0] <- NA # remove people never infected or infected on day 0
+
+individuals.seattle20 <- read.csv("results/Individuals-seattle20-heavylogging-cdc-2020-03-13", header=TRUE)
+individuals.seattle20$SOURCETYPE <- ifelse(individuals.seattle20$sourcetype==0, NA,
+                   ifelse(individuals.seattle20$sourcetype==1, "daytime.family",
+                   ifelse(individuals.seattle20$sourcetype==2, "daytime.comm",
+                   ifelse(individuals.seattle20$sourcetype==3, "daytime.nh",
+                   ifelse(individuals.seattle20$sourcetype==4, "daytime.school",
+                   ifelse(individuals.seattle20$sourcetype==5, "daytime.work",
+                   ifelse(individuals.seattle20$sourcetype==10, "nighttime.family",
+                   ifelse(individuals.seattle20$sourcetype==11, "nighttime.comm",
+                   ifelse(individuals.seattle20$sourcetype==12, "nighttime.nh",
+                   ifelse(individuals.seattle20$sourcetype==13, "nighttime.hhcluster",
+                   ifelse(individuals.seattle20$sourcetype==20, "seeded",
+		   ifelse(individuals.seattle20$sourcetype==21, "airport", "error"))))))))))))
+individuals.seattle20$generationtime <- (individuals.seattle20$infectedtime-individuals.seattle20$infectedtime[match(individuals.seattle20$sourceid,individuals.seattle20$id)])/2 # how many days ago was the infecter infected?
+individuals.seattle20$generationtime[individuals.seattle20$infectedtime<=0] <- NA # remove people never infected or infected on day 0
+
+par(mfrow=c(1,2),
+    mar=c(3.5,3.5,1,3), #bottom, left, top, and right.
+    mgp=c(2.0, 0.6, 0))
+timesteps <- 0:max(individuals.seattle25$infectedtime)
+plot(x=timesteps/2, y=sapply(timesteps, function(t) {sum(individuals.seattle25$infectedtime>0 & individuals.seattle25$infectedtime<=t)}), xlab="simulation day", ylab="cumulative infections", type="l", cex.axis=0.8)
+axis(4, at=seq(0,1,0.25)*nrow(individuals.seattle25), lab=paste(100*seq(0,1,0.25),"%",sep=""), las=2)
+polygon(x=c(timesteps/2,max(timesteps)/2,0), y=c(sapply(timesteps, function(t) {sum(individuals.seattle25$infectedtime>0 & individuals.seattle25$SOURCETYPE %in% c("daytime.family","nighttime.family") & individuals.seattle25$infectedtime<=t)}),0,0), col="salmon", border="darkred", lwd=0.2)
+polygon(x=c(timesteps/2,rev(timesteps/2)), y=c(sapply(timesteps, function(t) {sum(individuals.seattle25$infectedtime>0 & individuals.seattle25$SOURCETYPE %in% c("daytime.family","nighttime.family") & individuals.seattle25$infectedtime<=t)}),
+  sapply(rev(timesteps), function(t) {sum(individuals.seattle25$infectedtime>0 & individuals.seattle25$SOURCETYPE %in% c("daytime.family","nighttime.family","daytime.work") & individuals.seattle25$infectedtime<=t)})),
+ col="lightblue", border="darkblue", lwd=0.2)
+polygon(x=c(timesteps/2,rev(timesteps/2)), y=c(sapply(timesteps, function(t) {sum(individuals.seattle25$infectedtime>0 & individuals.seattle25$SOURCETYPE %in% c("daytime.family","nighttime.family","daytime.work") & individuals.seattle25$infectedtime<=t)}),
+  sapply(rev(timesteps), function(t) {sum(individuals.seattle25$infectedtime>0 & individuals.seattle25$SOURCETYPE %in% c("daytime.family","nighttime.family","daytime.work","daytime.school") & individuals.seattle25$infectedtime<=t)})),
+ col="orchid", border="purple", lwd=0.2)
+legend("topleft", legend=c("family","workplace","school","other"), fill=c("salmon","lightblue","orchid","white"), cex=0.8, inset=0.01)
+
+plot(x=NA, y=NA, xlim=c(0,max(timesteps)/2), ylim=c(0,1), xlab="simulation day", ylab="cumulative proportion by source", cex.lab=0.95, cex.axis=0.8, type="l")
+tot <- sapply(timesteps, function(t) {sum(individuals.seattle25$infectedtime>0 & individuals.seattle25$infectedtime<=t)})
+lines(x=timesteps/2, y=sapply(timesteps, function(t) {sum(individuals.seattle25$infectedtime>0 & individuals.seattle25$SOURCETYPE %in% c("daytime.family","nighttime.family") & individuals.seattle25$infectedtime<=t)})/tot, col="red", lwd=1.5)
+lines(x=timesteps/2, y=sapply(timesteps, function(t) {sum(individuals.seattle25$infectedtime>0 & individuals.seattle25$SOURCETYPE=="daytime.work" & individuals.seattle25$infectedtime<=t)})/tot, col="blue", lwd=1.5)
+lines(x=timesteps/2, y=sapply(timesteps, function(t) {sum(individuals.seattle25$infectedtime>0 & individuals.seattle25$SOURCETYPE=="daytime.school" & individuals.seattle25$infectedtime<=t)})/tot, col="purple", lwd=1.5)
+legend("topright", legend=c("family","workplace","school"), fill=c("red","blue","purple"), inset=0.01)
+
+temp <- data.frame(setting=c("school","work","home","community/neighbors","total"),
+                   infected25=c(sum(individuals.seattle25$SOURCETYPE=="daytime.school",na.rm=TRUE),
+           sum(individuals.seattle25$SOURCETYPE=="daytime.work",na.rm=TRUE),
+	   sum(individuals.seattle25$SOURCETYPE %in% c("daytime.family","nighttime.family"),na.rm=TRUE),
+	   sum(individuals.seattle25$SOURCETYPE %in% c("daytime.comm","daytime.nh","nighttime.comm","nighttime.nh","nighttime.hhcluster"),na.rm=TRUE),
+	   sum(!is.na(individuals.seattle25$SOURCETYPE) & individuals.seattle25$SOURCETYPE!="seeded")),
+                   infected20=c(sum(individuals.seattle20$SOURCETYPE=="daytime.school",na.rm=TRUE),
+           sum(individuals.seattle20$SOURCETYPE=="daytime.work",na.rm=TRUE),
+	   sum(individuals.seattle20$SOURCETYPE %in% c("daytime.family","nighttime.family"),na.rm=TRUE),
+	   sum(individuals.seattle20$SOURCETYPE %in% c("daytime.comm","daytime.nh","nighttime.comm","nighttime.nh","nighttime.hhcluster"),na.rm=TRUE),
+	   sum(!is.na(individuals.seattle20$SOURCETYPE) & individuals.seattle20$SOURCETYPE!="seeded")))
+temp$infected25 <- 100*temp$infected25/temp$infected25[nrow(temp)]
+temp$infected20 <- 100*temp$infected20/temp$infected20[nrow(temp)]
+#temp$infected25 <- 100*temp$infected25/nrow(individuals.seattle25)
+#temp$infected20 <- 100*temp$infected20/nrow(individuals.seattle20)
+kable(temp, digits=1, caption="Proportion of infections by settings for R0=2.5 and R0=2.0")
+```
+
+Corvid models the spread of disease in a few major settings that individuals go to daily.
+In an epidemic with R0=2.5 and no interventions,
+`r round(100*sum(!is.na(individuals.seattle25$SOURCETYPE) & individuals.seattle25$SOURCETYPE!="seeded")/nrow(individuals.seattle25),1)`% of the population was infected.
+A large proportion of infections were from household contacts, and approximately equal numbers from work and school.
+`r round(100*sum(individuals.seattle25$SOURCETYPE %in% c("daytime.comm","daytime.nh","nighttime.comm","nighttime.nh"),na.rm=TRUE)/nrow(individuals.seattle25),1)`% were infected by general community contacts (neighborhood + community).
+These proportions can be compared with those found across different agent-based models for R0=1.9 in Halloran et al 2008.
+This may be useful when considering the potential impact of interventions targeted to one of these settings.
+The first few infections may occur in either schools or workplaces (depending on the index case's age, I think), then families.
+
+
+```{r seattle-generationtime, fig.width=7, fig.height=3.25, fig.cap="Generation time, R0=2.5. On the left, the distribution of generation times. On the right, median and interquartile ranges over time. We considered the people infected grouped in 2-week time bins. The generation times were computed by a) measuring how long ago these people's infectors were infected (black) or b) how far in the future until these people infect someone (red). Results from one stochastic simulation.", echo=FALSE}
+par(mfrow=c(1,2),
+    mar=c(3.5,3.5,1,1), #bottom, left, top, and right.
+    mgp=c(2.0, 0.6, 0))
+hist(individuals.seattle25$generationtime, breaks=seq(0,max(individuals.seattle25$generationtime,na.rm=TRUE)+0.5,1), xlab="generation time, days", main="generation time distribution")
+
+binsize <- 28 # in timesteps, not days!
+starts <- seq(0,max(individuals.seattle25$infectedtime),binsize)
+plot(x=starts+binsize/2, y=sapply(starts, function(t) {mean(individuals.seattle25$generationtime[individuals.seattle25$infectedtime>=t & individuals.seattle25$infectedtime<t+binsize],na.rm=TRUE)}), xlim=c(0,7+max(starts)), ylim=c(0,15), ylab="generation time, days", xlab="day since introduction", lwd=2, axes=FALSE)
+for (t in starts) {
+  lines(x=rep(t+binsize/2,2), y=quantile(x=individuals.seattle25$generationtime[individuals.seattle25$infectedtime>=t & individuals.seattle25$infectedtime<t+binsize],probs=c(0.25,0.75),na.rm=TRUE), col="gray10", lwd=1.1)
+
+  temp <- match(individuals.seattle25$sourceid, individuals.seattle25$id)
+  points(x=starts+binsize/2+5, y=sapply(starts, function(t) {mean(individuals.seattle25$generationtime[individuals.seattle25$infectedtime[temp]>=t & individuals.seattle25$infectedtime[temp]<t+binsize],na.rm=TRUE)}), xlim=c(0,7+max(starts)), col="red", pch=4)
+  lines(x=rep(t+binsize/2,2)+5, y=quantile(x=individuals.seattle25$generationtime[individuals.seattle25$infectedtime[temp]>=t & individuals.seattle25$infectedtime[temp]<t+binsize],probs=c(0.25,0.75),na.rm=TRUE), col="salmon")
+}
+axis(1, at=starts, lab=starts/2, cex.axis=0.7)
+axis(2, las=2, cex.axis=0.9)
+legend("topleft", legend=c("measuring back to infector","measuring forward to next infectee"), col=c("black","red"), pch=c(1,4), cex=0.6, inset=0.01)
+```
+
+The average generation time was `r round(mean(individuals.seattle25$generationtime, na.rm=TRUE),2)` days, median=`r round(median(individuals.seattle25$generationtime, na.rm=TRUE),2)`, but this value increases after the epidemic peak if the generation time is measured "back" to when the infector was infected.
+If you measure "forward" to when a person will infect someone, the the generation time is basically constant throughout the epidemic.
+I need to re-read Kenah et al 2008 to understand this.
+The maximum infectious period allowed by the model was 21 days.
+
+
+
+\clearpage
+# Model description
+
+Corvid is a new agent-based model to simulate SARS-CoV-2 transmission in synthetic communities that represent typical American populations.
+It is based on an influenza model ("FluTE"), which is described in detail in doi:10.1371/journal.pcbi.1000656 and is available at https://github.com/dlchao/FluTE.
+FluTE was based on the EpiCast model described in Germann et al 2006.
+The new model is called "Corvid" and the C++ model code and the analysis scripts used to generate this report are available at https://github.com/dlchao/corvid. We use version 0.4 of Corvid for the runs described in this document.
+
+In brief, Corvid creates communities of about 2000 people, and to simulate larger populations, many such communities are created and connected through commuting patterns.
+Synthetic populations for US locations are created by generating enough communities to represent each census tract, with a population size matching the 2000 US Census data, and linking those communities using commuter data from that Census.
+Unfortunately, more recent censuses did not offer the commuting data.
+Individuals are in 5 age bins: pre-school (0-4y), school-aged (5-18y), young adult (19-29y), older adult (30-64y), and elderly (>65y).
+Individuals are generated by populating the communities with families with the household sizes and age distribution drawn from the 1% public use microdata sample of the 2000 Census.
+
+The model runs in discrete half-day time steps, representing day and night.
+During the day, people go to institutions (mixing groups) appropriate to their age, and at night they return to their families (where ages mix).
+Working-age adults may commute to different census tracts during the day.
+Susceptible people become infected when then are in the same setting as infected people. Susceptibles also have a small chance of infection if they are in the same community at the same time as an infectious person.
+Children and adults are equally susceptible to infection, but children tend to have stronger "contacts" in the model so are more likely to infect and become infected than adults.
+Upon infection, a person may become infectious starting the next day (regardless of symptom status) and their level of infectiousness can change daily (e.g., exponential, log-normal, etc). A fraction of infectious people become symptomatic after an incubation period, which is specified as a CDF for flexible parameterization (e.g., can be fixed incubation time, normal, Weibull, etc). Symptomatic people may choose to stop going to work or school because of illness. Public health interventions, such as home quarantine or school closures, may be based on the presence of detected symptomatic cases.
+Social distancing is implemented by closing settings, like schools, to stop transmission but this is partially offset by individuals going elsewhere.
+Much more detail about the community structure and infection process in the model is in the 2010 publication:
+doi:10.1371/journal.pcbi.1000656.
+
+
+## Calibration
+
+Corvid generally uses influenza parameters from FluTE, but we had to change the incubation period and infectiousness over time to mimic SARS-CoV-2 transmission.
+
+### Symptomatic fraction, incubation period, shedding (infectiousness) kinetics
+
+We assume that 50% of people infected will become symptomatic, regardless of age.
+
+For the incubation period distribution (duration from infection to showing symptoms), we used the log-normal fit from Lauer et al 2020 who used data from Shenzhen.
+They found parameters of log(mean)=1.621 log(sd)=0.418.
+
+```{r incubation, fig.width=4.25, fig.height=3.25, fig.cap="Incubation period distribution and daily infectiousness in Corvid. Black curve is the log-normal distribution of incubation periods from Lauer et al, truncated at day 14. Incubation periods are drawn from this distribution in Corvid. The blue curve is degree of infectiousness (shedding) over time in Corvid, which is a log-normal distribution with a higher mean than but same sd as the incubation distribution. The distribution truncated at day 21. In Corvid, people are infectious (but not highly) the day after infection regardless of symptomatic status.", echo=FALSE}
+par(mar=c(3.5,3.5,1,1), #bottom, left, top, and right.
+    mgp=c(2.0, 0.6, 0))
+time <- seq(0,14,0.1)
+plot(x=time, y=dlnorm(time, meanlog=1.621, sdlog=0.418), xlim=c(0,21), type="l", lwd=1.5, xlab="days after infection", ylab="density", ylim=c(0,0.25), cex.lab=1.1, cex.axis=1) # from Lauer
+
+time <- seq(0,21,0.1)
+lines(x=time, y=dlnorm(time, meanlog=log(exp(1.621)+4), sdlog=0.418), col="blue")
+legend("topright", legend=c("incubation period distribution","shedding trajectory"), col=c("black","blue"), lty=rep("solid",2), cex=0.8, inset=0.01)
+```
+
+There are reports that viral detection peaks a few days after symptoms.
+Wolfel et al found pharyngeal shedding to peak 4 days after symptoms using throat swabs.
+Therefore, we just used the incubation period distribution and added 4 to the mean (set the log(mean) of the distribution to log(exp(1.621)+4)).
+That makes shedding peak 4 days after the median incubation period.
+It might make more sense for shedding to peak right after symptoms appear in an individual instead of independent of symptom onset.
+We assume that shedding lasts for 21 days, though the level of shedding is low by the end of the infectious period.
+We make asymptomatic individuals half as infectious as symptomatic.
+So if a person never becomes symptomatic, infectiousness is simply half that of a symptomatic individual over time. If a person becomes symptomatic on day 5, then for first five days that person is less infectious and after that approximately twice as infectious.
+Currently, there is no evidence that asymptomatic people are less infectious than symptomatic, but we assume that the symptoms like sneezing mechanically spread disease.
+
+### Estimating R_0
+
+We calibrate R0 by counting the number of people an index case can infect in the model.
+This captures not only shedding kinetics, but behavior in response to illness (tendency to stay home) and age-dependent mixing patterns.
+We set transmissibility of coronavirus in the model by multiplying contact probabilities by the scalar beta, which we can set in the model.
+We derive the relationship between R0 and beta by running the model with different values of beta and counting the number of people an index case infects in a fully susceptible population.
+For each value of beta that we test, we infect one randomly selected individual in the population.
+We fit a line through the average number of secondary cases for each value of beta tested.
+The number of people infected depends on the age of the index case.
+For example, if an index case is a school-aged child, the number of secondary cases is higher than for other age groups.
+Also, the secondary cases are not representative of the general population -- school-aged children are also over-represented among infectees.
+R0 should be defined as the number of secondary cases generated by a "typical" case.
+Therefore, we tally the number of secondary cases generated by all index cases across runs to get a better idea of who is more likely to be a "typical" infector.
+We weight the relationship based on the proportion of secondary cases in each age bin; we put more weight on the high transmission from school children than the lower transmission from adults in our R0 calculation.
+
+The synthetic population is based on 2000 Census data of the metropolitan Seattle area.
+The synthetic population has `r as.integer(sum(tracts.seattle$pop))` residing in `r nrow(tracts.seattle)` census tracts.
+Tracts have `r min(tracts.seattle$pop)` to `r as.integer(max(tracts.seattle$pop))` people living in them, and `r min(tracts.seattle$workers)` to `r as.integer(max(tracts.seattle$workers))` people working in them.
+
+```{r map-seattle, fig.width=4, fig.height=4, fig.cap="Map of the census tracts for the synthetic Seattle population. Dot size proportional to resident population. Red circle size is proportional to the number of people who work in each tract.", echo=FALSE}
+par(mar=c(3.5,3.5,1,1), #bottom, left, top, and right.
+    mgp=c(2.0, 0.6, 0))
+plot(x=tractlocs$longitude, y=tractlocs$latitude, col="blue", cex=0.01*sqrt(tracts.seattle$pop[match(tractlocs$fipstract, tracts.seattle$FIPStract)]), pch=19, xlab="longitude", ylab="latitude", asp=1, cex.axis=0.5, cex.lab=0.8)
+points(x=tractlocs$longitude, y=tractlocs$latitude, col="red", cex=0.01*sqrt(tracts.seattle$workers[match(tractlocs$fipstract, tracts.seattle$FIPStract)]), pch=1)
+```
+
+\clearpage
+# References
+
+* Chao DL, Halloran ME, Obenchain VJ, Longini IM Jr.
+  FluTE, a publicly available stochastic influenza epidemic simulation model.
+  PLoS Comput Biol. 2010 Jan 29;6(1):e1000656. doi: 10.1371/journal.pcbi.1000656
+* Germann TC, Kadau K, Longini IM Jr, Macken CA.
+  Mitigation strategies for pandemic influenza in the United States.
+  Proc Natl Acad Sci U S A. 2006 Apr 11;103(15):5935-40.
+* Germann TC, Gao H, Gambhir M, Plummer A, Biggerstaff M, Reed C, Uzicanin A. School dismissal as a pandemic influenza response: When, where and for how long? Epidemics. 2019 Sep;28:100348. doi: 10.1016/j.epidem.2019.100348.
+* Halloran ME, Ferguson NM, Eubank S, Longini IM Jr, Cummings DA, Lewis B, Xu S, Fraser C, Vullikanti A, Germann TC, Wagener D, Beckman R, Kadau K, Barrett C, Macken CA, Burke DS, Cooley P.
+  Modeling targeted layered containment of an influenza pandemic in the United States. Proc Natl Acad Sci U S A. 2008 Mar 25;105(12):4639-44. doi: 10.1073/pnas.0706849105. 
+* Kenah E, Lipsitch M, Robins JM. Generation interval contraction and epidemic data analysis. Math Biosci. 2008 May;213(1):71-9. doi: 10.1016/j.mbs.2008.02.007.
+* Lauer SA, Grantz KH, Bi Q, Jones FK, Zheng Q, Meredith HR, Azman AS, Reich NG, Lessler J.
+  The Incubation Period of Coronavirus Disease 2019 (COVID-19) From Publicly Reported Confirmed Cases: Estimation and Application.
+  Ann Intern Med. 2020 Mar 10. doi: 10.7326/M20-0504.
+* Wolfel R, et al. Virological assessment of hospitalized cases of coronavirus disease 2019.
+  MedRxiv 2020. doi: 10.1101/2020.03.05.20030502.

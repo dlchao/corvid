@@ -1,8 +1,9 @@
-# basic configuration file for metro seattle
+# basic configuration file for metro seattle, R0=2.6, seeded with 5 infected
+# Also outputs "individualfile" for measuring Reffective over time
 label example-seattle-26
 datafile seattle
 R0 2.6
-runlength 180
+runlength 240
 summaryfilename Summary-seattle26.txt
 logfilename Log-seattle26.txt
 tractfilename Tracts-seattle26.txt
