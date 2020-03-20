@@ -6,7 +6,13 @@ CCLINKER = g++
 MAKE     = make --no-print-directory
 SHELL    = /bin/sh
 CFLAGS	 = -Wall -Werror -pedantic -DDSFMT_MEXP=19937 -msse2 -DHAVE_SSE2
-OPTI     = -O3
+# Check if opti was defined
+ifdef OPTI
+OPTI = $(OPTI)
+else
+OPTI     = -O3 -march=native
+endif
+
 #OPTI = -pg # for profiling
 LDFLAGS	= -lm
 INCLUDES	= 
