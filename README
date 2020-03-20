@@ -265,10 +265,10 @@ School opening day for each state after the start of the simulation. Values of 0
 Alabama, Alaska, -, Arizona, Arkansas, California, -, Colorado, Connecticut, Delaware, District of Columbia, Florida, Georgia, -, Hawaii, Idaho, Illinois, Indiana, Iowa, Kansas, Kentucky, Louisiana, Maine, Maryland, Massachusetts, Michigan, Minnesota, Mississippi, Missouri, Montana, Nebraska, Nevada, New Hampshire, New Jersey, New Mexico, New York, North Carolina, North Dakota, Ohio, Oklahoma, Oregon, Pennsylvania, -, Rhode Island, South Carolina, South Dakota, Tennessee, Texas, Utah, Vermont, Virginia, -, Washington, West Virginia, Wisconsin, Wyoming
 
 voluntaryisolation : real
-Voluntary isolation compliance probability. This is the probability that a sick person stays home voluntarily one day after symptoms. Default is 0, no isolation. 
+Voluntary isolation compliance probability. This is the probability that a sick person stays home voluntarily one day after symptoms. Default is 0, no isolation.
 
 ascertainedisolation : real
-Ascertained isolation compliance probability. This is the probability that a sick person stays home voluntarily after ascertained. Default is 0, no isolation. 
+Ascertained isolation compliance probability. This is the probability that a sick person stays after being ascertained. Default is 0, no isolation.
 
 quarantine : real
 Voluntary household quarantine compliance probability. This is the probability that the members of a household stay home if one of the family members gets sick. Default is 0, no quarantine. 

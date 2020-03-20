@@ -12,4 +12,4 @@ individualfile 1
 randomnumberseed 1
 seedinfected 5
 seedinfecteddaily 0
-responsethreshhold 1
+responsethreshold 1

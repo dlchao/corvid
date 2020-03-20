@@ -65,4 +65,4 @@ emacs:
 clean:
 	rm -f *.o corvid R0corvid *~
 	rm -f Summary? Tracts? Log? Individuals?
-	echo 0 > run-number
+
