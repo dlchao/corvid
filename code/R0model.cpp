@@ -16,7 +16,7 @@ using namespace std;
 
 R0Model::R0Model(EpiModelParameters &params) : EpiModel(params) {
   nNumInfected=0;
-  nRunLength=21;  // maximum run is 3 weeks
+  nRunLength=28;  // maximum run is 4 weeks
 }
 
 /*

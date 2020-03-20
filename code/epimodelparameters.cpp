@@ -59,6 +59,7 @@ EpiModelParameters::EpiModelParameters(const char *configname) {
   fVoluntaryIsolationCompliance=0.0;
   fAscertainedIsolationCompliance=0.0;
   fQuarantineCompliance=0.0;
+  nQuarantineLength=14; // default 14-day quarantine
   fLiberalLeaveCompliance=0.0;
   fWorkFromHomeCompliance=0.0;
   nAscertainmentDelay = 1;
@@ -463,6 +464,8 @@ bool EpiModelParameters::readConfigFile(const char *configname) {
 	    read_config_double(fAscertainedIsolationCompliance, iss, "ascertained isolation compliance probability", 0.0, 1.0);
 	} else if (param.compare("quarantine")==0) {
 	    read_config_double(fQuarantineCompliance, iss, "quarantine compliance probability", 0.0, 1.0);
+	} else if (param.compare("quarantinelength")==0) {
+	    read_config_int(nQuarantineLength, iss, "quarantine length");
 	} else if (param.compare("liberalleave")==0) {
 	    read_config_double(fLiberalLeaveCompliance, iss, "liberal leave compliance probability", 0.0, 1.0);
 	} else if (param.compare("workfromhome")==0) {

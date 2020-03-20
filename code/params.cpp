@@ -29,7 +29,6 @@ const double withdrawprob[3][WITHDRAWDAYS] = {
 // self isolation probabilities by age
 const double isolationprob[TAG] = {0.8,0.75,0.5,0.5,0.5};
 
-const int nQuarantineLength = 14; // length of quarantine in days
 const int nAntiviralCourseSize = 10; // number of pills in one antiviral course (1 tablet/day for prophylaxis and 2 tablets/day for treatment)
 const double fStopAntiviralTwoPills = 0.05; // probability that individuals taking antivirals stop after exactly two pills
 

@@ -495,6 +495,7 @@ class EpiModel {
   double fVoluntaryIsolationCompliance;      // probability of voluntary home isolation compliance (set to 0 for no isolation)?
   double fAscertainedIsolationCompliance;      // probability of home isolation after ascertainment compliance (set to 0 for no isolation)?
   double fQuarantineCompliance;     // probability of individual compliance (set to 0 for no quarantine)
+  double nQuarantineLength;         // length of quarantine in days
   double fLiberalLeaveCompliance;   // probability of individual compliance (set to 0 for no liberal leave)
   double fWorkFromHomeCompliance;   // probability of individual compliance (set to 0 for no work from home)
 };

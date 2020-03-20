@@ -128,6 +128,7 @@ EpiModel::EpiModel(EpiModelParameters &params) {
   fQuarantineCompliance=params.getQuarantineCompliance();
   fLiberalLeaveCompliance=params.getLiberalLeaveCompliance();
   fWorkFromHomeCompliance=params.getWorkFromHomeCompliance();
+  nQuarantineLength=params.getQuarantineLength();
 
   // make cumulative distribution for withdraw probabilities
   // convert from double to unsigned int for efficiency
@@ -157,7 +158,7 @@ EpiModel::EpiModel(EpiModelParameters &params) {
   // assuming linear relationship between 
   // viral load and infectiousness
   double scale = vmax - vmin;
-  scale *= 2.0; // because we will multiply by 2 for symptomatic people
+  scale *= 2.0; // because we will multiply by 2 for symptomatic people and we don't want the product to go above 1.0
   for (int i = 0; i < VLOADNSUB; i++)
     for (int j = 0; j < VLOADNDAY; j++)
       vload[i][j] = beta * (basevload[i][j] - vmin) / scale;
@@ -2025,6 +2026,7 @@ void EpiModel::summary(void) {
     outfile << "Voluntary isolation: " << fVoluntaryIsolationCompliance << endl;
     outfile << "Ascertained isolation: " << fAscertainedIsolationCompliance << endl;
     outfile << "Quarantine: " << fQuarantineCompliance << endl;
+    outfile << "Quarantine duration: " << nQuarantineLength << endl;
     outfile << "Liberal leave: " << fLiberalLeaveCompliance << endl;
     outfile << "Antiviral policy: ";
     if (eAVPolicy==NOAV)

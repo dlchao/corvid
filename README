@@ -273,6 +273,9 @@ Ascertained isolation compliance probability. This is the probability that a sic
 quarantine : real
 Voluntary household quarantine compliance probability. This is the probability that the members of a household stay home if one of the family members gets sick. Default is 0, no quarantine. 
 
+quarantinelength : integer
+Length of household quarantine in days. Default is 14.
+
 liberalleave : real
 Liberal leave compliance probability. The probability that people will take off from work if they get sick (in addition to the usual probably of staying home when sick). Default is 0, no liberal leave. 
 

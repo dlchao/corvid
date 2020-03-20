@@ -72,6 +72,7 @@ class EpiModelParameters {
   double getVoluntaryIsolationCompliance() { return fVoluntaryIsolationCompliance; }
   double getAscertainedIsolationCompliance() { return fAscertainedIsolationCompliance; }
   double getQuarantineCompliance() { return fQuarantineCompliance; }
+  int getQuarantineLength() { return nQuarantineLength; }
   double getLiberalLeaveCompliance() { return fLiberalLeaveCompliance; }
   double getWorkFromHomeCompliance() { return fWorkFromHomeCompliance; }
 
@@ -166,6 +167,7 @@ class EpiModelParameters {
   double fVoluntaryIsolationCompliance;      // probability of voluntary home isolation compliance (set to 0 for no isolation)?
   double fAscertainedIsolationCompliance;      // probability of home isolation compliance after ascertainment (set to 0 for no isolation)?
   double fQuarantineCompliance;     // probability of individual compliance (set to 0 for no quarantine)
+  int nQuarantineLength;            // length of quarantine in days
   double fLiberalLeaveCompliance;   // probability of individual compliance (set to 0 for no liberal leave)
   double fWorkFromHomeCompliance;   // probability of individual compliance (set to 0 for no work from home)
 };

@@ -12,7 +12,7 @@ class R0Model : public EpiModel {
   virtual void prerun(void);
   virtual void run(void);
  protected:
-  virtual void infect(Person& p);
+  virtual void infect(Person& p); // overrode base class to prevent secondary infections
   virtual void summary(void);
   int nNumInfected;  // total number of infected people (including index)
   unsigned int nIndexCaseID;  // ID of the first person infected in the simulation
