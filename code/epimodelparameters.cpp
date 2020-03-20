@@ -41,7 +41,7 @@ EpiModelParameters::EpiModelParameters(const char *configname) {
   }
   for (int i=0; i<TAG+3; i++) 
     bVaccineBoostByAge[i] = false;
-  fResponseThreshhold=0.0;
+  fResponseThreshold=0.0;
   nAVTotalLimit = nVaccineDailyLimit = nAVDailyLimit = UINT_MAX;
 
   AVEs = 0.3;  // less likely to get infected
@@ -56,7 +56,8 @@ EpiModelParameters::EpiModelParameters(const char *configname) {
   fContactAscertainment = 0.8;
   nSchoolClosureDays=0;
   schoolClosurePolicy=0;
-  fIsolationCompliance=0.0;
+  fVoluntaryIsolationCompliance=0.0;
+  fAscertainedIsolationCompliance=0.0;
   fQuarantineCompliance=0.0;
   fLiberalLeaveCompliance=0.0;
   fWorkFromHomeCompliance=0.0;
@@ -377,8 +378,9 @@ bool EpiModelParameters::readConfigFile(const char *configname) {
 	    read_config_double(AVEi, iss, "AVEi", 0.0, 1.0);
 	} else if (param.compare("AVEp")==0) {
 	    read_config_double(AVEp, iss, "AVEp", 0.0, 1.0);
-	} else if (param.compare("responsethreshhold")==0) {
-	    read_config_double(fResponseThreshhold, iss, "response threshhold", 0.0, 1.0);
+	} else if (param.compare("responsethreshold")==0 ||
+	           param.compare("responsethreshhold")==0) {
+	    read_config_double(fResponseThreshold, iss, "response threshold", 0.0, 1.0);
 	} else if (param.compare("responsedelay")==0) {
 	    read_config_int(nTriggerDelay, iss, "response delay");
 	} else if (param.compare("responseday")==0) {
@@ -455,8 +457,10 @@ bool EpiModelParameters::readConfigFile(const char *configname) {
 		cerr << "WARNING: " << s << " is not a valid school closure strategy." << endl;
 	      }
 	    }
-	} else if (param.compare("isolation")==0) {
-	    read_config_double(fIsolationCompliance, iss, "isolation compliance probability", 0.0, 1.0);
+	} else if (param.compare("voluntaryisolation")==0) {
+	    read_config_double(fVoluntaryIsolationCompliance, iss, "voluntary isolation compliance probability", 0.0, 1.0);
+	} else if (param.compare("ascertainedisolation")==0) {
+	    read_config_double(fAscertainedIsolationCompliance, iss, "ascertained isolation compliance probability", 0.0, 1.0);
 	} else if (param.compare("quarantine")==0) {
 	    read_config_double(fQuarantineCompliance, iss, "quarantine compliance probability", 0.0, 1.0);
 	} else if (param.compare("liberalleave")==0) {
@@ -518,6 +522,7 @@ bool EpiModelParameters::readConfigFile(const char *configname) {
 	    }
 	} else if (!param.compare("")==0) {
 	    cerr << "WARNING: " << param << " is not a valid parameter" << endl;
+	    exit(-1); // we should quit if there is a bad parameter
 	}
       }
     }

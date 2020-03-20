@@ -14,7 +14,7 @@ seedinfecteddaily 0
 ascertainmentdelay 3
 ascertainmentfraction 1.0
 responsedelay 0
-responsethreshhold 0.001
+responsethreshold 0.001
 schoolclosurepolicy none
 schoolclosuredays 0
 liberalleave 0.5

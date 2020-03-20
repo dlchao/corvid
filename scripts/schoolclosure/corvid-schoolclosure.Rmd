@@ -78,7 +78,6 @@ We model the impact of school closures combined with workplace-based policies on
 The model was run using a synthetic population of `r as.integer(popsize.seattle)`, beginning with 5 infected people on day 0.
 
 
-\clearpage
 ## Effect of school closures and other social distancing policies
 
 We believe that a combination of social distancing policies should and will be enacted to slow or even stop the spread of COVID-19.
@@ -293,6 +292,8 @@ If you close schools for only 42 days a couple of weeks really late, right befor
 Closing schools late in the epidemic and keeping them closed through the peak may prevent a "bounceback" of transmission when schools reopen.
 Though the peak is reduced by this late shorter school closure, it does not reduce the total number of cases (top right plot, blue curve vs black curve).
 
+Ferguson et al 2006 also found that school closures during the peak of an epidemic could reduce the peak but not the eventual number of cases.
+
 Plotting R_effective over time can help us understand these dynamics.
 We define R_effective for a set of individuals to be the average number of people they infect. We plotted R_effective for those infected during each 15-day interval of the epidemic in the bottom left.
 R_effective declines over time as susceptibles are infected and become immune,
@@ -399,6 +400,9 @@ Thanks to Clinton Collins for helping me run some of these simulations on a dece
 * Chao DL, Halloran ME, Obenchain VJ, Longini IM Jr.
   FluTE, a publicly available stochastic influenza epidemic simulation model.
   PLoS Comput Biol. 2010 Jan 29;6(1):e1000656. doi: 10.1371/journal.pcbi.1000656
+* Ferguson NM, Cummings DA, Fraser C, Cajka JC, Cooley PC, Burke DS.
+  Strategies for mitigating an influenza pandemic.
+  Nature. 2006 Jul 27;442(7101):448-52. 
 * Germann TC, Kadau K, Longini IM Jr, Macken CA.
   Mitigation strategies for pandemic influenza in the United States.
   Proc Natl Acad Sci U S A. 2006 Apr 11;103(15):5935-40.

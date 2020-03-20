@@ -49,7 +49,7 @@ class EpiModelParameters {
   unsigned char *getVaccinePriorities2() { return nVaccinePriorities2;}
   int getPriorityChangeTime() { return nPriorityChangeTime;}
   double getVaccinationFraction() { return fVaccinationFraction; }
-  double getResponseThreshhold() { return fResponseThreshhold; }
+  double getResponseThreshold() { return fResponseThreshold; }
   unsigned int *getVaccineInitialSupply() { return nVaccineInitialSupply; }
   int getVaccineDailyLimit() { return nVaccineDailyLimit; }
   int getAVTotalLimit() { return nAVTotalLimit; }
@@ -69,7 +69,8 @@ class EpiModelParameters {
   // NPI parameters
   int getSchoolClosurePolicy() { return schoolClosurePolicy; }
   int getSchoolClosureDays() { return nSchoolClosureDays; }
-  double getIsolationCompliance() { return fIsolationCompliance; }
+  double getVoluntaryIsolationCompliance() { return fVoluntaryIsolationCompliance; }
+  double getAscertainedIsolationCompliance() { return fAscertainedIsolationCompliance; }
   double getQuarantineCompliance() { return fQuarantineCompliance; }
   double getLiberalLeaveCompliance() { return fLiberalLeaveCompliance; }
   double getWorkFromHomeCompliance() { return fWorkFromHomeCompliance; }
@@ -129,7 +130,7 @@ class EpiModelParameters {
   int bTrigger;                     // has the trigger for response been reached
   int nTriggerDay;                  // day when reactive strategies will be deployed everywhere
   int nTriggerDelay;                // days between trigger and response
-  double fResponseThreshhold;       // fraction of ever ascertained before reaction
+  double fResponseThreshold;       // fraction of ever ascertained before reaction
   int nAscertainmentDelay;          // days between symptomatic and ascertainment
   double fAdultEssentialFraction;   // fraction of working-age adults who are "essential workers"
   double fPregnantFraction[TAG];    // fraction of people who are pregnant, by age
@@ -162,7 +163,8 @@ class EpiModelParameters {
   // non-pharmaceutical intervention parameters
   int schoolClosurePolicy;          // 
   int nSchoolClosureDays;           // number of days to close schools (0 for no school closure)
-  double fIsolationCompliance;      // probability of voluntary home isolation compliance (set to 0 for no isolation)?
+  double fVoluntaryIsolationCompliance;      // probability of voluntary home isolation compliance (set to 0 for no isolation)?
+  double fAscertainedIsolationCompliance;      // probability of home isolation compliance after ascertainment (set to 0 for no isolation)?
   double fQuarantineCompliance;     // probability of individual compliance (set to 0 for no quarantine)
   double fLiberalLeaveCompliance;   // probability of individual compliance (set to 0 for no liberal leave)
   double fWorkFromHomeCompliance;   // probability of individual compliance (set to 0 for no work from home)

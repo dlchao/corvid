@@ -49,7 +49,7 @@ EpiModel::EpiModel(EpiModelParameters &params) {
   nTimer = 0;
 
   // epidemic parameters
-  fResponseThreshhold=params.getResponseThreshhold();
+  fResponseThreshold=params.getResponseThreshold();
   bSeedDaily = params.getSeedDaily();
   nSeedAirports = params.getSeedAirports();
   bTravel = params.getTravel();
@@ -123,7 +123,8 @@ EpiModel::EpiModel(EpiModelParameters &params) {
   // NPIs
   nSchoolClosurePolicy=params.getSchoolClosurePolicy();
   nSchoolClosureDays=params.getSchoolClosureDays();
-  fIsolationCompliance=params.getIsolationCompliance();
+  fVoluntaryIsolationCompliance=params.getVoluntaryIsolationCompliance();
+  fAscertainedIsolationCompliance=params.getAscertainedIsolationCompliance();
   fQuarantineCompliance=params.getQuarantineCompliance();
   fLiberalLeaveCompliance=params.getLiberalLeaveCompliance();
   fWorkFromHomeCompliance=params.getWorkFromHomeCompliance();
@@ -945,7 +946,7 @@ void EpiModel::infect(Person& p) {
 	(getWithdrawDays(p)==0 || // doesn't voluntarily withdraw
 	 getWithdrawDays(p)-getIncubationDays(p)>1)) { // would withdraw after more than one day
       if ((fLiberalLeaveCompliance>0.0 && isWorkingAge(p) && p.nWorkplace>0 && get_rand_double<fLiberalLeaveCompliance) || // will take liberal leave
-	  (fIsolationCompliance>0.0 && get_rand_double<fIsolationCompliance)) { // voluntary isolation
+	  (fVoluntaryIsolationCompliance>0.0 && get_rand_double<fVoluntaryIsolationCompliance)) { // voluntary isolation (not ascertained isolation)
 	setWithdrawDays(p,getIncubationDays(p)+1); // stay home the day after symptom onset
       }
     }
@@ -1054,7 +1055,7 @@ void EpiModel::TAP(Person& p) {
     clearAVProphylaxis(p); // this person was preparing to get prophylaxis, but now should get treatment
   enum antiviralPolicy policy = getAVPolicy(tractvec[c.nTractID-nFirstTract]);
   if (policy==HHTAP || policy==FULLTAP || (policy==HHTAP100&&nNumTAPDone<100)) {
-  nNumTAPDone++;
+    nNumTAPDone++;
     for (unsigned int i=c.nFirstPerson; i<c.nLastPerson; i++) {
       Person &target = pvec[i];
       if (!target.bWantAV && 
@@ -1406,6 +1407,10 @@ void EpiModel::night(void) {
 	      // call TAP when cases are ascertained in this tract
 	      if (getAVPolicy(tractvec[comm.nTractID-nFirstTract])!=NOAV)
 		TAP(p);
+	      if (isAscertainedIsolation(tractvec[comm.nTractID-nFirstTract]) && get_rand_double<fAscertainedIsolationCompliance) { // ascertained isolation
+		setWithdrawDays(p,getIncubationDays(p)+nAscertainmentDelay);
+	      }
+	      
 	      // quarantine the family
 	      if (isQuarantine(tractvec[comm.nTractID-nFirstTract]) && p.iday==getIncubationDays(p)+1) {
 		for (unsigned int pid2=comm.nFirstPerson;
@@ -1622,7 +1627,7 @@ void EpiModel::response(void) {
       for (int j=0; j<TAG; j++)
 	nNumRecentlyAscertained += c.nRecentlyAscertained[j];
     }
-    if (nNumRecentlyAscertained/(double)nNumPerson>fResponseThreshhold) { // trigger reached
+    if (nNumRecentlyAscertained/(double)nNumPerson>fResponseThreshold) { // trigger reached
       bTrigger=true;
       nTriggerTime=nTimer+nTriggerDelay*2;
       cout << "Response starts on day " << (nTriggerTime/2) << ": ascertained: " << nNumRecentlyAscertained << "/" << nNumPerson << "=" << nNumRecentlyAscertained/(double)nNumPerson << " on day " << (nTimer/2) << endl;
@@ -1645,6 +1650,8 @@ void EpiModel::response(void) {
 	setAVPolicy(t, eAVPolicy);         // start using antivirals in tract
       if (fQuarantineCompliance>0.0 && !isQuarantine(t))
 	setQuarantine(t);  // activate household quarantine in tract
+      if (fAscertainedIsolationCompliance>0.0 && !isAscertainedIsolation(t))
+	setAscertainedIsolation(t);  // activate ascertained isolation in tract
       if (nSchoolClosureDays>0 && nSchoolClosurePolicy==1) {
 	cout << "Closing schools in tract " << t.id << " on day " << (nTimer/2) << " for " << nSchoolClosureDays << " days" << endl;
 	t.nSchoolClosureTimer=nSchoolClosureDays;
@@ -1996,7 +2003,7 @@ void EpiModel::summary(void) {
       outfile << endl;
     }
 
-    outfile << "Response threshhold: " << fResponseThreshhold << endl;
+    outfile << "Response threshold: " << fResponseThreshold << endl;
     outfile << "Response delay: " << nTriggerDelay << endl;
     outfile << "Ascertainment delay: " << nAscertainmentDelay << endl;
     outfile << "Ascertainment fraction: " << fSymptomaticAscertainment << endl;
@@ -2013,7 +2020,8 @@ void EpiModel::summary(void) {
     else
       outfile << "School closure policy: " << nSchoolClosurePolicy << endl;
     outfile << "School closure days: " << nSchoolClosureDays << endl;
-    outfile << "Isolation: " << fIsolationCompliance << endl;
+    outfile << "Voluntary isolation: " << fVoluntaryIsolationCompliance << endl;
+    outfile << "Ascertained isolation: " << fAscertainedIsolationCompliance << endl;
     outfile << "Quarantine: " << fQuarantineCompliance << endl;
     outfile << "Liberal leave: " << fLiberalLeaveCompliance << endl;
     outfile << "Antiviral policy: ";

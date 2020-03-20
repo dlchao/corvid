@@ -100,7 +100,7 @@ Almost all deaths and hospitalizations come from older adults.
 
 ```{r cases-seattle, fig.width=7, fig.height=3.25, fig.cap="Symptomatic people over time in Seattle with no interventions. On the right, cumulative symptomatic people over time. The axis on the right is the percent of the total population.", echo=FALSE}
 par(mfrow=c(1,2),
-    mar=c(3.5,3.5,1,2), #bottom, left, top, and right.
+    mar=c(3.5,3.5,1,2.5), #bottom, left, top, and right.
     mgp=c(2.0, 0.6, 0))
 ymax <- 7000
 plot(x=NA, y=NA, xlim=c(0,length(newlysymptomatic.seattle[[as.character(r0)]])), ylim=c(0,ymax), xlab="days since introduction", ylab="newly symptomatic per day", type="l", col=palr0["3.0"], lwd=2, cex.axis=0.8)
@@ -374,7 +374,7 @@ We believe that school closures generally delay the peak, but do not usually red
 More sustainable measures, like workplace liberal leave and work from home policies, can flatten the epidemic curve and reduce the total number of cases.
 Combining school closures with these other social policies may be synergistic, but we only tested a limited number of scenarios (one).
 
-```{r cases-seattle-socialdistancing, fig.width=7, fig.height=3.5, fig.cap="Impact of social distancing, R0=2.5. The dashed vertical line is the start of social distancing policies in response to detected cases. We test school closures alone, work from home/liberal leave (50% compliance) without school closures, and a combination of all three policies. Triangles near the x-axis mark when the schools re-open. The other policies (liberal leave and working from home) continue indefinitely. On the left, daily new symptomatic cases per 100,000 population. On the right, cumulative % of the population symptomatic.", echo=FALSE}
+```{r cases-seattle-socialdistancing, fig.width=7, fig.height=3.5, fig.cap="Impact of social distancing, R0=2.5. The dashed vertical line is the start of social distancing policies in response to detected cases. We test school closures alone, work from home/liberal leave (50% compliance) without school closures, and a combination of all three policies. The red bar near the x-axis marks the days when schools are closed. The other policies (liberal leave and working from home) continue indefinitely. On the left, daily new symptomatic cases per 100,000 population. On the right, cumulative % of the population symptomatic.", echo=FALSE}
 par(mfrow=c(1,2),
     mar=c(3.5,3.5,2,1), #bottom, left, top, and right.
     mgp=c(2.0, 0.6, 0))
@@ -410,9 +410,9 @@ ymax <- 1100
         csymp[[scenario]] <- as.numeric(strsplit(gsub("^.*: ","",temp[grep("Cumulative symptomatic", temp)]),",")[[1]])
         nsymp[[scenario]] <- c(symp[[scenario]][1], diff(csymp[[scenario]]))
         lines(x=days, y=nsymp[[scenario]]*denominator/popsize.seattle, col=palsocialdistancing[scenario], lwd=1.8)
-        if (scenario=="schoolonly") {
+        if (scenario=="school closure only") {
             lines(x=rep(delay+triggerday[[scenario]],2), y=c(-100,ymax+100), lty="dashed")
-	    points(x=duration+delay+triggerday[[scenario]], y=0, pch=25, bg=palduration[duration], cex=1.5)
+	    lines(x=delay+triggerday[[scenario]]+c(0,duration), y=rep(-ymax/200,2), col=palduration[duration], lwd=4)
         }
     }
     legend("topleft", legend=c("no intervention", scenarios), fill=c("black", palsocialdistancing[scenarios]), cex=0.55, inset=0.01, bg="white")
@@ -421,9 +421,9 @@ ymax <- 1100
     plot(x=days, y=csymptomatic.seattle[[as.character(r0)]]*100/popsize.seattle, xlab="days since introduction", ylab="cumulative symptomatic, %", main=paste("R0=",r0,", thresh=",format(trigger,scientific=FALSE), " (",as.integer(trigger*popsize.seattle)," cases)", sep=""), type="l", col="black", lwd=2, cex.main=1.0, cex.axis=1.0, cex.lab=1.0, ylim=c(0,ymax))
     for (scenario in scenarios) {
         lines(x=days, y=csymp[[scenario]]*100/popsize.seattle, col=palsocialdistancing[scenario], lwd=1.8)
-        points(x=duration+delay+triggerday[[scenario]], y=0, pch=25, bg=palduration[duration], cex=1.5)
-        if (scenario=="schoolonly") {
+        if (scenario=="school closure only") {
             lines(x=rep(delay+triggerday[[scenario]],2), y=c(-100,ymax*1.2), lty="dashed")
+	    lines(x=delay+triggerday[[scenario]]+c(0,duration), y=rep(-ymax/200,2), col=palduration[duration], lwd=4)
         }
     }
     legend("topleft", legend=c("no intervention", scenarios), fill=c("black", palsocialdistancing[scenarios]), cex=0.55, inset=0.01, bg="white")
@@ -510,7 +510,7 @@ In an epidemic with R0=2.5 and no interventions,
 A large proportion of infections were from household contacts, and approximately equal numbers from work and school.
 `r round(100*sum(individuals.seattle25$SOURCETYPE %in% c("daytime.comm","daytime.nh","nighttime.comm","nighttime.nh"),na.rm=TRUE)/nrow(individuals.seattle25),1)`% were infected by general community contacts (neighborhood + community).
 These proportions can be compared with those found across different agent-based models for R0=1.9 in Halloran et al 2008.
-This may be useful when considering the potential impact of interventions targeted to one of these settings
+This may be useful when considering the potential impact of interventions targeted to one of these settings.
 The first few infections may occur in either schools or workplaces (depending on the index case's age, I think), then families.
 
 

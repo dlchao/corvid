@@ -212,14 +212,14 @@ Antiviral vaccine efficacy for infectiousness (VE_I). Default is 0.62
 AVEp : real
 Antiviral vaccine efficacy for illness given infection (VE_P). Default is 0.6.
 
-responsethreshhold : real
+responsethreshold : real
 Fraction of the population ascertained that results in initiating reactive strategies. Reactive strategies include vaccinations, deploying antivirals, and non-pharmaceutical interventions like liberal leave. For example, 0.01 would set this trigger at 1% of the population. The default is 0.0 which initiates reactive strategies after the first person is ascertained. 
 
 responsedelay : integer
 Number of days to wait before initiating reactive strategies. A values of -1 would deploy reactive strategies on day 0, the first day of the simulation. this differs from the pre-strategy option because pre-vaccination assumes that you can vaccinate people early enough such that they have full protection on day 0. With a responsedelay of -1, they might get vaccine on day 0. Default is 1. 
 
 responseday : integer
-Sets the reactive responses to begin on specified day instead of waiting for ascertained cases (instead of using responsethreshhold and responsedelay).
+Sets the reactive responses to begin on specified day instead of waiting for ascertained cases (instead of using responsethreshold and responsedelay).
 
 ascertainmentdelay : integer
 Number of days it takes medical personnel to ascertain a symptomatic individual. Default is 1 day. 
@@ -264,8 +264,11 @@ schoolopening : integer[56]
 School opening day for each state after the start of the simulation. Values of 0 or -1 indicate that the state's schools are open when the simulation starts, while other values indicate that the state's schools start after n days. The parameter takes 56 arguments, which correspond to the FIPS codes of the states. The values are for the states in the following order ("-" indicates that the value is not used):
 Alabama, Alaska, -, Arizona, Arkansas, California, -, Colorado, Connecticut, Delaware, District of Columbia, Florida, Georgia, -, Hawaii, Idaho, Illinois, Indiana, Iowa, Kansas, Kentucky, Louisiana, Maine, Maryland, Massachusetts, Michigan, Minnesota, Mississippi, Missouri, Montana, Nebraska, Nevada, New Hampshire, New Jersey, New Mexico, New York, North Carolina, North Dakota, Ohio, Oklahoma, Oregon, Pennsylvania, -, Rhode Island, South Carolina, South Dakota, Tennessee, Texas, Utah, Vermont, Virginia, -, Washington, West Virginia, Wisconsin, Wyoming
 
-isolation : real
-Voluntary isolation compliance probability. This is the probability that a sick person stays home voluntarily. Default is 0, no isolation. 
+voluntaryisolation : real
+Voluntary isolation compliance probability. This is the probability that a sick person stays home voluntarily one day after symptoms. Default is 0, no isolation. 
+
+ascertainedisolation : real
+Ascertained isolation compliance probability. This is the probability that a sick person stays home voluntarily after ascertained. Default is 0, no isolation. 
 
 quarantine : real
 Voluntary household quarantine compliance probability. This is the probability that the members of a household stay home if one of the family members gets sick. Default is 0, no quarantine. 
