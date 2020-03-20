@@ -8,9 +8,9 @@ SHELL    = /bin/sh
 CFLAGS	 = -Wall -Werror -pedantic -DDSFMT_MEXP=19937 -msse2 -DHAVE_SSE2
 # Check if opti was defined
 ifdef OPTI
-OPTI = $(OPTI)
+OPTI     := $(OPTI)
 else
-OPTI     = -O3 -march=native
+OPTI     := -O3 -march=native
 #OPTI = -pg # for profiling
 endif
 LDFLAGS	= -lm
