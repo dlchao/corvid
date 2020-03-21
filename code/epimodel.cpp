@@ -158,7 +158,7 @@ EpiModel::EpiModel(EpiModelParameters &params) {
   // assuming linear relationship between 
   // viral load and infectiousness
   double scale = vmax - vmin;
-  scale *= 2.0; // because we will multiply by 2 for symptomatic people and we don't want the product to go above 1.0
+  scale *= fRelativeSymptomaticInfectiousness; // because we don't want the product of vload and fRelativeSymptomaticInfectiousness to go above 1.0
   for (int i = 0; i < VLOADNSUB; i++)
     for (int j = 0; j < VLOADNDAY; j++)
       vload[i][j] = beta * (basevload[i][j] - vmin) / scale;
@@ -1225,7 +1225,7 @@ void EpiModel::day(void) {
       p.pri *= (1.0-AVEi);
     }
     if (isSymptomatic(p))
-      p.pri *= 2.0;  // symptomatic people are 2 times as infectious
+      p.pri *= fRelativeSymptomaticInfectiousness;  // symptomatic people are 2 times as infectious
     assert(p.pri<=1.0);
     assert(p.prs<=1.0);
   }
@@ -1258,7 +1258,7 @@ void EpiModel::day(void) {
 	p.pri *= (1.0-AVEi);
       }
       if (isSymptomatic(p))
-	p.pri *= 2.0;
+	p.pri *= fRelativeSymptomaticInfectiousness;
       assert(p.pri<=1.0);
       assert(p.prs<=1.0);
     }

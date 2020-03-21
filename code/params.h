@@ -40,6 +40,9 @@ extern const double fStopAntiviralTwoPills; // probability that individuals taki
 // symptomatic probability
 extern double fBaseSymptomaticProb;
 
+// ratio of symptomatic:asymptomatic infectiousness
+extern double fRelativeSymptomaticInfectiousness;
+
 // cdf of duration for incubation period in days
 #define INCUBATIONMAX 14
 extern const double incubationcdf[INCUBATIONMAX];
