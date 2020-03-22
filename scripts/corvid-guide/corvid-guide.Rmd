@@ -1,0 +1,272 @@
+---
+title: "A quickly-written guide to Corvid, a coronavirus epidemic simulator"
+author: "Dennis Chao"
+header-includes:
+- \usepackage{fancyhdr}
+- \pagestyle{fancy}
+- \fancyhead[RO]{\today}
+output:
+  pdf_document: 
+    fig_caption: yes
+    fig_width: 6.5
+    fig_height: 5.5
+---
+
+# Introduction
+
+Corvid is an agent-based model to simulate SARS-CoV-2 transmission.
+The model is based on FluTE.
+The code is available at https://github.com/dlchao/corvid.
+
+# Compiling and running corvid
+
+Corvid is written in C++ and can be compiled using the Makefile in the "code/" directory.
+Just type "make corvid" or just "make" to make the executable. This just compiles the C++ and links the object files.
+
+Here is a simple config file, "config-seattle26":
+```{r print-configfile, echo=FALSE}
+temp <- readLines("config-seattle26")
+#print(temp)
+cat(temp, sep="\n")
+```
+
+This config file tells Corvid that you want to use the Seattle-based population,
+set R0=2.6, run the simulation for 180 days starting with 5 infected people, and don't add more infected people each day. It also specifies the random number seed, which you will need to vary if you want to see the effects of stochasticity on the outputs. The random number seed also affects the generation of the synthetic population, as described below.
+Just run "./corvid config-seattle26", and in about 10 minutes, it will output 4 files, whose names are specified in the config file.
+
+\clearpage
+
+# Corvid outputs
+
+The "Summary" file has most of the results you will want.
+It starts with the Corvid version number, then outputs the label specified in the config file. This allows you to match the file to the config file that generated it. The summary file contains the parameters used for the run and basic outputs, like the number of people who were symptomatic each day and the attack rates.
+Note that the "Number symptomatic" is the number who are symptomatic each day (prevalence), not the number who become symptomatic each day (incidence).
+You can derive incidence from the "Cumulative symptomatic".
+
+The "Tracts" file outputs the number of people in the synthetic population who live in each census tract. Corvid reads an input file that specifies the population size of each census tract, and it fills the tract with families of different size and age compositions randomly chosen from a distribution that reflects the US Census from the year 2000. Therefore, changing the random number seed will result in a slightly different population.
+
+The "Log" file outputs the symptomatic and infection prevalence as well as the cumulative symptomatic for each census tract each day. Note that the symptomatic prevalence is not the symptomatic incidence (new cases).
+
+The "Individuals" file is not normally output because it can be large, but "config-seattle26" tells Corvid to output it by specifying "individualfile 1", where "1" means output the file and "0" or not specifying this parameter will cause it not to be output. The "individuals" file outputs one line per individual in the synthetic population, which can allow you to inspect family structures, determine where and when each person was infected, and build infection trees.
+
+```{r load-seattle, echo=FALSE}
+library(knitr)
+library(RColorBrewer)
+
+tractlocs <- read.csv("seattle-tracts.dat", header=FALSE, col.names=c("fipsstate", "fipscounty", "fipstract", "population", "latitude", "longitude"))
+tracts.seattle <- read.csv("Tracts-seattle26.txt", header=TRUE)
+tracts.seattle$pop <- rowSums(tracts.seattle[5:9])
+wf.seattle <- read.csv("seattle-wf.dat", header=FALSE, sep=" ", col.names=c("source.fipsstate", "source.fipscounty", "source.fipstract", "dest.fipsstate", "dest.fipscounty", "dest.fipstract", "flow"))
+temp <- readLines("Summary-seattle26.txt")
+symptomatic.seattle26 <- as.numeric(strsplit(gsub("^.*: ","",temp[grep("Number symptomatic", temp)]),",")[[1]])
+cumulativesymptomatic.seattle26 <- as.numeric(strsplit(gsub("^.*: ","",temp[grep("Cumulative symptomatic", temp)]),",")[[1]])
+newlysymptomatic.seattle26 <- c(symptomatic.seattle26[1], diff(cumulativesymptomatic.seattle26))
+
+individuals.seattle26 <- read.csv("Individuals-seattle26.txt", header=TRUE)
+individuals.seattle26$SOURCETYPE <- ifelse(individuals.seattle26$sourcetype==0, NA,
+                   ifelse(individuals.seattle26$sourcetype==1, "daytime.family",
+                   ifelse(individuals.seattle26$sourcetype==2, "daytime.comm",
+                   ifelse(individuals.seattle26$sourcetype==3, "daytime.nh",
+                   ifelse(individuals.seattle26$sourcetype==4, "daytime.school",
+                   ifelse(individuals.seattle26$sourcetype==5, "daytime.work",
+                   ifelse(individuals.seattle26$sourcetype==10, "nighttime.family",
+                   ifelse(individuals.seattle26$sourcetype==11, "nighttime.comm",
+                   ifelse(individuals.seattle26$sourcetype==12, "nighttime.nh",
+                   ifelse(individuals.seattle26$sourcetype==13, "nighttime.hhcluster",
+                   ifelse(individuals.seattle26$sourcetype==20, "seeded",
+		   ifelse(individuals.seattle26$sourcetype==21, "airport", "error"))))))))))))
+individuals.seattle26$generationtime <- (individuals.seattle26$infectedtime-individuals.seattle26$infectedtime[match(individuals.seattle26$sourceid,individuals.seattle26$id)])/2 # how many days ago was the infecter infected?
+individuals.seattle26$generationtime[individuals.seattle26$infectedtime<=0] <- NA # remove people never infected or infected on day 0
+```
+
+# Parsing Corvid output files
+
+The "config-seattle26" tells Corvid to use the Seattle-like population, based on 2000 Census data of metropolitan Seattle.
+The synthetic population has `r as.integer(sum(tracts.seattle$pop))` residing in `r nrow(tracts.seattle)` census tracts.
+Tracts have `r min(tracts.seattle$pop)` to `r as.integer(max(tracts.seattle$pop))` people living in them, and `r min(tracts.seattle$workers)` to `r as.integer(max(tracts.seattle$workers))` people working in them.
+We can plot the number of people infected or symptomatic each day using the Summary file.
+
+```{r map-seattle, fig.width=4, fig.height=4, fig.cap="Map of the census tracts for the synthetic Seattle population. Dot size proportional to resident population. Red circle size is proportional to the number of people who work in each tract. Plotted using the 'seattle-tracts.dat' input file and the 'Tracts' output file.", echo=FALSE}
+par(mar=c(3.5,3.5,1,1), #bottom, left, top, and right.
+    mgp=c(2.0, 0.6, 0))
+#pal <- heat.colors(max(tracts.seattle$pop)+1, rev=TRUE)
+#plot(x=tractlocs$longitude, y=tractlocs$latitude, col=pal[tracts.seattle$pop[match(tractlocs$fipstract, tracts.seattle$FIPStract)]], cex=0.01*sqrt(tracts.seattle$pop[match(tractlocs$fipstract, tracts.seattle$FIPStract)]), pch=19, xlab="longitude", ylab="latitude", asp=1)
+plot(x=tractlocs$longitude, y=tractlocs$latitude, col="blue", cex=0.01*sqrt(tracts.seattle$pop[match(tractlocs$fipstract, tracts.seattle$FIPStract)]), pch=19, xlab="longitude", ylab="latitude", asp=1, cex.axis=0.5, cex.lab=0.8)
+points(x=tractlocs$longitude, y=tractlocs$latitude, col="red", cex=0.01*sqrt(tracts.seattle$workers[match(tractlocs$fipstract, tracts.seattle$FIPStract)]), pch=1)
+```
+
+```{r cases-seattle, fig.width=7, fig.height=3.25, fig.cap="Symptomatic people over time in Seattle. On the left, the number of newly symptomatic people per day. On the right, the cumulative cases. Plotted from data in the Summary file.", echo=FALSE}
+par(mfrow=c(1,2),
+    mar=c(3.5,3.5,1,1), #bottom, left, top, and right.
+    mgp=c(2.0, 0.6, 0))
+days <- 1:length(symptomatic.seattle26)
+plot(x=days, y=newlysymptomatic.seattle26, xlab="days since introduction", ylab="newly symptomatic per day", type="l", lwd=2)
+startday <- 40
+endday <- 70
+startday2 <- 40
+endday2 <- 70
+plot(x=days, y=cumulativesymptomatic.seattle26, xlab="days since introduction", ylab="cumulative symptomatic", cex=0.5)
+```
+
+The Individuals file allows us to look at the time and cause of infection of each individual in the simulation.
+The average generation time was `r round(mean(individuals.seattle26$generationtime, na.rm=TRUE),2)`, median=`r median(individuals.seattle26$generationtime, na.rm=TRUE)`.
+The largest number of infections come from household members. School and workplaces contribute nearly equally. The rest of infections come from the general community.
+These proportions can be compared with those found across different agent-based models for R0=1.9 in Halloran et al 2008.
+
+```{r seattle-generationtime, fig.width=7, fig.height=3.25, fig.cap="Generation time distribution in the Seattle model, R0=2.6. On the left, the distribution of generation times. On the right, incubation period distribution. Plotted using data from the Individuals output file.", echo=FALSE}
+par(mfrow=c(1,2),
+    mar=c(3.5,3.5,1,1), #bottom, left, top, and right.
+    mgp=c(2.0, 0.6, 0))
+hist(individuals.seattle26$generationtime, breaks=seq(0,max(individuals.seattle26$generationtime,na.rm=TRUE)+0.5,1), xlab="generation time, days", main="generation time distribution")
+
+hist(individuals.seattle26$incubationdays[individuals.seattle26$incubationdays>0], breaks=seq(0,max(individuals.seattle26$incubationdays,na.rm=TRUE)+0.5,1), xlab="incubation period, days", main="incubation period distribution")
+# incubation of 0 is asymptomatic in the model
+```
+
+
+```{r bysetting, fig.width=7, fig.height=3.25, fig.cap="Settings of infections in the Seattle model (R0=2.6). On the left, cumulative infections in the Seattle population model by source of infection. On the right, cumulative proportion of infections by source. The sources plotted do not add up to one - the remainder of infections come from the general community.", echo=FALSE}
+par(mfrow=c(1,2),
+    mar=c(3.5,3.5,1,3), #bottom, left, top, and right.
+    mgp=c(2.0, 0.6, 0))
+timesteps <- 0:max(individuals.seattle26$infectedtime)
+plot(x=timesteps/2, y=sapply(timesteps, function(t) {sum(individuals.seattle26$infectedtime>0 & individuals.seattle26$infectedtime<=t)}), xlab="simulation day", ylab="cumulative infections by source", type="l", cex.axis=0.8)
+axis(4, at=seq(0,1,0.25)*nrow(individuals.seattle26), lab=paste(100*seq(0,1,0.25),"%",sep=""), las=2)
+polygon(x=c(timesteps/2,max(timesteps)/2,0), y=c(sapply(timesteps, function(t) {sum(individuals.seattle26$infectedtime>0 & individuals.seattle26$SOURCETYPE %in% c("daytime.family","nighttime.family") & individuals.seattle26$infectedtime<=t)}),0,0), col="salmon", border="darkred")
+polygon(x=c(timesteps/2,rev(timesteps/2)), y=c(sapply(timesteps, function(t) {sum(individuals.seattle26$infectedtime>0 & individuals.seattle26$SOURCETYPE %in% c("daytime.family","nighttime.family") & individuals.seattle26$infectedtime<=t)}),
+  sapply(rev(timesteps), function(t) {sum(individuals.seattle26$infectedtime>0 & individuals.seattle26$SOURCETYPE %in% c("daytime.family","nighttime.family","daytime.work") & individuals.seattle26$infectedtime<=t)})),
+ col="lightblue", border="darkblue")
+polygon(x=c(timesteps/2,rev(timesteps/2)), y=c(sapply(timesteps, function(t) {sum(individuals.seattle26$infectedtime>0 & individuals.seattle26$SOURCETYPE %in% c("daytime.family","nighttime.family","daytime.work") & individuals.seattle26$infectedtime<=t)}),
+  sapply(rev(timesteps), function(t) {sum(individuals.seattle26$infectedtime>0 & individuals.seattle26$SOURCETYPE %in% c("daytime.family","nighttime.family","daytime.work","daytime.school") & individuals.seattle26$infectedtime<=t)})),
+ col="orchid", border="purple")
+legend("topleft", legend=c("family","workplace","school","other"), fill=c("salmon","lightblue","orchid","white"), cex=0.8, inset=0.01)
+
+plot(x=NA, y=NA, xlim=c(0,max(timesteps)/2), ylim=c(0,1), xlab="simulation day", ylab="cumulative proportion by source", cex.lab=0.95, cex.axis=0.8, type="l")
+tot <- sapply(timesteps, function(t) {sum(individuals.seattle26$infectedtime>0 & individuals.seattle26$infectedtime<=t)})
+lines(x=timesteps/2, y=sapply(timesteps, function(t) {sum(individuals.seattle26$infectedtime>0 & individuals.seattle26$SOURCETYPE %in% c("daytime.family","nighttime.family") & individuals.seattle26$infectedtime<=t)})/tot, col="red", lwd=1.5)
+lines(x=timesteps/2, y=sapply(timesteps, function(t) {sum(individuals.seattle26$infectedtime>0 & individuals.seattle26$SOURCETYPE %in% c("daytime.work") & individuals.seattle26$infectedtime<=t)})/tot, col="blue", lwd=1.5)
+lines(x=timesteps/2, y=sapply(timesteps, function(t) {sum(individuals.seattle26$infectedtime>0 & individuals.seattle26$SOURCETYPE %in% c("daytime.school") & individuals.seattle26$infectedtime<=t)})/tot, col="purple", lwd=1.5)
+legend("topright", legend=c("family","workplace","school"), fill=c("red","blue","purple"), inset=0.01)
+
+temp <- data.frame(setting=c("school","work","home","community/neighbors","total"),
+                   infected26=c(sum(individuals.seattle26$SOURCETYPE=="daytime.school",na.rm=TRUE),
+           sum(individuals.seattle26$SOURCETYPE=="daytime.work",na.rm=TRUE),
+	   sum(individuals.seattle26$SOURCETYPE %in% c("daytime.family","nighttime.family"),na.rm=TRUE),
+	   sum(individuals.seattle26$SOURCETYPE %in% c("daytime.comm","daytime.nh","nighttime.comm","nighttime.nh","nighttime.hhcluster"),na.rm=TRUE),
+	   sum(!is.na(individuals.seattle26$SOURCETYPE) & individuals.seattle26$SOURCETYPE!="seeded")))
+temp$infected26 <- 100*temp$infected26/temp$infected26[nrow(temp)]
+kable(temp, digits=1, caption="Proportion of infections by settings for R0=2.6, %")
+```
+
+\clearpage
+
+# Mapping locations of cases in Corvid
+
+```{r map-seattle-spread, fig.width=7, fig.height=5.75, fig.cap="Map of cumulative cases by census tract after epidemic starts with five infections on day 0. Color is based on cumulative symptomatic attack rate.", echo=FALSE}
+daily.seattle <- read.csv("Log-seattle26.txt", header=TRUE)
+daily.seattle$CUMSYM <- rowSums(daily.seattle[,grep("cumsym",colnames(daily.seattle))])
+tractlocs$TractID <- tracts.seattle$TractID[sapply(1:nrow(tractlocs), function(i) {which(tracts.seattle$FIPSstate==tractlocs$fipsstate[i] &
+                tracts.seattle$FIPScounty==tractlocs$fipscounty[i] &
+                tracts.seattle$FIPStract==tractlocs$fipstract[i])})]
+
+pal <- c("gray92",
+         colorRampPalette(c("salmon","orange"))(15),
+         colorRampPalette(c("orange","red"))(12),
+         colorRampPalette(c("red", "darkred"))(15),
+         rep("black", 50))
+par(mfrow=c(3,2),
+    mar=c(1,1,3,1), #bottom, left, top, and right.
+    mgp=c(0,0,0))
+for (day in c(15,35,50,100,130,179)) {
+    plot(x=tractlocs$longitude, y=tractlocs$latitude,
+         main=paste("Day ", day, ", ", sum(daily.seattle$CUMSYM[daily.seattle$time==day]), " cases",sep=""),xlab="", ylab="",
+         col=pal[1+ceiling(100*sapply(tractlocs$TractID, function(t) {daily.seattle$CUMSYM[daily.seattle$time==day & daily.seattle$TractID==t]})/tracts.seattle$pop)], axes=FALSE, asp=1)
+    legend("topleft", legend=paste(c(seq(0,40,10)),"%",sep=""), fill=pal[1+seq(0,40,10)])
+}
+```
+
+We can use the "Log" output files to see where and when cases occurred in the synthetic population. 
+The "seattle-tracts.dat" input file has the lat/long of each tract, and the "Tracts" output file give the size of the synthetic population in each census tract.
+There are no "cases" on day 1 because the initially infected people are not symptomatic yet.
+
+
+\clearpage
+# Simulating interventions
+
+We can simulate interventions like liberal leave at workplaces (employees even more likely than usual to go home if sick), work from home policies (workers stay at home instead of going to work), self-isolation by sick people, and home quarantine of family members of sick people.
+Here's the configuration file "config-seattle26-workfromhome" for having a "work from home" policy start on day 60:
+```{r print-configfile-workfromhome, echo=FALSE}
+temp <- readLines("config-seattle26-workfromhome")
+#print(temp)
+cat(temp, sep="\n")
+```
+
+The "compliance" of work-from-home is set to 0.6, which is the fraction of workers who decide to work from home.
+Compliance for other interventions is set in the same way (except for school closures).
+There is no option (yet) to turn off most interventions when activated.
+
+School closure is the only intervention with a fixed preset-duration.
+Here's the configuration file "config-seattle26-closeallschools" for shutting down all schools for 14 days starting on day 60:
+```{r print-configfile-schoolclosure, echo=FALSE}
+temp <- readLines("config-seattle26-closeallschools")
+#print(temp)
+cat(temp, sep="\n")
+```
+
+
+
+```{r interventions-seattle, fig.width=7, fig.height=3.25, fig.cap="Non-pharmaceutical intervention simulations. R0=2.6 and compliance is 60% (except for school closures, which is 100%).", echo=FALSE}
+interventions <- c("closeallschools","isolation","liberalleave","workfromhome", "quarantine")
+palinterventions <- c("black","red","blue","purple","orange","darkgreen")
+names(palinterventions) <- c("no intervention",interventions)
+par(mfrow=c(1,2),
+    mar=c(2.8,2.8,3.6,1), #bottom, left, top, and right.
+    mgp=c(1.7, 0.4, 0))
+for (plottype in c("symptomatic", "cumulative")) {
+    r0 <- 2.6
+    responseday <- 60
+    y <- NA
+    if (plottype=="cumulative") {
+        y <- cumulativesymptomatic.seattle26
+    } else {
+        y <- newlysymptomatic.seattle26
+    }
+    days <- 1:length(y)
+    plot(x=days, y=y, xlab="days", ylab=paste(ifelse(plottype=="cumulative","cumulative","daily new"),"symptomatic"), main=paste("Non-pharmaceutical interventions, R0=",r0,sep=""), xlim=c(0,180), type="l", lwd=0.5, col="black", cex.main=0.8, cex.lab=0.8, cex.axis=0.65, axes=FALSE)
+    polygon(x=c(days,max(days), 0), y=c(y,0,0), col="gray95", lwd=0.5)
+    axis(1, at=seq(0,200,30), cex.axis=0.85)
+    axis(2, cex.axis=0.85)
+    lines(x=rep(responseday,2), y=c(-10000,1000000), lty="dashed", col="darkgray")
+    text(x=responseday,y=0,"policies begin", col="black", cex=0.8, srt=90, adj=c(-0.5,1))
+
+    for (intervention in interventions) {
+        filename <- paste("Summary-seattle",as.integer(10*r0),"-",intervention,".txt",sep="")
+        if (file.exists(filename)) {
+            temp <- readLines(filename)
+	    csymp <- as.numeric(strsplit(gsub("^.*: ","",temp[grep("Cumulative symptomatic", temp)]),",")[[1]])
+	    nsymp <- c(csymp[1], diff(csymp))
+	    if (plottype=="cumulative") {
+	        y <- csymp
+            } else {
+	        y <- nsymp
+            }
+            lines(x=1:length(y), y=y, col=palinterventions[intervention], lwd=2)
+        }
+    }
+    legend("topleft",
+      legend=c("no intervention", interventions),
+      col=palinterventions, lwd=1.5, cex=0.5, inset=0.01)
+}
+```
+
+\clearpage
+# References
+
+* Chao DL, Halloran ME, Obenchain VJ, Longini IM Jr.
+  FluTE, a publicly available stochastic influenza epidemic simulation model.
+  PLoS Comput Biol. 2010 Jan 29;6(1):e1000656. doi: 10.1371/journal.pcbi.1000656
+* Germann TC, Kadau K, Longini IM Jr, Macken CA.
+  Mitigation strategies for pandemic influenza in the United States.
+  Proc Natl Acad Sci U S A. 2006 Apr 11;103(15):5935-40.
+* Germann TC, Gao H, Gambhir M, Plummer A, Biggerstaff M, Reed C, Uzicanin A. School dismissal as a pandemic influenza response: When, where and for how long? Epidemics. 2019 Sep;28:100348. doi: 10.1016/j.epidem.2019.100348.
+* Halloran ME, Ferguson NM, Eubank S, Longini IM Jr, Cummings DA, Lewis B, Xu S, Fraser C, Vullikanti A, Germann TC, Wagener D, Beckman R, Kadau K, Barrett C, Macken CA, Burke DS, Cooley P.
+  Modeling targeted layered containment of an influenza pandemic in the United States. Proc Natl Acad Sci U S A. 2008 Mar 25;105(12):4639-44. doi: 10.1073/pnas.0706849105.

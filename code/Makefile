@@ -32,14 +32,14 @@ bnldev.o: bnldev.c bnldev.h Makefile
 	$(CC) $(CFLAGS) $(OPTI) $(INCLUDES) $(DEFINES) -c bnldev.c -o bnldev.o
 
 zip: *.c *.cpp *.h Makefile
-	cd ../..; zip corvid/corvid.zip corvid/README corvid/LICENSE corvid/gpl.txt corvid/HISTORY corvid/code/Makefile corvid/code/*.cpp corvid/code/*.c corvid/code/*.h corvid/corviddata/one-*dat corvid/corviddata/seattle-*dat corvid/corviddata/la-*dat corvid/configfiles/*
+	cd ../..; zip corvid/corvid.zip corvid/README corvid/LICENSE corvid/gpl.txt corvid/HISTORY corvid/code/Makefile corvid/code/*.cpp corvid/code/*.c corvid/code/*.h corvid/corviddata/one-*dat corvid/corviddata/seattle-*dat corvid/corviddata/la-*dat corvid/sampleconfigfiles/*
 
-# makes directory ../corviddemo/ and runs several Seattle scenarios
+# makes directory ../corvid-guide/ and runs several Seattle scenarios
 demo: corvid
-	rm -rf ../corviddemo
-	mkdir ../corviddemo
-	cd ../corviddemo; ln -s ../code/corvid .; ln -s ../corviddata/seattle* .; ln -s ../configfiles/config-seattle26* .
-	cd ../corviddemo; ./corvid config-seattle26; ./corvid config-seattle26-closeallschools; ./corvid config-seattle26-isolation;  ./corvid config-seattle26-liberalleave; ./corvid config-seattle26-quarantine; ./corvid config-seattle26-workfromhome
+#	rm -rf ../corvid-guide
+	mkdir -p ../corvid-guide
+	cd ../corvid-guide; ln -s ../code/corvid .; ln -s ../corviddata/seattle* .; ln -s ../sampleconfigfiles/config-seattle26* .; ln -s ../scripts/corvid-guide/corvid-guide.Rmd .
+	cd ../corvid-guide; ./corvid config-seattle26; ./corvid config-seattle26-closeallschools; ./corvid config-seattle26-isolation;  ./corvid config-seattle26-liberalleave; ./corvid config-seattle26-quarantine; ./corvid config-seattle26-workfromhome
 
 # makes directory ../cdcmarch2020/ and runs several Seattle scenarios in response to the CDC coronavirus Modeling Team
 # The runs will take hours. You might want to customize the run script to take advantage of computer resources better than my own.
