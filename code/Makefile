@@ -35,10 +35,10 @@ zip: *.c *.cpp *.h Makefile
 	cd ../..; zip corvid/corvid.zip corvid/README corvid/LICENSE corvid/gpl.txt corvid/HISTORY corvid/code/Makefile corvid/code/*.cpp corvid/code/*.c corvid/code/*.h corvid/corviddata/one-*dat corvid/corviddata/seattle-*dat corvid/corviddata/la-*dat corvid/sampleconfigfiles/*
 
 # makes directory ../corvid-guide/ and runs several Seattle scenarios
-demo: corvid
+guide: corvid
 #	rm -rf ../corvid-guide
 	mkdir -p ../corvid-guide
-	cd ../corvid-guide; ln -s ../code/corvid .; ln -s ../corviddata/seattle* .; ln -s ../sampleconfigfiles/config-seattle26* .; ln -s ../scripts/corvid-guide/corvid-guide.Rmd .
+	cd ../corvid-guide; ln -s ../code/corvid .; ln -s ../corviddata/seattle* .; cp ../sampleconfigfiles/config-seattle26* .; cp ../scripts/corvid-guide/corvid-guide.Rmd .
 	cd ../corvid-guide; ./corvid config-seattle26; ./corvid config-seattle26-closeallschools; ./corvid config-seattle26-isolation;  ./corvid config-seattle26-liberalleave; ./corvid config-seattle26-quarantine; ./corvid config-seattle26-workfromhome
 
 # makes directory ../cdcmarch2020/ and runs several Seattle scenarios in response to the CDC coronavirus Modeling Team
@@ -61,7 +61,7 @@ schoolclosuremarch2020: corvid
 emacs:
 	emacs Makefile *.h *.c *.cpp &
 
-# does not clear out the demo or other directories
+# does not clear out the guide or other directories
 clean:
 	rm -f *.o corvid R0corvid *~
 	rm -f Summary? Tracts? Log? Individuals?

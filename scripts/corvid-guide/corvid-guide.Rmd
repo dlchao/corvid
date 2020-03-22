@@ -21,18 +21,18 @@ The code is available at https://github.com/dlchao/corvid.
 # Compiling and running corvid
 
 Corvid is written in C++ and can be compiled using the Makefile in the "code/" directory.
-Just type "make corvid" or just "make" to make the executable. This just compiles the C++ and links the object files.
+Just type "make corvid" or just "make" to make the executable. This just compiles the C++ and links the object files to produce the "corvid" executable.
 
 Here is a simple config file, "config-seattle26":
 ```{r print-configfile, echo=FALSE}
 temp <- readLines("config-seattle26")
-#print(temp)
 cat(temp, sep="\n")
 ```
 
 This config file tells Corvid that you want to use the Seattle-based population,
 set R0=2.6, run the simulation for 180 days starting with 5 infected people, and don't add more infected people each day. It also specifies the random number seed, which you will need to vary if you want to see the effects of stochasticity on the outputs. The random number seed also affects the generation of the synthetic population, as described below.
 Just run "./corvid config-seattle26", and in about 10 minutes, it will output 4 files, whose names are specified in the config file.
+A full list of configuration parameters is in the README.
 
 \clearpage
 
@@ -47,7 +47,7 @@ The "Tracts" file outputs the number of people in the synthetic population who l
 
 The "Log" file outputs the symptomatic and infection prevalence as well as the cumulative symptomatic for each census tract each day. Note that the symptomatic prevalence is not the symptomatic incidence (new cases).
 
-The "Individuals" file is not normally output because it can be large, but "config-seattle26" tells Corvid to output it by specifying "individualfile 1", where "1" means output the file and "0" or not specifying this parameter will cause it not to be output. The "individuals" file outputs one line per individual in the synthetic population, which can allow you to inspect family structures, determine where and when each person was infected, and build infection trees.
+The "Individuals" file is not normally generated because it can be large, but "config-seattle26" tells Corvid to output it by specifying "individualfile 1", where "1" means output the file and "0" or not specifying this parameter will cause it not to be output. The "individuals" file outputs one line per individual in the synthetic population, which can allow you to inspect household structures, determine where and when each person was infected, and build infection trees.
 
 ```{r load-seattle, echo=FALSE}
 library(knitr)
@@ -81,6 +81,7 @@ individuals.seattle26$generationtime[individuals.seattle26$infectedtime<=0] <- N
 
 # Parsing Corvid output files
 
+Here, we parse Corvid output files to generate summary statistics and plots.
 The "config-seattle26" tells Corvid to use the Seattle-like population, based on 2000 Census data of metropolitan Seattle.
 The synthetic population has `r as.integer(sum(tracts.seattle$pop))` residing in `r nrow(tracts.seattle)` census tracts.
 Tracts have `r min(tracts.seattle$pop)` to `r as.integer(max(tracts.seattle$pop))` people living in them, and `r min(tracts.seattle$workers)` to `r as.integer(max(tracts.seattle$workers))` people working in them.
@@ -202,9 +203,9 @@ cat(temp, sep="\n")
 
 The "compliance" of work-from-home is set to 0.6, which is the fraction of workers who decide to work from home.
 Compliance for other interventions is set in the same way (except for school closures).
-There is no option (yet) to turn off most interventions when activated.
+There is no option (yet) to turn off most interventions after they are activated.
 
-School closure is the only intervention with a fixed preset-duration.
+School closure is the only intervention with a limited duration.
 Here's the configuration file "config-seattle26-closeallschools" for shutting down all schools for 14 days starting on day 60:
 ```{r print-configfile-schoolclosure, echo=FALSE}
 temp <- readLines("config-seattle26-closeallschools")
@@ -231,7 +232,7 @@ for (plottype in c("symptomatic", "cumulative")) {
         y <- newlysymptomatic.seattle26
     }
     days <- 1:length(y)
-    plot(x=days, y=y, xlab="days", ylab=paste(ifelse(plottype=="cumulative","cumulative","daily new"),"symptomatic"), main=paste("Non-pharmaceutical interventions, R0=",r0,sep=""), xlim=c(0,180), type="l", lwd=0.5, col="black", cex.main=0.8, cex.lab=0.8, cex.axis=0.65, axes=FALSE)
+    plot(x=days, y=y, xlab="days", ylab=paste(ifelse(plottype=="cumulative","cumulative","daily new"),"symptomatic"), main=paste("Non-pharmaceutical interventions, R0=",r0,sep=""), xlim=c(0,180), type="l", lwd=0.5, col="black", cex.main=0.75, cex.lab=0.8, cex.axis=0.65, axes=FALSE)
     polygon(x=c(days,max(days), 0), y=c(y,0,0), col="gray95", lwd=0.5)
     axis(1, at=seq(0,200,30), cex.axis=0.85)
     axis(2, cex.axis=0.85)
@@ -267,6 +268,5 @@ for (plottype in c("symptomatic", "cumulative")) {
 * Germann TC, Kadau K, Longini IM Jr, Macken CA.
   Mitigation strategies for pandemic influenza in the United States.
   Proc Natl Acad Sci U S A. 2006 Apr 11;103(15):5935-40.
-* Germann TC, Gao H, Gambhir M, Plummer A, Biggerstaff M, Reed C, Uzicanin A. School dismissal as a pandemic influenza response: When, where and for how long? Epidemics. 2019 Sep;28:100348. doi: 10.1016/j.epidem.2019.100348.
 * Halloran ME, Ferguson NM, Eubank S, Longini IM Jr, Cummings DA, Lewis B, Xu S, Fraser C, Vullikanti A, Germann TC, Wagener D, Beckman R, Kadau K, Barrett C, Macken CA, Burke DS, Cooley P.
   Modeling targeted layered containment of an influenza pandemic in the United States. Proc Natl Acad Sci U S A. 2008 Mar 25;105(12):4639-44. doi: 10.1073/pnas.0706849105.

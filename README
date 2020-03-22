@@ -18,7 +18,7 @@ not run on a laptop.
 We include several scripts that we use for reports in the "scripts"
 directory. There are Makefile targets for setting up directories and
 running these scripts. When these runs are completed, you should be
-able to compile the R Markdown scripts (*.Rmd) to generate reports
+able to compile the R Markdown files (*.Rmd) to generate reports
 based on these results.
 
 --------------------------
@@ -27,9 +27,11 @@ based on these results.
 The source code and Makefile are in the "code" directory.
 The Makefile can be used on Linux systems to compile corvid (standard 
 simulator) and R0corvid (version of corvid in which only a single index case
-is infectious). You can also make "demo", which will compile corvid and
-run it in a new directory "corviddemo" using sample configuration files
-for a Seattle-like population.
+is infectious). You can also make "guide", which will compile corvid and
+run it in a new directory "corvid-guide" using sample configuration files
+for a Seattle-like population. You can then use the R Markdown file
+("corvid-guide.Rmd") that parses the outputs from these runs and produces
+a document on how to use Corvid.
 
 The source files are:
   epimodel.cpp - model implementation
