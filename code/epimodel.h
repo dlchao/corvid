@@ -98,9 +98,9 @@ enum {
 };      // status bits for persons (status)
 
 enum {
-  WILLBESYMPTOMATIC = 0x40u, // will become symptomatic if infected
-  WILLBEASCERTAINED = 0x80u // will become ascertained if infected
-};      // status bits for persons (ibits). Note: the first few bits of ibits are used to keep track of withdrawal timers (removed incubation timer from first bits)
+  WILLBESYMPTOMATIC = 0x1u, // will become symptomatic if infected
+  WILLBEASCERTAINED = 0x2u // will become ascertained if infected
+};
 
 enum {
   //  VACCINE2       = 0x1u, // first 3 bits for vaccine ID
@@ -176,6 +176,7 @@ struct Person {
   unsigned char vday;   // vaccination timer (number of days elapsed)
   char nAVTimer;        // antiviral timer (number of tablets left)
   unsigned char nQuarantineTimer; // quarantine timer (number of days left)
+  char nWithdrawDays;   // number of days after symptoms to withdraw
   char nTravelTimer;	// travel time left
   char nDayNeighborhood; // ID of work neighborhood
   unsigned int nDayTract;        // ID of daytime (work, school) tract
@@ -244,11 +245,11 @@ struct Person {
   friend inline bool getWillBeSymptomatic(const Person &p) { return p.ibits&WILLBESYMPTOMATIC; }
   friend inline bool getWillBeAscertained(const Person &p) { return p.ibits&WILLBEASCERTAINED; }
   friend inline int getIncubationDays(const Person &p) { return p.nIncubationDays; }
-  friend inline unsigned int getWithdrawDays(const Person &p) { return (p.ibits>>3)&0x7u; } // if 0, then will not withdraw.  otherwise, withdraw this many days after symptoms
+  friend inline unsigned int getWithdrawDays(const Person &p) { return p.nWithdrawDays; } // if 0, then will not withdraw.  otherwise, withdraw this many days after symptoms
   friend inline void setWillBeSymptomatic(Person &p) {p.ibits|=WILLBESYMPTOMATIC; }
   friend inline void setWillBeAscertained(Person &p) {p.ibits|=WILLBEASCERTAINED; }
   friend inline void setIncubationDays(Person &p, unsigned int x) { p.nIncubationDays=x; }
-  friend inline void setWithdrawDays(Person &p, unsigned int x) {p.ibits=(p.ibits&0xC7u)|(x<<3); }
+  friend inline void setWithdrawDays(Person &p, char x) {p.nWithdrawDays=x; }
 
   // person.vbits accessor functions (miscellaneous state)
   friend inline void setWhichVaccine(Person &p, unsigned char nWhich) { assert(nWhich<16); p.vbits|=nWhich; } // set which vaccine did this person got (0-15, where 0 is the default vaccine)

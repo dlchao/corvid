@@ -929,7 +929,7 @@ void EpiModel::infect(Person& p) {
       }
     }
     assert(getIncubationDays(p)>0);
-    if (rn<fSymptomaticProb*fSymptomaticAscertainment) { // will be ascertained
+    if (fSymptomaticAscertainment==1.0 || rn<fSymptomaticProb*fSymptomaticAscertainment) { // will be ascertained
       setWillBeAscertained(p);
     }
     rn2 = get_rand_double;
