@@ -175,7 +175,7 @@ struct Person {
   unsigned char vbits;  // state info for vaccine
   unsigned char vday;   // vaccination timer (number of days elapsed)
   char nAVTimer;        // antiviral timer (number of tablets left)
-  unsigned char nQuarantineTimer; // quarantine timer (number of days left)
+  char nQuarantineTimer; // quarantine timer (number of days left)
   char nWithdrawDays;   // number of days after symptoms to withdraw
   char nTravelTimer;	// travel time left
   char nDayNeighborhood; // ID of work neighborhood
