@@ -281,9 +281,14 @@ Length of household quarantine in days. Default is 14.
 liberalleave : real
 Liberal leave compliance probability. The probability that people will take off from work if they get sick (in addition to the usual probably of staying home when sick). Default is 0, no liberal leave. 
 
+liberalleavedays : integer
+Duration of liberal leave policy in days. Default is 10000.
+
 workfromhome : real
 Working from home compliance probability. The probability that a person who normally goes to work will work from home instead. Default is 0, no work from home.
 
+workfromhomedays : integer
+Duration of work from home policy in days. Default is 10000.
 
 --------------------------
 4. Running corvid

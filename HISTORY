@@ -13,4 +13,4 @@ The parallel computing version was removed, so populations of more than
 Version 0.1 or 0.2 added a "work from home" policy.
 Version 0.3 is the first version the outside world has seen.
 Version 0.4 fixes bug in "liberal leave" that made it happen before the policy was supposed to start and a huge bug in incubation time.
-Version 0.5 adds option for home isolation after ascertainment
+Version 0.5 adds option for home isolation after ascertainment and work policies of limited duration

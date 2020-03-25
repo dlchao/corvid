@@ -75,6 +75,8 @@ class EpiModelParameters {
   int getQuarantineLength() { return nQuarantineLength; }
   double getLiberalLeaveCompliance() { return fLiberalLeaveCompliance; }
   double getWorkFromHomeCompliance() { return fWorkFromHomeCompliance; }
+  int getLiberalLeaveDuration() { return nLiberalLeaveDuration; }
+  int getWorkFromHomeDuration() { return nWorkFromHomeDuration; }
 
   // log files
   bool getIsLogFile() { return (nLogFileInterval>0); }
@@ -170,4 +172,6 @@ class EpiModelParameters {
   int nQuarantineLength;            // length of quarantine in days
   double fLiberalLeaveCompliance;   // probability of individual compliance (set to 0 for no liberal leave)
   double fWorkFromHomeCompliance;   // probability of individual compliance (set to 0 for no work from home)
+  int nLiberalLeaveDuration;   // length of time policy is in effect
+  int nWorkFromHomeDuration;   // length of time policy is in effect
 };
