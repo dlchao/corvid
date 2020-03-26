@@ -128,6 +128,8 @@ EpiModel::EpiModel(EpiModelParameters &params) {
   fQuarantineCompliance=params.getQuarantineCompliance();
   fLiberalLeaveCompliance=params.getLiberalLeaveCompliance();
   fWorkFromHomeCompliance=params.getWorkFromHomeCompliance();
+  nLiberalLeaveDuration=params.getLiberalLeaveDuration();
+  nWorkFromHomeDuration=params.getWorkFromHomeDuration();
   nQuarantineLength=params.getQuarantineLength();
 
   // make cumulative distribution for withdraw probabilities
@@ -158,7 +160,7 @@ EpiModel::EpiModel(EpiModelParameters &params) {
   // assuming linear relationship between 
   // viral load and infectiousness
   double scale = vmax - vmin;
-  scale *= 2.0; // because we will multiply by 2 for symptomatic people and we don't want the product to go above 1.0
+  scale *= fRelativeSymptomaticInfectiousness; // because we don't want the product of vload and fRelativeSymptomaticInfectiousness to go above 1.0
   for (int i = 0; i < VLOADNSUB; i++)
     for (int j = 0; j < VLOADNDAY; j++)
       vload[i][j] = beta * (basevload[i][j] - vmin) / scale;
@@ -302,10 +304,12 @@ void EpiModel::read_tracts(void) {
        it++) {
     Tract &t = *it;
     t.id=nLastTract++;
-    t.status=0;
+    t.status=0; // no interventions in place
     t.nFirstCommunity = nNumCommunities;
     t.nNumResidents=0;
     t.nSchoolClosureTimer=0;
+    t.nLiberalLeaveTimer=0;
+    t.nWorkFromHomeTimer=0;
     for (int i=0; i<9; i++)
       t.bSchoolClosed[i] = false;
     int ncom = int(t.censuspopulation/(double)(Community::TARGETCOMMUNITYSIZE)+0.5);
@@ -456,7 +460,8 @@ void EpiModel::read_workflow(void)
 	    setEssential(p);
 
 	  p.nWorkplace=-1; // assign placeholder workplace
-	  p.nDayNeighborhood=get_rand_uint32 % 4; // work neighborhood
+	  p.nWorkNeighborhood=get_rand_uint32 % 4; // work neighborhood
+	  p.nDayNeighborhood=p.nWorkNeighborhood; // daytime neighborhood
 	  if (flow[fromtract*nNumTractsTotal + nNumTractsTotal-1]==0) {
 	    // no workerflow data for this tract, so work in home tract
 	    p.nDayTract = comm.nTractID;
@@ -531,7 +536,7 @@ void EpiModel::create_person(int nAgeGroup, int nFamilySize, int nFamily, int nH
   p.age   = nAgeGroup;
   p.family= nFamily;
   p.nFamilySize = nFamilySize;
-  p.nHomeNeighborhood=p.nDayNeighborhood=nNeighborhood;
+  p.nHomeNeighborhood=p.nDayNeighborhood=p.nWorkNeighborhood=nNeighborhood;
   p.status = p.iday = p.ibits = p.vbits = p.nTravelTimer = p.sourcetype = 0;
   setSusceptible(p);
   p.sourceid = p.id;
@@ -946,7 +951,9 @@ void EpiModel::infect(Person& p) {
     if (bTrigger && nTimer>=nTriggerTime &&
 	(getWithdrawDays(p)==0 || // doesn't voluntarily withdraw
 	 getWithdrawDays(p)-getIncubationDays(p)>1)) { // would withdraw after more than one day
-      if ((fLiberalLeaveCompliance>0.0 && isWorkingAge(p) && p.nWorkplace>0 && get_rand_double<fLiberalLeaveCompliance) || // will take liberal leave
+      if ((fLiberalLeaveCompliance>0.0 &&
+           isLiberalLeave(tractvec[p.nDayTract-nFirstTract]) && // liberal leave in effect here
+	   isWorkingAge(p) && p.nWorkplace>0 && get_rand_double<fLiberalLeaveCompliance) || // will take liberal leave
 	  (fVoluntaryIsolationCompliance>0.0 && get_rand_double<fVoluntaryIsolationCompliance)) { // voluntary isolation (not ascertained isolation)
 	setWithdrawDays(p,getIncubationDays(p)+1); // stay home the day after symptom onset
       }
@@ -1225,7 +1232,7 @@ void EpiModel::day(void) {
       p.pri *= (1.0-AVEi);
     }
     if (isSymptomatic(p))
-      p.pri *= 2.0;  // symptomatic people are 2 times as infectious
+      p.pri *= fRelativeSymptomaticInfectiousness;  // symptomatic people are 2 times as infectious
     assert(p.pri<=1.0);
     assert(p.prs<=1.0);
   }
@@ -1258,7 +1265,7 @@ void EpiModel::day(void) {
 	p.pri *= (1.0-AVEi);
       }
       if (isSymptomatic(p))
-	p.pri *= 2.0;
+	p.pri *= fRelativeSymptomaticInfectiousness;
       assert(p.pri<=1.0);
       assert(p.prs<=1.0);
     }
@@ -1581,7 +1588,8 @@ void EpiModel::travel_start(void) {
 	traveler.nDayTract = destinationtract;
 	traveler.nHomeComm = destinationcomm;
 	traveler.nDayComm = destinationcomm;
-	traveler.nDayNeighborhood = get_rand_uint32 % 4; // work neighborhood
+	traveler.nWorkNeighborhood = get_rand_uint32 % 4; // work neighborhood
+	traveler.nDayNeighborhood = traveler.nWorkNeighborhood;
 	diff = commvec[destinationcomm].nLastPerson-commvec[destinationcomm].nFirstPerson;
 	if (diff>0) {
 	  // assign a host family to the traveler
@@ -1664,7 +1672,14 @@ void EpiModel::response(void) {
 	}
       }
       if (fWorkFromHomeCompliance>0.0 && !isWorkFromHome(t)) {
-	setWorkFromHome(t);  // activate work from home in tract (not sure if we need to do this, but let's track it just in case)
+	setWorkFromHome(t);  // activate work from home in tract
+	t.nWorkFromHomeTimer = nWorkFromHomeDuration;
+	cout << "Working from home in tract " << t.id << " on day " << (nTimer/2) << " for " << nWorkFromHomeDuration << " days" << endl;
+      }
+      if (fLiberalLeaveCompliance>0.0 && !isLiberalLeave(t)) {
+	setLiberalLeave(t);  // activate liberal leave in tract
+	t.nLiberalLeaveTimer = nLiberalLeaveDuration;
+	cout << "Liberal leave in tract " << t.id << " on day " << (nTimer/2) << " for " << nLiberalLeaveDuration << " days" << endl;
       }
       if (eVaccinationStrategy==MASSVAC && !isVaccinated(t))
 	vaccinate(t);
@@ -1679,7 +1694,7 @@ void EpiModel::response(void) {
 	if ((isWorkingAge(p)) && (p.nWorkplace>=0) &&
 	    (get_rand_double < fWorkFromHomeCompliance)) {
 	  setWorkingFromHome(p);
-	  p.nDayNeighborhood = p.nHomeNeighborhood; // spends time at home now. I will regret this code if we need to let them go back to work.
+	  p.nDayNeighborhood = p.nHomeNeighborhood; // now spends daytime at home
 	}
       }
     }
@@ -1773,6 +1788,43 @@ void EpiModel::response(void) {
 	  for (int i=0; i<9; i++)
 	    setSchoolOpen(t,i);// school is open again
 	  resetAscertained(t,1); // reset school-aged children
+	}
+      }
+    }
+    // are workplace policies done?
+    if ((fLiberalLeaveCompliance>0.0 && nLiberalLeaveDuration>0 && nLiberalLeaveDuration<5000) ||
+	(fWorkFromHomeCompliance>0.0 && nWorkFromHomeDuration>0 && nWorkFromHomeDuration<5000)) { // is liberal leave or work from home an option and of finite duration?
+      bool bBackToWork = false;
+      for (vector< Tract >::iterator it = tractvec.begin();
+	   it != tractvec.end();
+	   it++) {
+	Tract &t = *it;
+	if (isWorkFromHome(t) &&
+	    (--t.nWorkFromHomeTimer)<=0) {
+	  //	  cout << "no more working at home in tract " << t.id << " on day " << nTimer/2 << endl;
+	  clearWorkFromHome(t);// tract goes back to work
+	  bBackToWork = true;
+	}
+	if (isLiberalLeave(t) &&
+	    (--t.nLiberalLeaveTimer)<=0) {
+	  //	  cout << "need to work when sick in tract " << t.id << " on day " << nTimer/2 << endl;
+	  clearLiberalLeave(t);// sick people in this tract don't go home as much
+	}
+      }
+
+      // really inefficient loop to send people back to work
+      if (bBackToWork) { // send people back to work
+	vector< Person >::iterator pend=pvec.end();
+	for (vector< Person >::iterator it = pvec.begin(); 
+	     it != pend;
+	     it++) {
+	  Person &p = *it;
+	  if (isWorkingAge(p) && (p.nWorkplace>=0) &&
+	      isWorkingFromHome(p) &&
+	       isWorkFromHome(tractvec[p.nDayTract-nFirstTract])) {
+	    clearWorkingFromHome(p);
+	    p.nDayNeighborhood = p.nWorkNeighborhood; // now spends daytime at work
+	  }
 	}
       }
     }
@@ -2027,7 +2079,10 @@ void EpiModel::summary(void) {
     outfile << "Ascertained isolation: " << fAscertainedIsolationCompliance << endl;
     outfile << "Quarantine: " << fQuarantineCompliance << endl;
     outfile << "Quarantine duration: " << nQuarantineLength << endl;
-    outfile << "Liberal leave: " << fLiberalLeaveCompliance << endl;
+    outfile << "Liberal leave compliance: " << fLiberalLeaveCompliance << endl;
+    outfile << "Liberal leave duration: " << nLiberalLeaveDuration << endl;
+    outfile << "Work from home compliance: " << fWorkFromHomeCompliance << endl;
+    outfile << "Work from home duration: " << nWorkFromHomeDuration << endl;
     outfile << "Antiviral policy: ";
     if (eAVPolicy==NOAV)
       outfile << "none" << endl;

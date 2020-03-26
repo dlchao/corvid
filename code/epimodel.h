@@ -98,9 +98,9 @@ enum {
 };      // status bits for persons (status)
 
 enum {
-  WILLBESYMPTOMATIC = 0x40u, // will become symptomatic if infected
-  WILLBEASCERTAINED = 0x80u // will become ascertained if infected
-};      // status bits for persons (ibits). Note: the first few bits of ibits are used to keep track of withdrawal timers (removed incubation timer from first bits)
+  WILLBESYMPTOMATIC = 0x1u, // will become symptomatic if infected
+  WILLBEASCERTAINED = 0x2u // will become ascertained if infected
+};
 
 enum {
   //  VACCINE2       = 0x1u, // first 3 bits for vaccine ID
@@ -130,12 +130,6 @@ enum tractstatusbits {
   //  TRAVELRESTRICTED = 0x20u, // reduced long-distance travel
 };      // status bits for census tracts
 
-enum schoolclosurebits {
-  DAYCARECLOSED = 0x1u,
-  ELEMENTARYCLOSED = 0x2u,
-  MIDDLECLOSED = 0x4u,
-  HIGHCLOSED = 0x8u
-};
 
 enum {
   FROMFAMILY       = 1,
@@ -175,9 +169,11 @@ struct Person {
   unsigned char vbits;  // state info for vaccine
   unsigned char vday;   // vaccination timer (number of days elapsed)
   char nAVTimer;        // antiviral timer (number of tablets left)
-  unsigned char nQuarantineTimer; // quarantine timer (number of days left)
+  char nQuarantineTimer; // quarantine timer (number of days left)
+  char nWithdrawDays;   // number of days after symptoms to withdraw
   char nTravelTimer;	// travel time left
   char nDayNeighborhood; // ID of work neighborhood
+  char nWorkNeighborhood; // backup ID of work neighborhood
   unsigned int nDayTract;        // ID of daytime (work, school) tract
   unsigned int nDayComm;         // ID of daytime (work, school) community
   int nWorkplace;	// work or school group
@@ -244,11 +240,11 @@ struct Person {
   friend inline bool getWillBeSymptomatic(const Person &p) { return p.ibits&WILLBESYMPTOMATIC; }
   friend inline bool getWillBeAscertained(const Person &p) { return p.ibits&WILLBEASCERTAINED; }
   friend inline int getIncubationDays(const Person &p) { return p.nIncubationDays; }
-  friend inline unsigned int getWithdrawDays(const Person &p) { return (p.ibits>>3)&0x7u; } // if 0, then will not withdraw.  otherwise, withdraw this many days after symptoms
+  friend inline unsigned int getWithdrawDays(const Person &p) { return p.nWithdrawDays; } // if 0, then will not withdraw.  otherwise, withdraw this many days after symptoms
   friend inline void setWillBeSymptomatic(Person &p) {p.ibits|=WILLBESYMPTOMATIC; }
   friend inline void setWillBeAscertained(Person &p) {p.ibits|=WILLBEASCERTAINED; }
   friend inline void setIncubationDays(Person &p, unsigned int x) { p.nIncubationDays=x; }
-  friend inline void setWithdrawDays(Person &p, unsigned int x) {p.ibits=(p.ibits&0xC7u)|(x<<3); }
+  friend inline void setWithdrawDays(Person &p, char x) {p.nWithdrawDays=x; }
 
   // person.vbits accessor functions (miscellaneous state)
   friend inline void setWhichVaccine(Person &p, unsigned char nWhich) { assert(nWhich<16); p.vbits|=nWhich; } // set which vaccine did this person got (0-15, where 0 is the default vaccine)
@@ -259,6 +255,7 @@ struct Person {
   friend inline void setQuarantined(Person &p) {p.vbits|=ISQUARANTINED;}
   friend inline bool isWorkingFromHome(const Person &p) { return p.vbits&ONWORKFROMHOME; }
   friend inline void setWorkingFromHome(Person &p) {p.vbits|=ONWORKFROMHOME;}
+  friend inline void clearWorkingFromHome(Person &p) {p.vbits&=(~ONWORKFROMHOME);}
   friend inline void clearQuarantined(Person &p) {p.vbits&=(~ISQUARANTINED);}
   friend inline bool isAVProphylaxis(const Person &p) { return p.vbits&AVPROPHYLAXIS; }
   friend inline void setAVProphylaxis(Person &p) {p.vbits|=AVPROPHYLAXIS;}
@@ -326,6 +323,8 @@ struct Tract {
   unsigned int nLastCommunity;   // ID of the last community (+1) in this tract
   int nNumResidents;        // number of residents (population size)
   int nSchoolClosureTimer;
+  int nLiberalLeaveTimer;
+  int nWorkFromHomeTimer;
   
   friend istream& operator>>(istream& is, Tract& t) {
     char p; // because it is a comma separated file
@@ -337,6 +336,7 @@ struct Tract {
   friend inline bool isQuarantine(const Tract &t) { return t.status&TRACTQUARANTINE; }
   friend inline bool isAscertainedIsolation(const Tract &t) { return t.status&TRACTAISOLATION; }
   friend inline bool isWorkFromHome(const Tract &t) { return t.status&TRACTWORKFROMHOME; }
+  friend inline bool isLiberalLeave(const Tract &t) { return t.status&TRACTLIBERALLEAVE; }
   friend inline bool isVaccinated(const Tract &t) { return t.status&TRACTVACCINATED; } 
   friend inline bool isSchoolClosed(const Tract &t, int which) { return t.bSchoolClosed[which]; }
   friend inline void setSchoolClosed(Tract &t, int which) { t.bSchoolClosed[which]=true; }
@@ -344,6 +344,9 @@ struct Tract {
   friend inline void setQuarantine(Tract &t) {t.status|=TRACTQUARANTINE;}
   friend inline void setAscertainedIsolation(Tract &t) {t.status|=TRACTAISOLATION;}
   friend inline void setWorkFromHome(Tract &t) {t.status|=TRACTWORKFROMHOME;}
+  friend inline void clearWorkFromHome(Tract &t) {t.status&=~TRACTWORKFROMHOME;}
+  friend inline void setLiberalLeave(Tract &t) {t.status|=TRACTLIBERALLEAVE;}
+  friend inline void clearLiberalLeave(Tract &t) {t.status&=~TRACTLIBERALLEAVE;}
   friend inline void setVaccinated(Tract &t) {t.status|=TRACTVACCINATED;}
 };
 
@@ -394,7 +397,7 @@ class EpiModel {
   unsigned int nNumPerson;      // number of people on this node
   unsigned int nNumFamilies;    // number of families on this node
   unsigned int nNumCommunities; // number of communities on this node
-  unsigned int nFirstTract;     // id of the first tract on this node
+  unsigned int nFirstTract;     // id of the first tract on this node (should always be 0 in the single-core version)
   unsigned int nLastTract;      // id of the last tract (+1) on this node
   unsigned int nNumTractsTotal; // number of tracts across all CPUs
   double beta; // transmisison parameter
@@ -498,4 +501,6 @@ class EpiModel {
   double nQuarantineLength;         // length of quarantine in days
   double fLiberalLeaveCompliance;   // probability of individual compliance (set to 0 for no liberal leave)
   double fWorkFromHomeCompliance;   // probability of individual compliance (set to 0 for no work from home)
+  int nLiberalLeaveDuration;
+  int nWorkFromHomeDuration;
 };

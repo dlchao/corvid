@@ -35,6 +35,9 @@ const double fStopAntiviralTwoPills = 0.05; // probability that individuals taki
 // symptomatic probability
 double fBaseSymptomaticProb=0.5; // half of infections are symptomatic
 
+// ratio of symptomatic:asymptomatic infectiousness
+double fRelativeSymptomaticInfectiousness = 2.0;
+
 // cdf of duration for incubation period in days
 //const double incubationcdf[14] = {0.0128885,0.06283671,0.1533217,0.2772347,0.4202624,0.5651,0.6961202,0.8029434,
 //				  0.8817976,0.9346127,0.9667359,0.9844785,0.9933733,1.0}; // Weibull from Hellewell et al 2020

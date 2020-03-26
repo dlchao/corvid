@@ -40,6 +40,9 @@ extern const double fStopAntiviralTwoPills; // probability that individuals taki
 // symptomatic probability
 extern double fBaseSymptomaticProb;
 
+// ratio of symptomatic:asymptomatic infectiousness
+extern double fRelativeSymptomaticInfectiousness;
+
 // cdf of duration for incubation period in days
 #define INCUBATIONMAX 14
 extern const double incubationcdf[INCUBATIONMAX];
@@ -55,7 +58,8 @@ extern const double basevload[VLOADNSUB][VLOADNDAY];
 // 28 days for VE buildup
 #define VACCEFFLENGTH 28
 
-// maximum length of a simulation in days (change this if you want longer runs)
+// maximum length of a simulation in days
+// the run length is capped at one year because there are no vital dynamics in the model
 #define MAXRUNLENGTH 365
 
 // travel data
