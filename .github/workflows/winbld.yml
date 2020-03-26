@@ -23,7 +23,7 @@ jobs:
 
     - name: make
       env:
-        OPTI: -03
+        OPTI: -O3
       run: mingw32-make
       working-directory: code
 
