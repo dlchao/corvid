@@ -6,7 +6,7 @@ CCLINKER = g++
 MAKE     = make --no-print-directory
 SHELL    = /bin/sh
 CFLAGS	 = -Wall -Werror -pedantic -DDSFMT_MEXP=19937 -msse2 -DHAVE_SSE2
-# Check if opti was defined
+# Check if OPTI was defined as an environment variable and if so set that
 ifdef OPTI
 OPTI     := $(OPTI)
 else
