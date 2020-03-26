@@ -73,7 +73,7 @@ state FIPS code, county FIPS code, tract FIPS code, number of employed
 20-64 year olds, and the total number of working-age individuals
 (19-64 year olds).
 
-The sample populations are:
+The sample populations, in the corviddata directory, are:
 
 one - a single community of 2000 people.
 
@@ -289,6 +289,12 @@ Working from home compliance probability. The probability that a person who norm
 
 workfromhomedays : integer
 Duration of work from home policy in days. Default is 10000.
+
+communitycontactreduction : real
+Reduction in community transmissibility. Default is 0, no reduction.
+
+communitycontactreductiondays : integer
+Duration of reduction in community contacts policy in days. Default is 10000.
 
 --------------------------
 4. Running corvid

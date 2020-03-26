@@ -131,6 +131,8 @@ EpiModel::EpiModel(EpiModelParameters &params) {
   nLiberalLeaveDuration=params.getLiberalLeaveDuration();
   nWorkFromHomeDuration=params.getWorkFromHomeDuration();
   nQuarantineLength=params.getQuarantineLength();
+  fCommunityContactReduction=params.getCommunityContactReduction();
+  nCommunityContactReductionDuration=params.getCommunityContactReductionDuration();
 
   // make cumulative distribution for withdraw probabilities
   // convert from double to unsigned int for efficiency
@@ -310,6 +312,7 @@ void EpiModel::read_tracts(void) {
     t.nSchoolClosureTimer=0;
     t.nLiberalLeaveTimer=0;
     t.nWorkFromHomeTimer=0;
+    t.nCommunityContactReductionTimer=0;
     for (int i=0; i<9; i++)
       t.bSchoolClosed[i] = false;
     int ncom = int(t.censuspopulation/(double)(Community::TARGETCOMMUNITYSIZE)+0.5);
@@ -1145,9 +1148,9 @@ void EpiModel::dayinfectsusceptibles(const Person &infected, Community &comm) {
 	   isWorkingFromHome(p2)))
 	casualmultiplier2 = 2.0;      // susceptible's casual contacts double for out-of-school children and adults working from home
 
-      if (!isQuarantined(p2) && !infect(p2,infected,comm.daycpcm[p2.age]*casualmultiplier2,FROMCOMMUNITY)) { // transmission within community
+      if (!isQuarantined(p2) && !infect(p2,infected,(isCommunityContactReduction(tractvec[comm.nTractID-nFirstTract])?(1.0-fCommunityContactReduction):1.0)*comm.daycpcm[p2.age]*casualmultiplier2,FROMCOMMUNITY)) { // transmission within community
 	if (infected.nDayNeighborhood==p2.nDayNeighborhood)  // transmission within neighborhood
-	  if (infect(p2,infected,comm.daycpnh[p2.age]*casualmultiplier2,FROMNEIGHBORHOOD))
+	  if (infect(p2,infected,(isCommunityContactReduction(tractvec[comm.nTractID-nFirstTract])?(1.0-fCommunityContactReduction):1.0)*comm.daycpnh[p2.age]*casualmultiplier2,FROMNEIGHBORHOOD))
 	    continue;
 	if (isChild(infected)) {  // transmitter is child
 	  if (bInfectedIsAtSchool && isChild(p2) && infected.nWorkplace==p2.nWorkplace)
@@ -1166,9 +1169,9 @@ void EpiModel::dayinfectsusceptibles(const Person &infected, Community &comm) {
        it++) {
     Person &p2 = pvec[*it];
     if (isSusceptible(p2) && !isQuarantined(p2) && !isWorkingFromHome(p2) && p2.nTravelTimer<=0) {
-      if (!infect(p2,infected,comm.daycpcm[p2.age]*casualmultiplier,FROMCOMMUNITY)) { // transmission within community
+      if (!infect(p2,infected,(isCommunityContactReduction(tractvec[comm.nTractID-nFirstTract])?(1.0-fCommunityContactReduction):1.0)*comm.daycpcm[p2.age]*casualmultiplier,FROMCOMMUNITY)) { // transmission within community
 	if (infected.nDayNeighborhood==p2.nDayNeighborhood)  // transmission within neighborhood
-	  if (infect(p2,infected,comm.daycpnh[p2.age]*casualmultiplier,FROMNEIGHBORHOOD))
+	  if (infect(p2,infected,(isCommunityContactReduction(tractvec[comm.nTractID-nFirstTract])?(1.0-fCommunityContactReduction):1.0)*comm.daycpnh[p2.age]*casualmultiplier,FROMNEIGHBORHOOD))
 	    continue;
 	if (isWorkingAge(infected) && infected.nWorkplace==p2.nWorkplace) {
 	  // transmit to coworkers from other tracts
@@ -1188,9 +1191,9 @@ void EpiModel::dayinfectsusceptibles(const Person &infected, Community &comm) {
       assert(p2.nDayComm==comm.id);
       assert(p2.nTravelTimer>0);
       if (isSusceptible(p2)) { // && !isQuarantined(p2)) {
-	if (!infect(p2,infected,comm.daycpcm[p2.age]*casualmultiplier,FROMCOMMUNITY)) { // transmission within community
+	if (!infect(p2,infected,(isCommunityContactReduction(tractvec[comm.nTractID-nFirstTract])?(1.0-fCommunityContactReduction):1.0)*comm.daycpcm[p2.age]*casualmultiplier,FROMCOMMUNITY)) { // transmission within community
 	  if (infected.nDayNeighborhood==p2.nDayNeighborhood)  // transmission work neighborhood
-	    if (infect(p2,infected,comm.daycpnh[p2.age]*casualmultiplier,FROMNEIGHBORHOOD))
+	    if (infect(p2,infected,(isCommunityContactReduction(tractvec[comm.nTractID-nFirstTract])?(1.0-fCommunityContactReduction):1.0)*comm.daycpnh[p2.age]*casualmultiplier,FROMNEIGHBORHOOD))
 	      continue;
 	  if (isWorkingAge(infected) && isWorkingAge(p2) && infected.nWorkplace==p2.nWorkplace && p2.nWorkplace>0)
 	    infect(p2,infected,cpw,FROMWORK);
@@ -1327,12 +1330,12 @@ void EpiModel::nightinfectsusceptibles(const Person &infected, Community &comm) 
 	  continue;
       if (!isWithdrawn(infected) && !isQuarantined(infected) && !isQuarantined(p2)) {
 	assert(infected.nHomeComm==p2.nHomeComm);
-	if (!infect(p2,infected,comm.cpcm[p2.age],FROMCOMMUNITYNIGHT)) { // transmission within home community
+	if (!infect(p2,infected,(isCommunityContactReduction(tractvec[comm.nTractID-nFirstTract])?(1.0-fCommunityContactReduction):1.0)*comm.cpcm[p2.age],FROMCOMMUNITYNIGHT)) { // transmission within home community
 	  if (infected.nHomeNeighborhood==p2.nHomeNeighborhood) // transmission within neighborhood
-	    if (infect(p2,infected,comm.cpnh[p2.age],FROMNEIGHBORHOODNIGHT))
+	    if (infect(p2,infected,(isCommunityContactReduction(tractvec[comm.nTractID-nFirstTract])?(1.0-fCommunityContactReduction):1.0)*comm.cpnh[p2.age],FROMNEIGHBORHOODNIGHT))
 	      continue;
 	  if (infected.householdcluster==p2.householdcluster) // transmission within household cluster
-	    infect(p2,infected,cphc[p2.age],FROMHHCLUSTERNIGHT);
+	    infect(p2,infected,(isCommunityContactReduction(tractvec[comm.nTractID-nFirstTract])?(1.0-fCommunityContactReduction):1.0)*cphc[p2.age],FROMHHCLUSTERNIGHT);
 	}
       }
     }
@@ -1351,12 +1354,12 @@ void EpiModel::nightinfectsusceptibles(const Person &infected, Community &comm) 
 	    continue;
 	if (!isWithdrawn(infected) && !isQuarantined(infected) && !isQuarantined(p2)) {
 	  assert(infected.nHomeComm==p2.nHomeComm);
-	  if (!infect(p2,infected,comm.cpcm[p2.age],FROMCOMMUNITYNIGHT)) { // transmission within home community
+	  if (!infect(p2,infected,(isCommunityContactReduction(tractvec[comm.nTractID-nFirstTract])?(1.0-fCommunityContactReduction):1.0)*comm.cpcm[p2.age],FROMCOMMUNITYNIGHT)) { // transmission within home community
 	    if (infected.nHomeNeighborhood==p2.nHomeNeighborhood) // transmission within neighborhood
-	      if (infect(p2,infected,comm.cpnh[p2.age],FROMNEIGHBORHOODNIGHT))
+	      if (infect(p2,infected,(isCommunityContactReduction(tractvec[comm.nTractID-nFirstTract])?(1.0-fCommunityContactReduction):1.0)*comm.cpnh[p2.age],FROMNEIGHBORHOODNIGHT))
 		continue;
 	    if (infected.householdcluster==p2.householdcluster) // transmission within household cluster
-	      infect(p2,infected,cphc[p2.age],FROMHHCLUSTERNIGHT);
+	      infect(p2,infected,(isCommunityContactReduction(tractvec[comm.nTractID-nFirstTract])?(1.0-fCommunityContactReduction):1.0)*cphc[p2.age],FROMHHCLUSTERNIGHT);
 	  }
 	}
       }
@@ -1442,7 +1445,10 @@ void EpiModel::night(void) {
 	if (p.iday>=VLOADNDAY) {
 	  if (isSymptomatic(p))
 	    comm.nsym[p.age]--;
-	  p.status &= ~(SUSCEPTIBLE|INFECTED|SYMPTOMATIC|WITHDRAWN); // recovered
+	  clearSymptomatic(p); // recovered
+	  clearSusceptible(p); // recovered
+	  clearInfected(p);    // recovered
+	  clearWithdrawn(p);   // recovered
 	  comm.ninf[p.age]--;
 	  p.iday=0;
 	}
@@ -1486,7 +1492,10 @@ void EpiModel::night(void) {
 	  }
 	  p.iday++;
 	  if (p.iday>=VLOADNDAY) {
-	    p.status&=~(SUSCEPTIBLE|INFECTED|SYMPTOMATIC|WITHDRAWN); // recovered
+	    clearSymptomatic(p); // recovered
+	    clearSusceptible(p); // recovered
+	    clearInfected(p);    // recovered
+	    clearWithdrawn(p);   // recovered
 	    p.iday=0;
 	  }
 	}
@@ -1671,15 +1680,20 @@ void EpiModel::response(void) {
 	    setSchoolClosed(t,i);// activate school closures
 	}
       }
-      if (fWorkFromHomeCompliance>0.0 && !isWorkFromHome(t)) {
+      if (fWorkFromHomeCompliance>0.0 && nWorkFromHomeDuration>0 && !isWorkFromHome(t)) {
 	setWorkFromHome(t);  // activate work from home in tract
 	t.nWorkFromHomeTimer = nWorkFromHomeDuration;
 	cout << "Working from home in tract " << t.id << " on day " << (nTimer/2) << " for " << nWorkFromHomeDuration << " days" << endl;
       }
-      if (fLiberalLeaveCompliance>0.0 && !isLiberalLeave(t)) {
+      if (fLiberalLeaveCompliance>0.0 && nLiberalLeaveDuration>0 && !isLiberalLeave(t)) {
 	setLiberalLeave(t);  // activate liberal leave in tract
 	t.nLiberalLeaveTimer = nLiberalLeaveDuration;
 	cout << "Liberal leave in tract " << t.id << " on day " << (nTimer/2) << " for " << nLiberalLeaveDuration << " days" << endl;
+      }
+      if (fCommunityContactReduction>0.0 && nCommunityContactReductionDuration>0 && !isCommunityContactReduction(t)) {
+	setCommunityContactReduction(t);  // activate community contact reduction in tract
+	t.nCommunityContactReductionTimer = nCommunityContactReductionDuration;
+	cout << "Community contact reduction of " << 100*fCommunityContactReduction << "% in tract " << t.id << " on day " << (nTimer/2) << " for " << nCommunityContactReductionDuration << " days" << endl;
       }
       if (eVaccinationStrategy==MASSVAC && !isVaccinated(t))
 	vaccinate(t);
@@ -1791,9 +1805,10 @@ void EpiModel::response(void) {
 	}
       }
     }
-    // are workplace policies done?
+    // are non-school NPIs done?
     if ((fLiberalLeaveCompliance>0.0 && nLiberalLeaveDuration>0 && nLiberalLeaveDuration<5000) ||
-	(fWorkFromHomeCompliance>0.0 && nWorkFromHomeDuration>0 && nWorkFromHomeDuration<5000)) { // is liberal leave or work from home an option and of finite duration?
+	(fWorkFromHomeCompliance>0.0 && nWorkFromHomeDuration>0 && nWorkFromHomeDuration<5000) ||
+        (fCommunityContactReduction>0.0 && nCommunityContactReductionDuration>0 && nCommunityContactReductionDuration<5000)) { // is liberal leave or work from home an option and of finite duration?
       bool bBackToWork = false;
       for (vector< Tract >::iterator it = tractvec.begin();
 	   it != tractvec.end();
@@ -1810,6 +1825,10 @@ void EpiModel::response(void) {
 	  //	  cout << "need to work when sick in tract " << t.id << " on day " << nTimer/2 << endl;
 	  clearLiberalLeave(t);// sick people in this tract don't go home as much
 	}
+	if (isCommunityContactReduction(t) &&
+	    (--t.nCommunityContactReductionTimer)<=0) {
+	  clearCommunityContactReduction(t);// resume community contacts in this tract
+	}
       }
 
       // really inefficient loop to send people back to work
@@ -1821,7 +1840,7 @@ void EpiModel::response(void) {
 	  Person &p = *it;
 	  if (isWorkingAge(p) && (p.nWorkplace>=0) &&
 	      isWorkingFromHome(p) &&
-	       isWorkFromHome(tractvec[p.nDayTract-nFirstTract])) {
+	       !isWorkFromHome(tractvec[p.nDayTract-nFirstTract])) {
 	    clearWorkingFromHome(p);
 	    p.nDayNeighborhood = p.nWorkNeighborhood; // now spends daytime at work
 	  }
@@ -2083,6 +2102,8 @@ void EpiModel::summary(void) {
     outfile << "Liberal leave duration: " << nLiberalLeaveDuration << endl;
     outfile << "Work from home compliance: " << fWorkFromHomeCompliance << endl;
     outfile << "Work from home duration: " << nWorkFromHomeDuration << endl;
+    outfile << "Community contact reduction: " << fCommunityContactReduction << endl;
+    outfile << "Community contact reduction duration: " << nCommunityContactReductionDuration << endl;
     outfile << "Antiviral policy: ";
     if (eAVPolicy==NOAV)
       outfile << "none" << endl;

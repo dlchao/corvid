@@ -77,6 +77,8 @@ class EpiModelParameters {
   double getWorkFromHomeCompliance() { return fWorkFromHomeCompliance; }
   int getLiberalLeaveDuration() { return nLiberalLeaveDuration; }
   int getWorkFromHomeDuration() { return nWorkFromHomeDuration; }
+  double getCommunityContactReduction() { return fCommunityContactReduction; }
+  int getCommunityContactReductionDuration() { return nCommunityContactReductionDuration; }
 
   // log files
   bool getIsLogFile() { return (nLogFileInterval>0); }
@@ -174,4 +176,6 @@ class EpiModelParameters {
   double fWorkFromHomeCompliance;   // probability of individual compliance (set to 0 for no work from home)
   int nLiberalLeaveDuration;   // length of time policy is in effect
   int nWorkFromHomeDuration;   // length of time policy is in effect
+  double fCommunityContactReduction; // reduction in community contacts
+  int nCommunityContactReductionDuration; // how long to reduce community contacts
 };

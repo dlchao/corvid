@@ -62,8 +62,10 @@ EpiModelParameters::EpiModelParameters(const char *configname) {
   nQuarantineLength=14; // default 14-day quarantine
   fLiberalLeaveCompliance=0.0;
   fWorkFromHomeCompliance=0.0;
+  fCommunityContactReduction=0.0;
   nLiberalLeaveDuration=10000;
   nWorkFromHomeDuration=10000;
+  nCommunityContactReductionDuration=10000;
   nAscertainmentDelay = 1;
   fSymptomaticAscertainment=0.8;
   fAdultEssentialFraction = 0.0;
@@ -470,12 +472,16 @@ bool EpiModelParameters::readConfigFile(const char *configname) {
 	    read_config_int(nQuarantineLength, iss, "quarantine length");
 	} else if (param.compare("liberalleave")==0) {
 	    read_config_double(fLiberalLeaveCompliance, iss, "liberal leave compliance probability", 0.0, 1.0);
+	} else if (param.compare("liberalleavedays")==0) {
+	    read_config_int(nLiberalLeaveDuration, iss, "liberal leave duration");
 	} else if (param.compare("workfromhome")==0) {
 	    read_config_double(fWorkFromHomeCompliance, iss, "work from home compliance probability", 0.0, 1.0);
 	} else if (param.compare("workfromhomedays")==0) {
 	    read_config_int(nWorkFromHomeDuration, iss, "work from home duration");
-	} else if (param.compare("liberalleavedays")==0) {
-	    read_config_int(nLiberalLeaveDuration, iss, "liberal leave duration");
+	} else if (param.compare("communitycontactreduction")==0) {
+	    read_config_double(fCommunityContactReduction, iss, "community contact reduction", 0.0, 1.0);
+	} else if (param.compare("communitycontactreductiondays")==0) {
+	    read_config_int(nCommunityContactReductionDuration, iss, "community contact reduction duration");
 	} else if (param.compare("preexistingimmunityprotection")==0) {
 	    read_config_double(fPreexistingImmunityProtection, iss, "protection for those with pre-existing immunity", 0.0, 1.0);
 	} else if (param.compare("preexistingimmunitybyage")==0) {

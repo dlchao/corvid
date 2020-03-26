@@ -126,7 +126,8 @@ enum tractstatusbits {
   TRACTWORKFROMHOME = 0x8u,     // work from home policy for workers
   TRACTVACCINATED = 0x10u, // tract-wide vaccination
   TRACTQUARANTINE = 0x20u,  // household quarantine active in this tract
-  TRACTAISOLATION = 0x40u  // ascertained isolation active in this tract
+  TRACTAISOLATION = 0x40u,  // ascertained isolation active in this tract
+  TRACTNIGHTREDUCTION = 0x80u  // reduce nighttime contacts
   //  TRAVELRESTRICTED = 0x20u, // reduced long-distance travel
 };      // status bits for census tracts
 
@@ -227,7 +228,9 @@ struct Person {
   friend inline bool isAntiviral(const Person &p) { return p.status&ANTIVIRAL; }
   friend inline bool isSymptomatic(const Person &p) { return p.status&SYMPTOMATIC; }
   friend inline void setSymptomatic(Person &p) {p.status|=SYMPTOMATIC;}
+  friend inline void clearSymptomatic(Person &p) {p.status&=(~SYMPTOMATIC);}
   friend inline void setInfected(Person &p) {p.status|=INFECTED;}
+  friend inline void clearInfected(Person &p) {p.status&=(~INFECTED);}
   friend inline void setVaccinated(Person &p) {p.status|=VACCINATED;}
   friend inline void setBoosted(Person &p) {p.status|=BOOSTED;}
   friend inline void setAntiviral(Person &p) {p.status|=ANTIVIRAL;}
@@ -251,6 +254,7 @@ struct Person {
   friend inline unsigned char whichVaccine(const Person &p) { return p.vbits&0x0F; }	// which vaccine did this person get?
   friend inline bool isWithdrawn(const Person &p) { return p.vbits&WITHDRAWN; }
   friend inline void setWithdrawn(Person &p) {p.vbits|=WITHDRAWN;}
+  friend inline void clearWithdrawn(Person &p) {p.vbits&=(~WITHDRAWN);}
   friend inline bool isQuarantined(const Person &p) { return p.vbits&ISQUARANTINED; }
   friend inline void setQuarantined(Person &p) {p.vbits|=ISQUARANTINED;}
   friend inline bool isWorkingFromHome(const Person &p) { return p.vbits&ONWORKFROMHOME; }
@@ -325,6 +329,7 @@ struct Tract {
   int nSchoolClosureTimer;
   int nLiberalLeaveTimer;
   int nWorkFromHomeTimer;
+  int nCommunityContactReductionTimer;
   
   friend istream& operator>>(istream& is, Tract& t) {
     char p; // because it is a comma separated file
@@ -337,6 +342,7 @@ struct Tract {
   friend inline bool isAscertainedIsolation(const Tract &t) { return t.status&TRACTAISOLATION; }
   friend inline bool isWorkFromHome(const Tract &t) { return t.status&TRACTWORKFROMHOME; }
   friend inline bool isLiberalLeave(const Tract &t) { return t.status&TRACTLIBERALLEAVE; }
+  friend inline bool isCommunityContactReduction(const Tract &t) { return t.status&TRACTNIGHTREDUCTION; }
   friend inline bool isVaccinated(const Tract &t) { return t.status&TRACTVACCINATED; } 
   friend inline bool isSchoolClosed(const Tract &t, int which) { return t.bSchoolClosed[which]; }
   friend inline void setSchoolClosed(Tract &t, int which) { t.bSchoolClosed[which]=true; }
@@ -348,6 +354,8 @@ struct Tract {
   friend inline void setLiberalLeave(Tract &t) {t.status|=TRACTLIBERALLEAVE;}
   friend inline void clearLiberalLeave(Tract &t) {t.status&=~TRACTLIBERALLEAVE;}
   friend inline void setVaccinated(Tract &t) {t.status|=TRACTVACCINATED;}
+  friend inline void setCommunityContactReduction(Tract &t) {t.status|=TRACTNIGHTREDUCTION;}
+  friend inline void clearCommunityContactReduction(Tract &t) {t.status&=(~TRACTNIGHTREDUCTION);}
 };
 
 class EpiModel {
@@ -500,7 +508,9 @@ class EpiModel {
   double fQuarantineCompliance;     // probability of individual compliance (set to 0 for no quarantine)
   double nQuarantineLength;         // length of quarantine in days
   double fLiberalLeaveCompliance;   // probability of individual compliance (set to 0 for no liberal leave)
-  double fWorkFromHomeCompliance;   // probability of individual compliance (set to 0 for no work from home)
   int nLiberalLeaveDuration;
+  double fWorkFromHomeCompliance;   // probability of individual compliance (set to 0 for no work from home)
   int nWorkFromHomeDuration;
+  double fCommunityContactReduction; // reduction in nighttime contacts (excluding household)
+  int nCommunityContactReductionDuration;  // how long to reduce nighttime contacts
 };
