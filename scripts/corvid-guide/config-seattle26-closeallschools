@@ -1,0 +1,14 @@
+# metro seattle with total school closure on day 60
+label example-seattle-26-closeallschools
+datafile seattle
+R0 2.6
+runlength 180
+summaryfilename Summary-seattle26-closeallschools.txt
+logfilename Log-seattle26-closeallschools.txt
+tractfilename Tracts-seattle26-closeallschools.txt
+randomnumberseed 1
+seedinfected 5
+seedinfecteddaily 0
+responseday 60
+schoolclosurepolicy all
+schoolclosuredays 14

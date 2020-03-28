@@ -1,0 +1,14 @@
+# basic configuration file for metro seattle
+label example-seattle-26
+datafile seattle
+R0 2.6
+runlength 180
+summaryfilename Summary-seattle26.txt
+logfilename Log-seattle26.txt
+tractfilename Tracts-seattle26.txt
+individualfilename Individuals-seattle26.txt
+individualfile 1
+randomnumberseed 1
+seedinfected 5
+seedinfecteddaily 0
+responsethreshold 1

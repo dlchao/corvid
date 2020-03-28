@@ -1,0 +1,13 @@
+# metro seattle with liberal leave
+label example-seattle-26-liberalleave
+datafile seattle
+R0 2.6
+runlength 180
+summaryfilename Summary-seattle26-liberalleave.txt
+logfilename Log-seattle26-liberalleave.txt
+tractfilename Tracts-seattle26-liberalleave.txt
+randomnumberseed 1
+seedinfected 5
+seedinfecteddaily 0
+responseday 60
+liberalleave 0.6

@@ -1,0 +1,19 @@
+# configuration file for metro seattle where schools close after 10% of the population is symptomatic
+label seattle-21-threshold
+datafile seattle
+R0 2.1
+runlength 180
+summaryfilename Summary-seattle21-threshold.txt
+logfilename Log-seattle21-threshold.txt
+tractfilename Tracts-seattle21-threshold.txt
+individualfilename Individuals-seattle21-threshold.txt
+randomnumberseed 1
+seedinfected 5
+seedinfecteddaily 0
+ascertainmentfraction 1.0
+ascertainmentdelay 0
+responsethreshold 0.1
+responsedelay 0
+schoolclosurepolicy all
+schoolclosuredays 14
+

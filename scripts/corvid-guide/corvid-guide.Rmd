@@ -1,5 +1,5 @@
 ---
-title: "A quickly-written guide to Corvid, a coronavirus epidemic simulator"
+title: "A short guide to Corvid, a SARS-CoV-2 epidemic simulator"
 author: "Dennis Chao"
 header-includes:
 - \usepackage{fancyhdr}
@@ -15,7 +15,7 @@ output:
 # Introduction
 
 Corvid is an agent-based model to simulate SARS-CoV-2 transmission.
-The model is based on FluTE.
+The model is based on FluTE (doi 10.1371/journal.pcbi.1000656).
 The code is available at https://github.com/dlchao/corvid.
 
 # Compiling and running corvid
@@ -48,6 +48,7 @@ The "Tracts" file outputs the number of people in the synthetic population who l
 The "Log" file outputs the symptomatic and infection prevalence as well as the cumulative symptomatic for each census tract each day. Note that the symptomatic prevalence is not the symptomatic incidence (new cases).
 
 The "Individuals" file is not normally generated because it can be large, but "config-seattle26" tells Corvid to output it by specifying "individualfile 1", where "1" means output the file and "0" or not specifying this parameter will cause it not to be output. The "individuals" file outputs one line per individual in the synthetic population, which can allow you to inspect household structures, determine where and when each person was infected, and build infection trees.
+The time of infection reported in the file is in units of half-days, so divide by 2 to convert to days.
 
 ```{r load-seattle, echo=FALSE}
 library(knitr)
@@ -55,9 +56,11 @@ library(RColorBrewer)
 
 tractlocs <- read.csv("seattle-tracts.dat", header=FALSE, col.names=c("fipsstate", "fipscounty", "fipstract", "population", "latitude", "longitude"))
 tracts.seattle <- read.csv("Tracts-seattle26.txt", header=TRUE)
-tracts.seattle$pop <- rowSums(tracts.seattle[5:9])
+tracts.seattle$pop <- rowSums(tracts.seattle[grep("^pop",colnames(tracts.seattle))])
+popsize <- sum(tracts.seattle$pop) # size of this synthetic population
 wf.seattle <- read.csv("seattle-wf.dat", header=FALSE, sep=" ", col.names=c("source.fipsstate", "source.fipscounty", "source.fipstract", "dest.fipsstate", "dest.fipscounty", "dest.fipstract", "flow"))
 temp <- readLines("Summary-seattle26.txt")
+corvidversion <- as.numeric(strsplit(gsub("^.*: ","",temp[grep("Corvid version", temp)]),",")[[1]])
 symptomatic.seattle26 <- as.numeric(strsplit(gsub("^.*: ","",temp[grep("Number symptomatic", temp)]),",")[[1]])
 cumulativesymptomatic.seattle26 <- as.numeric(strsplit(gsub("^.*: ","",temp[grep("Cumulative symptomatic", temp)]),",")[[1]])
 newlysymptomatic.seattle26 <- c(symptomatic.seattle26[1], diff(cumulativesymptomatic.seattle26))
@@ -86,6 +89,7 @@ The "config-seattle26" tells Corvid to use the Seattle-like population, based on
 The synthetic population has `r as.integer(sum(tracts.seattle$pop))` residing in `r nrow(tracts.seattle)` census tracts.
 Tracts have `r min(tracts.seattle$pop)` to `r as.integer(max(tracts.seattle$pop))` people living in them, and `r min(tracts.seattle$workers)` to `r as.integer(max(tracts.seattle$workers))` people working in them.
 We can plot the number of people infected or symptomatic each day using the Summary file.
+The plots in this manuscript use Corvid version `r corvidversion`.
 
 ```{r map-seattle, fig.width=4, fig.height=4, fig.cap="Map of the census tracts for the synthetic Seattle population. Dot size proportional to resident population. Red circle size is proportional to the number of people who work in each tract. Plotted using the 'seattle-tracts.dat' input file and the 'Tracts' output file.", echo=FALSE}
 par(mar=c(3.5,3.5,1,1), #bottom, left, top, and right.
@@ -213,8 +217,6 @@ temp <- readLines("config-seattle26-closeallschools")
 cat(temp, sep="\n")
 ```
 
-
-
 ```{r interventions-seattle, fig.width=7, fig.height=3.25, fig.cap="Non-pharmaceutical intervention simulations. R0=2.6 and compliance is 60% (except for school closures, which is 100%).", echo=FALSE}
 interventions <- c("closeallschools","isolation","liberalleave","workfromhome", "quarantine")
 palinterventions <- c("black","red","blue","purple","orange","darkgreen")
@@ -256,6 +258,65 @@ for (plottype in c("symptomatic", "cumulative")) {
     legend("topleft",
       legend=c("no intervention", interventions),
       col=palinterventions, lwd=1.5, cex=0.5, inset=0.01)
+}
+```
+
+\clearpage
+
+You can also choose to start interventions after a certain fraction of the population has become ascertained, instead of using a pre-specified date.
+Here's the configuration file "config-seattle21-threshold" for shutting down all schools for 14 days after 10% of the population has become symptomatic:
+```{r print-configfile-threshold, echo=FALSE}
+temp <- readLines("config-seattle21-threshold")
+#print(temp)
+cat(temp, sep="\n")
+```
+The "responsethreshold" is the cumulative fraction of the population that must be ascertained (after getting symptoms) before the epidemic is "declared".
+The response begins a set number of days (specified by "responsedelay") after the epidemic is declared.
+In this case, schools close for 14 days.
+In this example, we set the ascertainment rate to 100% with no ascertainment delay, so every symptomatic illness is immediately counted towards this threshold.
+
+```{r thresholds, fig.width=7, fig.height=3.25, fig.cap="Using thresholds to start responses. Schools close for 14 days after 10% of the population has become symptomatic. R0=2.1 or 2.6.", echo=FALSE}
+r0s <- c(2.1,2.6)
+palr0 <- c("blue","red")
+names(palr0) <- as.character(r0s)
+par(mfrow=c(1,2),
+    mar=c(2.8,2.8,3.6,1), #bottom, left, top, and right.
+    mgp=c(1.7, 0.4, 0))
+for (plottype in c("symptomatic", "cumulative")) {
+    r0 <- 2.6
+    responseday <- 60
+    y <- NA
+    if (plottype=="cumulative") {
+        y <- cumulativesymptomatic.seattle26
+    } else {
+        y <- newlysymptomatic.seattle26
+    }
+    xmax <- 180
+    ymax <- ifelse(plottype=="cumulative", 42, 5000)
+    plot(x=NA, y=NA, xlab="days", ylab=paste(ifelse(plottype=="cumulative","cumulative","daily new"),"symptomatic"), main="Starting interventions at 10%", xlim=c(0,xmax), ylim=c(0,ymax), type="l", lwd=0.5, col="black", cex.main=0.75, cex.lab=0.8, cex.axis=0.65, axes=FALSE)
+    axis(1, at=seq(0,200,30), cex.axis=0.85)
+    axis(2, cex.axis=0.85)
+
+    for (r0 in r0s) {
+        filename <- paste("Summary-seattle",as.integer(10*r0),"-threshold.txt",sep="")
+        if (file.exists(filename)) {
+            temp <- readLines(filename)
+	    csymp <- as.numeric(strsplit(gsub("^.*: ","",temp[grep("Cumulative symptomatic", temp)]),",")[[1]])
+	    nsymp <- c(csymp[1], diff(csymp))
+	    responseday <- as.numeric(strsplit(gsub("^.*: ","",temp[grep("Reactive strategies deployed on day", temp)]),",")[[1]])
+	    if (plottype=="cumulative") {
+	        y <- 100*csymp/popsize
+            } else {
+	        y <- nsymp
+            }
+            lines(x=1:length(y), y=y, col=palr0[as.character(r0)], lwd=2)
+	    lines(x=rep(responseday,2), y=c(-10000,1000000), lty="dashed", col=palr0[as.character(r0)], lwd=0.5)
+	    text(x=responseday,y=0,"policies begin", col=palr0[as.character(r0)], cex=0.7, srt=90, adj=c(-0.5,1))
+        }
+    }
+    legend("topleft",
+      legend=paste("R0=",r0s,sep=""),
+      col=palr0, lwd=1.5, cex=1, inset=0.01)
 }
 ```
 
