@@ -85,6 +85,7 @@ individuals.seattle26$generationtime[individuals.seattle26$infectedtime<=0] <- N
 # Parsing Corvid output files
 
 Here, we parse Corvid output files to generate summary statistics and plots.
+You can look at "corvid-guide.Rmd" to see the R code that produces all of the tables or figues in this pdf.
 The "config-seattle26" tells Corvid to use the Seattle-like population, based on 2000 Census data of metropolitan Seattle.
 The synthetic population has `r as.integer(sum(tracts.seattle$pop))` residing in `r nrow(tracts.seattle)` census tracts.
 Tracts have `r min(tracts.seattle$pop)` to `r as.integer(max(tracts.seattle$pop))` people living in them, and `r min(tracts.seattle$workers)` to `r as.integer(max(tracts.seattle$workers))` people working in them.
@@ -217,7 +218,7 @@ temp <- readLines("config-seattle26-closeallschools")
 cat(temp, sep="\n")
 ```
 
-```{r interventions-seattle, fig.width=7, fig.height=3.25, fig.cap="Non-pharmaceutical intervention simulations. R0=2.6 and compliance is 60% (except for school closures, which is 100%).", echo=FALSE}
+```{r interventions-seattle, fig.width=7, fig.height=3.25, fig.cap="Non-pharmaceutical intervention simulations. R0=2.6 and compliance for the interventions is 60% (except for school closures, which is 100%).", echo=FALSE}
 interventions <- c("closeallschools","isolation","liberalleave","workfromhome", "quarantine")
 palinterventions <- c("black","red","blue","purple","orange","darkgreen")
 names(palinterventions) <- c("no intervention",interventions)
@@ -274,6 +275,7 @@ The "responsethreshold" is the cumulative fraction of the population that must b
 The response begins a set number of days (specified by "responsedelay") after the epidemic is declared.
 In this case, schools close for 14 days.
 In this example, we set the ascertainment rate to 100% with no ascertainment delay, so every symptomatic illness is immediately counted towards this threshold.
+Since epidemics with lower R0 progress more slowly, reaching the 10% threshold to trigger interventions takes longer for R0=2.1 than for 2.6 (see plot).
 
 ```{r thresholds, fig.width=7, fig.height=3.25, fig.cap="Using thresholds to start responses. Schools close for 14 days after 10% of the population has become symptomatic. R0=2.1 or 2.6.", echo=FALSE}
 r0s <- c(2.1,2.6)
