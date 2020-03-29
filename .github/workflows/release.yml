@@ -3,17 +3,67 @@ on:
     types: [created]
 name: Handle Release
 jobs:
-  generate:
-    name: Create release-artifacts
+  generate-linux:
+    name: Create Linux Release Artifacts
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
     - name: make
+      env:
+        OPTI: -O3
       run: make
       working-directory: code
-    - name: Upload the release
-      uses: skx/github-action-publish-binaries@master
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Upload corvid binary
+      uses: svenstaro/upload-release-action@v1-release
       with:
-        args: 'code/corvid'
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: code/corvid
+        asset_name: corvid.ubuntu18.04.amd64
+        tag: ${{ github.ref }}
+  generate-windows:
+    name: Create Windows Release Artifacts
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: gcc vercheck
+      run: gcc --version
+    - name: g++ vercheck
+      run: g++ --version
+    - name: make vercheck
+      run: mingw32-make --version
+    - name: make
+      env:
+        OPTI: -O3
+      run: mingw32-make
+      working-directory: code
+    - name: copy static libraries
+      run: foreach ($libname in @('libgcc_s_seh-1.dll','libstdc++-6.dll','libwinpthread-1.dll')) { foreach ( $libpath in cmd /c where $libname | select -first 1 ) { copy $libpath . } }
+      working-directory: code
+    - name: Upload corvid.exe
+      uses: svenstaro/upload-release-action@v1-release
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: code/corvid.exe
+        asset_name: corvid.exe
+        tag: ${{ github.ref }}
+    - name: Upload libstdc++-6.dll
+      uses: svenstaro/upload-release-action@v1-release
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: 'code/libstdc++-6.dll'
+        asset_name: 'libstdc++-6.dll'
+        tag: ${{ github.ref }}
+    - name: Upload libgcc_s_seh-1.dll
+      uses: svenstaro/upload-release-action@v1-release
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: 'code/libgcc_s_seh-1.dll'
+        asset_name: 'libgcc_s_seh-1.dll'
+        tag: ${{ github.ref }}
+    - name: Upload libwinpthread-1.dll
+      uses: svenstaro/upload-release-action@v1-release
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: 'code/libwinpthread-1.dll'
+        asset_name: 'libwinpthread-1.dll'
+        tag: ${{ github.ref }}

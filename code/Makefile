@@ -5,9 +5,12 @@ CLINKER  = gcc
 CCLINKER = g++
 MAKE     = make --no-print-directory
 SHELL    = /bin/sh
-CFLAGS		= -Wall -Werror -pedantic -DDSFMT_MEXP=19937 -msse2 -DHAVE_SSE2 
-OPTI            = -O3 -march=native
+CFLAGS	 = -Wall -Werror -pedantic -DDSFMT_MEXP=19937 -msse2 -DHAVE_SSE2
+# Check if OPTI not defined as an environment variable set the default
+ifndef OPTI
+OPTI     := -O3 -march=native
 #OPTI = -pg # for profiling
+endif
 LDFLAGS	= -lm
 INCLUDES	= 
 LIBS	= 
