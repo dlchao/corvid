@@ -16,8 +16,10 @@ jobs:
     - name: make
       run: make
       working-directory: code
+      env:
+        OPTI: -O3
     - name: Archive production artifacts
       uses: actions/upload-artifact@v1
       with:
-        name: corvid.linux.amd64
+        name: corvid.ubuntu18.04.amd64
         path: code/corvid
