@@ -1,0 +1,21 @@
+# Seattle configuration for CDC Modeling Team
+# Liberal leave and work from home policies start on day 60
+# Close all schools on day 60
+label seattle26-combo-school-libleavewfh50 
+datafile seattle
+R0 2.6
+runlength 240
+summaryfilename Summary-seattle26-combo-school-libleavewfh50
+logfilename Log-seattle26-combo-school-libleavewfh50
+tractfilename Tracts-seattle26-combo-school-libleavewfh50
+randomnumberseed 1
+seedinfected 5
+seedinfecteddaily 0
+responseday 60
+ascertainmentdelay 0
+ascertainmentfraction 1.0
+schoolclosurepolicy all
+schoolclosuredays 56
+liberalleave 0.5
+workfromhome 0.5
+

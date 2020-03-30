@@ -1,0 +1,24 @@
+# Seattle configuration for test-and-isolate strategy
+# people just stay home after ascertainment and family does nothing
+label seattlePRINTR0-testandisolate-TESTFRACTION-TESTDELAY-RESPONSEDAY-AVPOLICY-QUARANTINECOMPLIANCE-QUARANTINEDAYS
+datafile seattle
+R0 PARAMR0
+runlength 240
+summaryfilename Summary-seattlePRINTR0-testandisolate-TESTFRACTION-TESTDELAY-RESPONSEDAY-AVPOLICY-QUARANTINECOMPLIANCE-QUARANTINEDAYS
+logfilename Log-seattlePRINTR0-testandisolate-TESTFRACTION-TESTDELAY-RESPONSEDAY-AVPOLICY-QUARANTINECOMPLIANCE-QUARANTINEDAYS
+tractfilename Tracts-seattlePRINTR0-testandisolate-TESTFRACTION-TESTDELAY-RESPONSEDAY-AVPOLICY-QUARANTINECOMPLIANCE-QUARANTINEDAYS
+randomnumberseed 1
+seedinfected 5
+seedinfecteddaily 0
+ascertainmentdelay TESTDELAY
+ascertainmentfraction TESTFRACTION
+responseday RESPONSEDAY
+voluntaryisolation 0
+ascertainedisolation 1.0
+antiviraldoses 100000000
+AVEs 0
+AVEi 1
+AVEp 0
+antiviralpolicy AVPOLICY
+quarantine QUARANTINECOMPLIANCE
+quarantinelength QUARANTINEDAYS
