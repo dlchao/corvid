@@ -521,8 +521,8 @@ individuals <- read.csv("results/Individuals-seattle26-shutdown-90-0.0001-0.9-0.
 individuals$infectedday = individuals$infectedtime/2
 
 # response starts on day 33. there were 49 symptomatic people on this day
-temp <- data.frame(before.shutdown=as.vector(table(individuals$SOURCETYPE[individuals$infectedday<responseday], exclude=NA)),
-                   during.shutdown=as.vector(table(individuals$SOURCETYPE[individuals$infectedday>responseday & individuals$infectedday<responseday+responselength], exclude=NA)))
+temp <- data.frame(before.shutdown=as.vector(table(individuals$SOURCETYPE[individuals$infectedday<responseday])),
+                   during.shutdown=as.vector(table(individuals$SOURCETYPE[individuals$infectedday>responseday & individuals$infectedday<responseday+responselength])))
 rownames(temp) = levels(individuals$SOURCETYPE)
 temp <- rbind(temp, total=colSums(temp))
 kable(temp, caption="Proportion of cases by setting before and during a shutdown.")
@@ -534,6 +534,62 @@ d <- (individuals$sourceid %in% a) & (individuals$infectedday<responseday+respon
 e <- (individuals$familyid != individuals$familyid[match(individuals$sourceid,individuals$id)]) # who were infected by people from outside their households? (households that "infect themselves" are knocked out)
 f <- (individuals$familyid[d & e]) # households infected by people outside their households?
 #length(unique(f))/length(unique(b)) # household R_effective
+```
+
+```{r shutdown-trace-graphviz, echo=FALSE}
+# output file for graphviz
+inplot <- ((individuals$infectedday>=0 & individuals$infectedday<responseday+responselength) | individuals$SOURCETYPE=="seeded")
+lastcases <- (inplot & individuals$infectedday+21>responseday+responselength)
+summary(individuals$infectedday>responseday & individuals$infectedday<responseday+responselength)
+
+cat("digraph G{\n", file="shutdown.dot", append=FALSE)
+cat(" size=\"10,3\"\n", file="shutdown.dot", append=TRUE)
+cat(" margin=0\n", file="shutdown.dot", append=TRUE)
+
+# first define styles for all the nodes
+# make index cases different
+cat(" node [style=filled, shape=box, color=purple, fontsize=30, fontname=Helvetica] {", file="shutdown.dot", append=TRUE)
+cat(individuals$id[inplot & !lastcases & !is.na(individuals$SOURCETYPE) & individuals$SOURCETYPE=="seeded"], file="shutdown.dot", append=TRUE)
+cat("}\n", file="shutdown.dot", append=TRUE)
+cat(" node [fontsize=9, width=0.2, height=0.35, margin=0.03, fontname=Helvetica]\n", file="shutdown.dot", append=TRUE)
+# school
+cat(" node [style=filled, shape=ellipse, color=steelblue] {", file="shutdown.dot", append=TRUE)
+cat(individuals$id[inplot & !lastcases & !is.na(individuals$SOURCETYPE) & individuals$SOURCETYPE=="daytime.school"], file="shutdown.dot", append=TRUE)
+cat("}\n", file="shutdown.dot", append=TRUE)
+# work
+cat(" node [style=filled, shape=ellipse, color=springgreen] {", file="shutdown.dot", append=TRUE)
+cat(individuals$id[inplot & !lastcases & !is.na(individuals$SOURCETYPE) & individuals$SOURCETYPE=="daytime.work"], file="shutdown.dot", append=TRUE)
+cat("}\n", file="shutdown.dot", append=TRUE)
+# family
+cat(" node [style=filled, shape=ellipse, color=red] {", file="shutdown.dot", append=TRUE)
+cat(individuals$id[inplot & !lastcases & !is.na(individuals$SOURCETYPE) & individuals$SOURCETYPE %in% c("daytime.family","nighttime.family")], file="shutdown.dot", append=TRUE)
+cat("}\n", file="shutdown.dot", append=TRUE)
+# community
+cat(" node [style=filled, shape=ellipse, color=tan] {", file="shutdown.dot", append=TRUE)
+cat(individuals$id[inplot & !lastcases & !is.na(individuals$SOURCETYPE) & individuals$SOURCETYPE %in% c("daytime.comm","daytime.nh","nighttime.nh","nighttime.comm","nighttime.hhcluster")], file="shutdown.dot", append=TRUE)
+cat("}\n", file="shutdown.dot", append=TRUE)
+# family, last cases
+cat(" node [style=filled, shape=box, color=red, fontsize=30] {", file="shutdown.dot", append=TRUE)
+cat(individuals$id[inplot & lastcases & !is.na(individuals$SOURCETYPE) & individuals$SOURCETYPE %in% c("daytime.family","nighttime.family")], file="shutdown.dot", append=TRUE)
+cat("}\n", file="shutdown.dot", append=TRUE)
+# community, last cases
+cat(" node [style=filled, shape=box, color=tan, fontsize=30] {", file="shutdown.dot", append=TRUE)
+cat(individuals$id[inplot & lastcases & !is.na(individuals$SOURCETYPE) & individuals$SOURCETYPE %in% c("daytime.comm","daytime.nh","nighttime.nh","nighttime.comm","nighttime.hhcluster")], file="shutdown.dot", append=TRUE)
+cat("}\n", file="shutdown.dot", append=TRUE)
+
+# output all the edges
+for (i in which(inplot)) {
+    if (!is.na(individuals$SOURCETYPE[i])) {
+        if (individuals$id[i] != individuals$sourceid[i]) {
+            cat(paste(" ",individuals$sourceid[i], " -> ", individuals$id[i], "\n", sep=""), file="shutdown.dot", append=TRUE)
+        }
+    }
+}
+cat("}\n", file="shutdown.dot", append=TRUE)
+
+# run from the command line:
+#dot -Tpdf shutdown.dot > tree-shutdown.pdf
+#twopi -Tpdf shutdown.dot > radialtree-shutdown.pdf
 ```
 
 During one stochastic realization of a 90-day shutdown with SARS-CoV-2 persistence, 

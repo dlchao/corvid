@@ -29,8 +29,8 @@ const double withdrawprob[3][WITHDRAWDAYS] = {
 // self isolation probabilities by age
 const double isolationprob[TAG] = {0.8,0.75,0.5,0.5,0.5};
 
-const int nAntiviralCourseSize = 10; // number of pills in one antiviral course (1 tablet/day for prophylaxis and 2 tablets/day for treatment)
-const double fStopAntiviralTwoPills = 0.05; // probability that individuals taking antivirals stop after exactly two pills
+const int nAntiviralCourseSize = 10; // number of pills in one antiviral course (1 tablet/day for prophylaxis and 2 tablets/day for treatment). based on oseltamivir.
+const double fStopAntiviralTwoPills = 0.0; // probability that individuals taking antivirals stop after exactly two pills (parameter was used for Oseltamivir)
 
 // symptomatic probability
 double fBaseSymptomaticProb=0.5; // half of infections are symptomatic

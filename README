@@ -228,7 +228,6 @@ Number of days it takes medical personnel to ascertain a symptomatic individual.
 
 ascertainmentfraction : real
 Fraction of all symptomatic individuals who will be ascertained. Default is 0.8. 
-
 essentialfraction: real
 Fraction of working-age adults that belong to the "essential workforce" and are priortized for receiving vaccine. Default is 0, no priority. The essential workforce is 6.9% of the employed population when there is a vaccine shortage and 10.8% if there is not a shortage. Default is 0, no essential workers prioritized to get vaccine.
 
