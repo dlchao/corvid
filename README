@@ -81,6 +81,9 @@ seattle - metropolitan Seattle, based on the 2000 US Census.
 
 kingcounty - King County (Washington State), based on the 2000 US Census.
 
+kingsnohomishpierce - King, Snohomish, and Pierce Counties (Washington
+State), based on the 2000 US Census.
+
 la - Los Angeles County.  la-tracts.dat is not from the 2000 Census;
 It is based on 2007 PEPS estimates from Walter R. McDonald & 
 Associates, Inc. (WRMA) and padded with an additional 776,000 
@@ -244,7 +247,7 @@ seedinfected : integer
 Number of people to infect across the whole population. Default is 0, infect no people. 
 
 seedinfecteddaily : binary
-Indicates if infected people should be introduced into the population every day or just on the first day. A value of 1 will seed infected people every day, while 0 seeds infected only on day 0. Default is 0. 
+Indicates if "seedinfected" infected people should be introduced into the population every day or just on the first day. A value of 1 will seed infected people every day, while 0 seeds infected only on day 0. Default is 0. 
 
 seedairports : integer
 Value between 0 and 10000 to indicate the number of passengers per 10000 per day to infect in airport counties. Default is 0, no passengers to be infected. 
@@ -329,11 +332,14 @@ Note that the "Number symptomatic" is the symptomatic prevalence, or the
 number of people who are symptomatic on a given day - it is not the
 number who become symptomatic that day.
 
-Log(n) - The number of symptomatics per tract each day (prevalence and 
-cumulative). Each line has: the day, a unique numeric tract id, the 
-number of people currently symptomatic in the 5 age groups, the number 
-of people who have ever been symptomatic in the 5 age groups. Can be an
-enormous file.
+Log(n) - The number of symptomatics and infected people per tract each
+day (prevalence and cumulative). Each line has: the day, a unique numeric
+tract id, the number of people currently symptomatic in the 5 age groups,
+the number of people who have ever been symptomatic in the 5 age groups,
+the number of people currently infected in the 5 age groups, the number
+of people who have ever been infected in the 5 age groups. Note that
+it does not report incident symptomatic or infected people - that can be
+derived from the cumulative counts. This can be an enormous file.
 
 Tracts(n) - a unique numeric tract id, the FIPS codes, and the 
 populations of the tracts by age. Also contains the number of people 
