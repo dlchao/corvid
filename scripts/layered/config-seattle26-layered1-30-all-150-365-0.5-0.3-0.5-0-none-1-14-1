@@ -1,0 +1,30 @@
+# configuration for "layered" interventions
+# layered interventions: no intervention + liberal-leave + full WFH + school closure + test/isolate + quarantine HH
+label params-seattle26-layered1-30-all-150-365-0.5-0.3-0.5-0-none-1-14-1
+datafile seattle
+R0 2.6
+runlength 365
+summaryfilename Summary-seattle26-layered1-30-all-150-365-0.5-0.3-0.5-0-none-1-14-1
+logfilename Log-seattle26-layered1-30-all-150-365-0.5-0.3-0.5-0-none-1-14-1
+tractfilename Tracts-seattle26-layered1-30-all-150-365-0.5-0.3-0.5-0-none-1-14-1
+individualfilename Individuals-seattle26-layered1-30-all-150-365-0.5-0.3-0.5-0-none-1-14-1
+individualfile 1
+randomnumberseed 1
+seedinfected 5
+seedinfecteddaily 0
+ascertainmentdelay 0
+ascertainmentfraction 0.5
+ascertainedisolation 1.0
+responsedelay 0
+responseday 30
+schoolclosurepolicy all
+schoolclosuredays 150
+liberalleave 0.5
+liberalleavedays 365
+workfromhome 0.5
+workfromhomedays 365
+communitycontactreduction 0.3
+communitycontactreductiondays 365
+antiviralpolicy none
+quarantine 1
+quarantinelength 14

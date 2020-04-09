@@ -1,0 +1,14 @@
+# Seattle configuration for no interventions
+# no interventions
+label seattle20
+datafile seattle
+R0 2.0
+runlength 240
+summaryfilename Summary-seattle20
+logfilename Log-seattle20
+tractfilename Tracts-seattle20
+individualfilename Individuals-seattle20
+individualfile 1
+randomnumberseed 1
+seedinfected 5
+seedinfecteddaily 0

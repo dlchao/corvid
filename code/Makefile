@@ -54,11 +54,22 @@ cdcmarch2020: corvid
 
 # makes directory ../schoolclosuremarch2020/ and runs school closure
 # The runs will take hours. You might want to customize the run script to take advantage of computer resources better than my own.
-schoolclosuremarch2020: corvid
+schoolclosuremarch2020: corvid Makefile
 #	rm -rf ../schoolclosuremarch2020 # you can erase this directory if you want to
 	mkdir -p ../schoolclosuremarch2020
 	cd ../schoolclosuremarch2020; ln -s ../code/corvid .; ln -s ../corviddata/seattle* .; cp ../scripts/schoolclosure/* .; chmod +x run-*.sh
 	cd ../schoolclosuremarch2020; ./run-schoolclosures-2020-03.sh # run all the simulations for hours
+
+# makes directory ../layeredapril2020/ and runs layered NPI simulations
+# The runs will take many hours. You might want to customize the run script to take advantage of computer resources better than my own.
+layerednpisapril2020: corvid Makefile
+#	rm -rf ../layerednpisapril2020 # you can erase this directory if you want to
+	mkdir -p ../layerednpisapril2020
+	cd ../layerednpisapril2020; ln -s ../code/corvid .; ln -s ../corviddata/seattle* .; cp ../scripts/layered/* .; chmod +x run-*.sh
+	cd ../layerednpisapril2020; ./run-fig10.sh; ./run-fig1-top.sh; ./run-fig3-top.sh; ./run-fig5.sh; ./run-fig1-bottom.sh; ./run-fig3-bottom.sh; ./run-fig4.sh; mkdir -p results; mv Summary-* Log-* Tracts-* Individuals-* results
+
+# run all the simulations for hours
+
 
 # using emacs makes me feel old
 emacs:

@@ -1,0 +1,625 @@
+---
+title: "Figures for: Modeling layered non-pharmaceutical interventions against SARS-CoV-2 in the United States with Corvid"
+author: "Dennis Chao"
+header-includes:
+- \usepackage{fancyhdr}
+- \pagestyle{fancy}
+- \fancyhead[RO]{\today}
+output:
+  pdf_document: 
+    fig_caption: yes
+    fig_width: 6.5
+    fig_height: 5.5
+---
+
+```{r initialize, echo=FALSE}
+library(knitr)
+scenarios <- c("no intervention", "ll/wfh", "ll/wfh+school", "ll/wfh+school+shelter", "ll/wfh+school+shelter+home iso", "ll/wfh+school+shelter+self iso", "ll/wfh+school+shelter+home iso+quar")
+pallayers <- c("gray25", "royalblue", "red", "magenta", "seagreen", "purple", "orange", "brown") # color palette for plotting scenarios
+names(pallayers) <- scenarios
+```
+
+This pdf is generated from an R Markdown script. The Markdown generates figures and other results for "Modeling layered non-pharmaceutical interventions against SARS-CoV-2 in the United States with Corvid".
+
+```{r load-seattle, echo=FALSE}
+tractlocs.seattle <- read.csv("../corviddata/seattle-tracts.dat", header=FALSE, col.names=c("fipsstate", "fipscounty", "fipstract", "population", "latitude", "longitude"))
+tracts.seattle <- read.csv("results/Tracts-seattle26", header=TRUE)
+tracts.seattle$pop <- rowSums(tracts.seattle[5:9])
+popsize.seattle <- sum(tracts.seattle$pop)
+tractlocs.seattle$TractID <- tracts.seattle$TractID[sapply(1:nrow(tractlocs.seattle), function(i) {which(tracts.seattle$FIPSstate==tractlocs.seattle$fipsstate[i] &
+                tracts.seattle$FIPScounty==tractlocs.seattle$fipscounty[i] &
+                tracts.seattle$FIPStract==tractlocs.seattle$fipstract[i])})]
+
+wf.seattle <- read.csv("../corviddata/seattle-wf.dat", header=FALSE, sep=" ", col.names=c("source.fipsstate", "source.fipscounty", "source.fipstract", "dest.fipsstate", "dest.fipscounty", "dest.fipstract", "flow"))
+
+# load the "no intervention" outputs
+symptomatic.seattle <- list()
+csymptomatic.seattle <- list()
+newlysymptomatic.seattle <- list()
+individuals.seattle <- list()
+for (r0 in c(2.0,2.6)) {
+  temp <- readLines(paste("results/Summary-seattle",r0*10,"",sep=""))
+  symptomatic.seattle[[as.character(r0)]] <- as.numeric(strsplit(gsub("^.*: ","",temp[grep("Number symptomatic", temp)]),",")[[1]])
+  csymptomatic.seattle[[as.character(r0)]] <- as.numeric(strsplit(gsub("^.*: ","",temp[grep("Cumulative symptomatic", temp)]),",")[[1]])
+  newlysymptomatic.seattle[[as.character(r0)]] <- c(symptomatic.seattle[[as.character(r0)]][1], diff(csymptomatic.seattle[[as.character(r0)]]))
+  individuals.seattle[[as.character(r0)]] <- read.csv(paste("results/Individuals-seattle",r0*10,sep=""), header=TRUE)
+  individuals.seattle[[as.character(r0)]]$SOURCETYPE <- ifelse(individuals.seattle[[as.character(r0)]]$sourcetype==0, NA,
+                   ifelse(individuals.seattle[[as.character(r0)]]$sourcetype==1, "daytime.family",
+                   ifelse(individuals.seattle[[as.character(r0)]]$sourcetype==2, "daytime.comm",
+                   ifelse(individuals.seattle[[as.character(r0)]]$sourcetype==3, "daytime.nh",
+                   ifelse(individuals.seattle[[as.character(r0)]]$sourcetype==4, "daytime.school",
+                   ifelse(individuals.seattle[[as.character(r0)]]$sourcetype==5, "daytime.work",
+                   ifelse(individuals.seattle[[as.character(r0)]]$sourcetype==10, "nighttime.family",
+                   ifelse(individuals.seattle[[as.character(r0)]]$sourcetype==11, "nighttime.comm",
+                   ifelse(individuals.seattle[[as.character(r0)]]$sourcetype==12, "nighttime.nh",
+                   ifelse(individuals.seattle[[as.character(r0)]]$sourcetype==13, "nighttime.hhcluster",
+                   ifelse(individuals.seattle[[as.character(r0)]]$sourcetype==20, "seeded",
+		   ifelse(individuals.seattle[[as.character(r0)]]$sourcetype==21, "airport", "error"))))))))))))
+  individuals.seattle[[as.character(r0)]]$generationtime <- (individuals.seattle[[as.character(r0)]]$infectedtime-individuals.seattle[[as.character(r0)]]$infectedtime[match(individuals.seattle[[as.character(r0)]]$sourceid,individuals.seattle[[as.character(r0)]]$id)])/2 # how many days ago was the infecter infected?
+  individuals.seattle[[as.character(r0)]]$generationtime[individuals.seattle[[as.character(r0)]]$infectedtime<=0] <- NA # remove people never infected or infected on day 0
+}
+```
+
+We ran simulations in a synthetic population that represents an American metropolitan area with a population of `r as.integer(sum(tracts.seattle$pop))`.
+The synthetic population resides in `r nrow(tracts.seattle)` census tracts.
+Tracts have `r min(tracts.seattle$pop)` to `r as.integer(max(tracts.seattle$pop))` people living in them, and `r min(tracts.seattle$workers)` to `r as.integer(max(tracts.seattle$workers))` people working in them.
+In an unmitigated outbreak starting with five infected people, `r round(100*csymptomatic.seattle[["2.6"]][length(csymptomatic.seattle[["2.6"]])]/popsize.seattle,2)`% of the population become symptomatic when R0=2.6
+
+```{r cases-seattle, fig.width=7, fig.height=3.25, fig.cap="Symptomatic people over time in a metropolitan area. On the left, the number of people who become symptomatic each day for R0=2.6 and R0=2.0. On the right, the log$_2$ cumulative cases are plotted and two linear regression fits to estimate doubling time for R0=2.6.", echo=FALSE}
+par(mfrow=c(1,2),
+    mar=c(3.5,3.5,1,1), #bottom, left, top, and right.
+    mgp=c(2.0, 0.6, 0))
+days <- 1:length(newlysymptomatic.seattle[["2.6"]])
+plot(x=days, y=newlysymptomatic.seattle[["2.6"]], xlab="days since introduction", ylab="newly symptomatic per day", type="l", lwd=2)
+lines(x=days, y=newlysymptomatic.seattle[["2"]], lwd=2, col="red")
+legend("topleft", legend=c("R0=2.6", "R0=2.0"), fill=c("black", "red"), inset=0.01, cex=0.8)
+startday <- 25
+endday <- 45
+startday2 <- 60
+endday2 <- 90
+plot(x=days, y=log(csymptomatic.seattle[["2.6"]],2), xlab="days since introduction", ylab="log2(cumulative symptomatic)", col=ifelse(days>=startday & days<endday,"black",ifelse(days>=startday2 & days<endday2,"blue","gray")), cex=0.5)
+lmf <- summary(lm(log(csymptomatic.seattle[["2.6"]][startday:endday],2) ~ days[startday:endday], na.action = na.omit))
+abline(lmf$coefficients[1],lmf$coefficients[2], col="black")
+text(35,5,substitute(log2(cumulative) == a * day + b, list(a=round(lmf$coefficients[2],digits=4), b=round(lmf$coefficients[1],digits=4))), pos=4, cex=0.65, col="black")
+lmf2 = summary(lm(log(csymptomatic.seattle[["2.6"]][startday2:endday2],2) ~ days[startday2:endday2], na.action = na.omit))
+abline(lmf2$coefficients[1],lmf2$coefficients[2], col="blue")
+text(35,3,substitute(log2(cumulative) == a * day + b, list(a=round(lmf2$coefficients[2],digits=4), b=round(lmf2$coefficients[1],digits=4))), pos=4, cex=0.65, col="blue")
+```
+
+```{r seattle-generationtime, fig.width=7, fig.height=3.25, fig.cap="Generation time and incubation period distribution. Results from one epidemic simulation with R0=2.6. On the left, the distribution of generation times. On the right, incubation period distribution.", echo=FALSE}
+par(mfrow=c(1,2),
+    mar=c(3.5,3.5,1,1), #bottom, left, top, and right.
+    mgp=c(2.0, 0.6, 0))
+hist(individuals.seattle[[as.character(r0)]]$generationtime, breaks=seq(0,max(individuals.seattle[[as.character(r0)]]$generationtime,na.rm=TRUE)+0.5,1), xlab="generation time, days", main="generation time distribution")
+hist(individuals.seattle[[as.character(r0)]]$incubationdays[individuals.seattle[[as.character(r0)]]$incubationdays>0], breaks=seq(0,max(individuals.seattle[[as.character(r0)]]$incubationdays,na.rm=TRUE)+0.5,1), xlab="incubation period, days", main="incubation period distribution")
+# incubation of 0 is asymptomatic in the model
+```
+
+The doubling time was initially `r round(1/lmf$coefficients[2],2)` days
+then slowed to `r round(1/lmf2$coefficients[2],2)` days.
+The average generation time was `r round(mean(individuals.seattle[[as.character(r0)]]$generationtime,na.rm=TRUE),2)` days, median of `r median(individuals.seattle[[as.character(r0)]]$generationtime,na.rm=TRUE)` days. The maximum infectious period allowed by the model was 21 days.
+
+
+```{r seattle-r0test, fig.width=5.5, fig.height=3.75, fig.cap="Number of people an individual infects in the Seattle population model. R0=2.6", echo=FALSE}
+# kable(100*table(individuals.seattle[[as.character(r0)]]$SOURCETYPE)/sum(!is.na(individuals.seattle[[as.character(r0)]]$sourcetype) & individuals.seattle[[as.character(r0)]]$sourcetype<20), digits=2, caption="source of infections R0=2.6, %")
+temp <- table(table(individuals.seattle[[as.character(r0)]]$sourceid))
+plot(temp, ylim=c(0,1.05*max(temp)), xlab="number of people an individual infects", ylab="frequency", pch=4, cex=0.5, col="red", lwd=2)
+text(x=as.numeric(names(temp)), y=temp, lab=temp, col="blue", adj=c(0.5,-0.5), cex=0.6)
+```
+
+\clearpage
+## Modeling layered non-pharmaceutical interventions
+
+```{r cases-seattle-layered, fig.width=7, fig.height=8, fig.cap="Simulating layered NPIs. NPIs were started on day 30 or 90 of the epidemic. The left plots show log-transformed numbers of newly symptomatic people per day per 100,000 population, and the right plots show cumulative % of the population that has been symptomatic. Each curve represents one stochastic simulation. The days when workplace policies are in effect is shown as a blue horizontal dashed line near the x-axis and school closures as a red line.", echo=FALSE}
+# output runs
+par(mfrow=c(3,2),
+    mar=c(3.5,3.5,2,1), #bottom, left, top, and right.
+    mgp=c(2.0, 0.6, 0))
+r0 = 2.6
+denominator <- 100000
+xmax <- 365
+triggerday <- list()
+closurelength <- list()
+symp <- list()
+csymp <- list()
+nsymp <- list()
+for (responseday in c(30,90)) {
+    for (plottype in c("symptomatic", "cumulative")) {
+        logy <- ifelse(plottype=="cumulative", FALSE, TRUE)
+        ymax <- ifelse(plottype=="cumulative", 42, 1100)
+        ymin <- -ymax/20
+        if (logy==TRUE) {
+            ymax <- ifelse(plottype=="cumulative", 51, 1100)
+            ymin <- ifelse(plottype=="cumulative", 0.01, 0.15)
+        }
+        plot(x=NA, y=NA, xlab="days since introduction", ylab=ifelse(plottype=="cumulative","cumulative symptomatic, %",paste("newly symptomatic/",as.integer(denominator)," pop per day", sep="")), main=paste("Layered NPIs starting on day",responseday), type="l", col="black", axes=FALSE, lwd=2, cex.main=1.3, cex.lab=1.05, ylim=c(ymin,ymax), xlim=c(0,xmax), log=ifelse(logy,"y",""))
+        axis(1, at=seq(0,xmax,30), cex.axis=1.0)
+        if (!logy) {
+            axis(2, cex.axis=1.0)
+            if (plottype=="cumulative") {
+                for (y in seq(0,50,10)) {
+                    abline(y,0,lwd=0.1,col="lightgray")
+                }
+            }
+        } else {
+            if (plottype=="cumulative") {
+                axis(2, at=c(0.01,0.1,1.0,10,50), cex.axis=1.0)
+            } else {
+                axis(2, at=c(0.1,1.0,10,100,1000), cex.axis=1.0)
+            }
+        }
+        
+        for (scenario in scenarios) {
+            filename <- paste("results/Summary-seattle26-layered1-",responseday,"-",ifelse(grepl("school",scenario),"all","none"),"-365-365-",ifelse(grepl("wfh",scenario),0.5,0.0),"-",ifelse(grepl("shelter",scenario),0.3,0.0),"-",ifelse(grepl("iso",scenario),0.5,0.0),"-0-",ifelse(grepl("self",scenario),"treatmentonly","none"),"-",ifelse(grepl("quar",scenario),1,0),"-14-1",sep="")
+            if (scenario=="no intervention") {
+                filename <- "results/Summary-seattle26-layered1-30-none-365-365-0-0-0-0-none-0-14-1"
+            }
+#	cat(scenario, filename, fill=TRUE)
+            temp <- readLines(filename)
+            triggerday[[scenario]] <- as.numeric(strsplit(gsub("^.*: ","",temp[grep("Reactive strategies deployed on day", temp)]),",")[[1]])
+            closurelength[[scenario]] <- as.numeric(strsplit(gsub("^.*: ","",temp[grep("School closure days", temp)]),",")[[1]])
+            symp[[scenario]] <- as.numeric(strsplit(gsub("^.*: ","",temp[grep("Number symptomatic", temp)]),",")[[1]])
+            csymp[[scenario]] <- as.numeric(strsplit(gsub("^.*: ","",temp[grep("Cumulative symptomatic", temp)]),",")[[1]])
+            nsymp[[scenario]] <- c(symp[[scenario]][1], diff(csymp[[scenario]]))
+            y <- NA
+            days <- 1:length(nsymp[[scenario]])
+            if (plottype=="cumulative") {
+                y <- csymp[[scenario]]*100/popsize.seattle
+            } else { 
+                y <- nsymp[[scenario]]*denominator/popsize.seattle
+            }
+            lines(x=days, y=y, col=pallayers[scenario], lwd=1.8)
+            if (scenario=="ll/wfh+school") {
+                lines(x=rep(triggerday[[scenario]],2), y=c(-100,ymax+100), lty="dashed")
+                lines(x=triggerday[[scenario]]+c(0,closurelength[[scenario]]), y=rep(ymin,2), col=pallayers[scenario], lwd=2, lty="dashed")
+            } else if (scenario=="ll/wfh") {
+                lines(x=triggerday[[scenario]]+c(0,365), y=rep(ifelse(!logy,ymin-ymax*0.02,ymin*0.85),2), col=pallayers[scenario], lwd=2, lty="dashed")
+            }
+        }
+        if ((!logy & plottype=="symptomatic") |
+            (logy & plottype=="cumulative" & triggerday[[scenario]]==90)) {
+            legend(ifelse(plottype=="symptomatic","topright","bottomright"), legend=scenarios, fill=pallayers, cex=ifelse(plottype=="symptomatic",0.62,0.75), inset=ifelse(plottype=="symptomatic",0.01,0.06), bg="white")
+        }
+    }
+}
+plot(x=NA, y=NA, xlab="", ylab="", main="", axes=FALSE, lwd=2, cex.main=1, cex.lab=0.8, ylim=c(ymin,ymax), xlim=c(0,xmax))
+legend("topleft", legend=scenarios, fill=pallayers, cex=1.3, inset=0, bg="white")
+```
+
+```{r cases-seattle-layered-schoolopen, fig.width=7, fig.height=8, fig.cap="Simulating re-opening schools after school closure and other sustained NPIs. NPIs were started on day 30 or 90 of the epidemic, and schools were re-opened on day 180.    The left plots show log-transformed numbers of newly symptomatic people per day per 100,000 population, and the right plots show cumulative % of the population symptomatic. Each curve represents one stochastic simulation. The days when workplace policies are in effect is shown as a blue horizontal dashed line near the x-axis and school closures as a red line.", echo=FALSE}
+par(mfrow=c(3,2),
+    mar=c(3.5,3.5,2,1), #bottom, left, top, and right.
+    mgp=c(2.0, 0.6, 0))
+r0 = 2.6
+denominator <- 100000
+xmax <- 365
+    triggerday <- list()
+    closurelength <- list()
+    symp <- list()
+    csymp <- list()
+    nsymp <- list()
+for (responseday in c(30,90)) {
+  for (plottype in c("symptomatic", "cumulative")) {
+    logy <- ifelse(plottype=="cumulative", FALSE, TRUE)
+    ymax <- ifelse(plottype=="cumulative", 42, 1100)
+    ymin <- -ymax/20
+    if (logy) {
+    ymax <- ifelse(plottype=="cumulative", 51, 1100)
+    ymin <- ifelse(plottype=="cumulative", 0.01, 0.15)
+    }
+    plot(x=NA, y=NA, xlab="days since introduction", ylab=ifelse(plottype=="cumulative","cumulative symptomatic, %",paste("newly symptomatic/",as.integer(denominator)," pop per day", sep="")), main=paste("Layered NPIs starting on day",responseday), type="l", col="black", axes=FALSE, lwd=2, cex.main=1.3, cex.lab=1.05, ylim=c(ymin,ymax), xlim=c(0,xmax), log=ifelse(logy,"y",""))
+    if (!logy) {
+    axis(2, cex.axis=1.0)
+    if (plottype=="cumulative") {
+      for (y in seq(0,50,10)) {
+        abline(y,0,lwd=0.1,col="lightgray")
+      }
+    }
+    } else {
+    if (plottype=="cumulative") {
+      axis(2, at=c(0.01,0.1,1.0,10,50), cex.axis=1.0)
+    } else {
+      axis(2, at=c(0.1,1.0,10,100,1000), cex.axis=1.0)
+    }
+    }
+    axis(1, at=seq(0,xmax,30), cex.axis=1.0)
+
+    for (scenario in scenarios) {
+	filename <- paste("results/Summary-seattle26-layered1-",responseday,"-",ifelse(grepl("school",scenario),"all","none"),"-",(180-responseday),"-365-",ifelse(grepl("wfh",scenario),0.5,0.0),"-",ifelse(grepl("shelter",scenario),0.3,0.0),"-",ifelse(grepl("iso",scenario),0.5,0.0),"-0-",ifelse(grepl("self",scenario),"treatmentonly","none"),"-",ifelse(grepl("quar",scenario),1,0),"-14-1",sep="")
+	if (scenario=="no intervention") {
+            filename <- "results/Summary-seattle26-layered1-30-none-365-365-0-0-0-0-none-0-14-1"
+	}
+#	cat(scenario, filename, fill=TRUE)
+        temp <- readLines(filename)
+        triggerday[[scenario]] <- as.numeric(strsplit(gsub("^.*: ","",temp[grep("Reactive strategies deployed on day", temp)]),",")[[1]])
+        closurelength[[scenario]] <- as.numeric(strsplit(gsub("^.*: ","",temp[grep("School closure days", temp)]),",")[[1]])
+        symp[[scenario]] <- as.numeric(strsplit(gsub("^.*: ","",temp[grep("Number symptomatic", temp)]),",")[[1]])
+        csymp[[scenario]] <- as.numeric(strsplit(gsub("^.*: ","",temp[grep("Cumulative symptomatic", temp)]),",")[[1]])
+        nsymp[[scenario]] <- c(symp[[scenario]][1], diff(csymp[[scenario]]))
+	y <- NA
+	days <- 1:length(nsymp[[scenario]])
+        if (plottype=="cumulative") {
+            y <- csymp[[scenario]]*100/popsize.seattle
+	} else { 
+	    y <- nsymp[[scenario]]*denominator/popsize.seattle
+	}
+        lines(x=days, y=y, col=pallayers[scenario], lwd=1.8)
+        if (scenario=="ll/wfh+school") {
+            lines(x=rep(triggerday[[scenario]],2), y=c(-100,ymax+100), lty="dashed")
+	    lines(x=triggerday[[scenario]]+c(0,closurelength[[scenario]]), y=rep(ymin,2), col=pallayers[scenario], lwd=2, lty="dashed")
+        } else if (scenario=="ll/wfh") {
+	    lines(x=triggerday[[scenario]]+c(0,365), y=rep(ifelse(!logy,ymin-ymax*0.02,ymin*0.85),2), col=pallayers[scenario], lwd=2, lty="dashed")
+        }
+    }
+    if ((!logy & plottype=="symptomatic") |
+        (logy & plottype=="cumulative" & triggerday[[scenario]]==90)) {
+        legend(ifelse(plottype=="symptomatic","topright","bottomright"), legend=scenarios, fill=pallayers, cex=ifelse(plottype=="symptomatic",0.55,0.72), inset=ifelse(plottype=="symptomatic",0.01,0.06), bg="white")
+    }
+  }
+}
+plot(x=NA, y=NA, xlab="", ylab="", main="", axes=FALSE, lwd=2, cex.main=1, cex.lab=0.8, ylim=c(ymin,ymax), xlim=c(0,xmax))
+legend("topleft", legend=scenarios, fill=pallayers, cex=1.1, inset=0, bg="white")
+```
+
+```{r cases-seattle-layered-schoolopen-testdelay, fig.width=7, fig.height=8, fig.cap="The effect of testing delays on test-and-isolate strategies. We simulated test-and-isolate strategies in which ascertainment of cases took place immediately upon symptom onset (solid lines) or 5 days after symptom onset (dashed lines). The simulations with no testing delay (solid lines) are identical to those shown in Figure~\ref{fig:layered1}: all NPIs start on day 30 (top row) or 90 (bottom row) of the epidemic, and schools are re-opened on day 180. Three different isolation strategies were modeled: home isolation, self isolation, and home isolation with family quarantine. 50% of symptomatic people were tested. The left plots show log-transformed numbers of newly symptomatic people per day per 100,000 population, and the right plots show cumulative % of the population symptomatic. Each curve represents one stochastic realization of the model. The days when workplace policies are in effect are shown as blue horizontal dotted lines near the x-axis and school closures as red lines.", echo=FALSE}
+
+scenarios2 <- scenarios[c(1,5,6,7)]
+
+par(mfrow=c(3,2),
+    mar=c(3.5,3.5,2,1), #bottom, left, top, and right.
+    mgp=c(2.0, 0.6, 0))
+r0 = 2.6
+denominator <- 100000
+xmax <- 365
+triggerday <- list()
+closurelength <- list()
+symp <- list()
+csymp <- list()
+nsymp <- list()
+for (responseday in c(30,90)) {
+    for (plottype in c("symptomatic", "cumulative")) {
+        logy <- ifelse(plottype=="cumulative", FALSE, TRUE)
+        ymax <- ifelse(plottype=="cumulative", 42, 1100)
+        ymin <- -ymax/20
+        if (logy) {
+            ymax <- ifelse(plottype=="cumulative", 51, 1100)
+            ymin <- ifelse(plottype=="cumulative", 0.01, 0.15)
+        }
+        plot(x=NA, y=NA, xlab="days since introduction", ylab=ifelse(plottype=="cumulative","cumulative symptomatic, %",paste("newly symptomatic/",as.integer(denominator)," pop per day", sep="")), main=paste("NPIs starting on day",responseday," with testing delays"), type="l", col="black", axes=FALSE, lwd=2, cex.main=1.2, cex.lab=1.05, ylim=c(ymin,ymax), xlim=c(0,xmax), log=ifelse(logy,"y",""))
+        axis(1, at=seq(0,xmax,30), cex.axis=0.95)
+        if (!logy) {
+            axis(2, cex.axis=1)
+            if (plottype=="cumulative") {
+                for (y in seq(0,50,10)) {
+                    abline(y,0,lwd=0.1,col="lightgray")
+                }
+            }
+        } else {
+            if (plottype=="cumulative") {
+                axis(2, at=c(0.01,0.1,1.0,10,50), cex.axis=1)
+            } else {
+                axis(2, at=c(0.1,1.0,10,100,1000), cex.axis=1)
+            }
+        }
+        
+        for (testdelay in c(0,5)) {
+            for (scenario in scenarios2) {
+                filename <- paste("results/Summary-seattle26-layered1-",responseday,"-",ifelse(grepl("school",scenario),"all","none"),"-",(180-responseday),"-365-",ifelse(grepl("wfh",scenario),0.5,0.0),"-",ifelse(grepl("shelter",scenario),0.3,0.0),"-",ifelse(grepl("iso",scenario),0.5,0.0),"-",testdelay,"-",ifelse(grepl("self",scenario),"treatmentonly","none"),"-",ifelse(grepl("quar",scenario),1,0),"-14-1",sep="")
+                if (scenario=="no intervention") {
+                    filename <- "results/Summary-seattle26-layered1-30-none-365-365-0-0-0-0-none-0-14-1"
+                }
+#	cat(scenario, filename, fill=TRUE)
+                temp <- readLines(filename)
+                triggerday[[scenario]] <- as.numeric(strsplit(gsub("^.*: ","",temp[grep("Reactive strategies deployed on day", temp)]),",")[[1]])
+                closurelength[[scenario]] <- as.numeric(strsplit(gsub("^.*: ","",temp[grep("School closure days", temp)]),",")[[1]])
+                symp[[scenario]] <- as.numeric(strsplit(gsub("^.*: ","",temp[grep("Number symptomatic", temp)]),",")[[1]])
+                csymp[[scenario]] <- as.numeric(strsplit(gsub("^.*: ","",temp[grep("Cumulative symptomatic", temp)]),",")[[1]])
+                nsymp[[scenario]] <- c(symp[[scenario]][1], diff(csymp[[scenario]]))
+                y <- NA
+                days <- 1:length(nsymp[[scenario]])
+                if (plottype=="cumulative") {
+                    y <- csymp[[scenario]]*100/popsize.seattle
+                } else { 
+                    y <- nsymp[[scenario]]*denominator/popsize.seattle
+                }
+                lines(x=days, y=y, col=pallayers[scenario], lwd=1.8, lty=ifelse(testdelay==0,"solid","dashed"))
+                if (testdelay==0 & scenario=="ll/wfh+school+shelter+home iso") {
+                    lines(x=rep(triggerday[[scenario]],2), y=c(-100,ymax+100), lty="dashed")
+                    lines(x=triggerday[[scenario]]+c(0,closurelength[[scenario]]), y=rep(ymin,2), col=pallayers["ll/wfh+school"], lwd=2, lty="dotted")
+                    lines(x=triggerday[[scenario]]+c(0,365), y=rep(ifelse(!logy,ymin-ymax*0.02,ymin*0.85),2), col=pallayers[["ll/wfh"]], lwd=2, lty="dotted")
+                }
+            }
+        }
+        if ((!logy & plottype=="symptomatic") | 
+            (logy & plottype=="cumulative")) {
+            legend(ifelse(plottype=="symptomatic","topright","bottomright"), legend=scenarios2, fill=pallayers[scenarios2], cex=ifelse(plottype=="symptomatic",0.5,0.7), inset=ifelse(plottype=="symptomatic",0.01,0.06), bg="white")
+        }
+    }
+}
+    plot(x=NA, y=NA, xlab="", ylab="", main="", axes=FALSE, ylim=c(ymin,ymax), xlim=c(0,xmax))
+    legend("topleft", legend=scenarios2, fill=pallayers[scenarios2], cex=1.2, inset=0, bg="white")
+    plot(x=NA, y=NA, xlab="", ylab="", main="", axes=FALSE, ylim=c(ymin,ymax), xlim=c(0,xmax))
+    legend("topleft", legend=c("isolation immediately after symptom onset", "5-day from testing to isolation"), lty=c("solid","dashed"), lwd=2, cex=1.05, inset=0, bg="white")
+```
+
+```{r layered-settings, fig.width=6.5, fig.height=4, fig.cap="Settings of infections under layered NPIs. The bars show the number of symptomatic cases per 100,000 population infected in one of four settings: `home', `work', `school', and `other'. Each row represents the number of infections that occur after day 90 during for one scenario starting on day 90 of the epidemic. Each row represents the results from one stochastic simulation.", echo=FALSE}
+library(data.table)
+results.settings <- list()
+for (responseday in c(90)) {
+    for (scenario in scenarios) {
+	filename <- paste("results/Individuals-seattle26-layered1-",responseday,"-",ifelse(grepl("school",scenario),"all","none"),"-365-365-",ifelse(grepl("wfh",scenario),0.5,0.0),"-",ifelse(grepl("shelter",scenario),0.3,0.0),"-",ifelse(grepl("iso",scenario),0.5,0.0),"-0-",ifelse(grepl("self",scenario),"treatmentonly","none"),"-",ifelse(grepl("quar",scenario),1,0),"-14-1",sep="")
+	if (scenario=="no intervention") {
+            filename <- "results/Individuals-seattle26-layered1-30-none-365-365-0-0-0-0-none-0-14-1"
+	}
+        temp <- fread(filename,sep=",",header=TRUE)
+	temp$SOURCETYPE <- as.factor(ifelse(temp$sourcetype==0, NA,
+                   ifelse(temp$sourcetype==1, "daytime.family",
+                   ifelse(temp$sourcetype==2, "daytime.comm",
+                   ifelse(temp$sourcetype==3, "daytime.nh",
+                   ifelse(temp$sourcetype==4, "daytime.school",
+                   ifelse(temp$sourcetype==5, "daytime.work",
+                   ifelse(temp$sourcetype==10, "nighttime.family",
+                   ifelse(temp$sourcetype==11, "nighttime.comm",
+                   ifelse(temp$sourcetype==12, "nighttime.nh",
+                   ifelse(temp$sourcetype==13, "nighttime.hhcluster",
+                   ifelse(temp$sourcetype==20, "seeded",
+		   ifelse(temp$sourcetype==21, "airport", "error")))))))))))))
+        results.settings[[scenario]] <- table(temp$SOURCETYPE[temp$infectedtime>180]) # only count infections after day 90
+    }
+}
+
+xmax <- 70000
+denominator <- 100000
+par(mar=c(3.5,13,1,1), #bottom, left, top, and right.
+    mgp=c(2.0, 0.6, 0))
+plot(x=NA, y=NA, xlim=c(1,xmax), ylim=c(length(scenarios)+0.5,0.5), xlab=paste("people infected per",as.integer(denominator),"population"), ylab="", axes=FALSE)
+axis(1, cex.axis=0.75)
+axis(2, at=1:length(scenarios), lab=scenarios, las=2, cex.axis=0.55)
+settings <- c("home","work","school","other")
+palsettings <- c("salmon", "lightgreen", "lightblue","tan")
+names(palsettings) <- settings
+for (scenarionum in 1:length(scenarios)) {
+    scenario <- scenarios[scenarionum]
+    temp <- results.settings[[scenario]]
+    sum.home <- sum(temp[c("daytime.family","nighttime.family")])
+    sum.work <- sum(temp["daytime.work"])
+    sum.school <- sum(temp["daytime.school"])
+    sum.other <- sum(temp) - (sum.home+sum.work+sum.school)
+    rect(xleft=0,xright=sum.home*denominator/popsize.seattle,ytop=scenarionum+0.3,ybottom=scenarionum-0.3, col=palsettings["home"], lwd=0.2)
+    rect(xleft=sum.home*denominator/popsize.seattle,xright=(sum.home+sum.work)*denominator/popsize.seattle,ytop=scenarionum+0.3,ybottom=scenarionum-0.3, col=palsettings["work"], lwd=0.2)
+    rect(xleft=(sum.home+sum.work)*denominator/popsize.seattle,xright=(sum.home+sum.work+sum.school)*denominator/popsize.seattle,ytop=scenarionum+0.3,ybottom=scenarionum-0.3, col=palsettings["school"], lwd=0.2)
+    rect(xleft=(sum.home+sum.work+sum.school)*denominator/popsize.seattle,xright=(sum.home+sum.work+sum.school+sum.other)*denominator/popsize.seattle,ytop=scenarionum+0.3,ybottom=scenarionum-0.3, col=palsettings["other"], lwd=0.2)
+}
+legend("bottomright", legend=settings, fill=palsettings, inset=0.01)
+```
+
+## Tracing stochastic persistence
+
+```{r cases-shutdown-stochastic, fig.width=7, fig.height=3.25, fig.cap="Simulating a ``shutdown'' for 150 days. We simulated a combination of liberal leave + work from home + school closure + shelter-in-place +  home isolation. Each curve is one stochastic realization, 20 per panel. The red bars on the bottom indicate the shutdown dates, and the vertical lines are the starts of the shutdowns for each of the stochastic realizations. R0=2.6.", echo=FALSE}
+par(mfrow=c(1,2),
+    mar=c(3.4,3.4,2,1), #bottom, left, top, and right.
+    mgp=c(1.9, 0.6, 0))
+r0 <- 2.6
+denominator <- 100000
+for (plottype in c("symptomatic", "cumulative")) {
+            xmax <- 240
+            ymax <- ifelse(plottype=="cumulative", 3, 100)
+            plot(x=NA, y=NA, xlim=c(0,xmax), ylim=c(-ymax*0.01,ymax), xlab="days since introduction", ylab=ifelse(plottype=="cumulative", "cumulative symptomatic, %", paste("newly symptomatic /", as.integer(denominator), "per day")), main="", cex.main=1, cex.lab=0.85, cex.axis=0.8, axes=FALSE)
+            axis(2, cex.axis=0.9)
+            axis(1, at=seq(0,xmax,30), cex.axis=0.85)
+
+	    # plot intervention runs
+            symptomatic <- list()
+            csymptomatic <- list()
+            newlysymptomatic <- list()
+            responseday <- list()
+            responseduration <- list()
+            for (randomseed in c(1:20)) {
+                filename <- paste("results/Summary-seattle26-layered1-30-all-150-365-0.5-0.3-0.5-0-none-0-14-",randomseed,sep="")
+                temp <- readLines(filename)
+                scenarioname <- filename
+                symptomatic[[scenarioname]] <- as.numeric(strsplit(gsub("^.*: ","",temp[grep("Number symptomatic", temp)]),",")[[1]])
+                csymptomatic[[scenarioname]] <- as.numeric(strsplit(gsub("^.*: ","",temp[grep("Cumulative symptomatic", temp)]),",")[[1]])
+                newlysymptomatic[[scenarioname]] <- c(symptomatic[[scenarioname]][1], diff(csymptomatic[[scenarioname]]))
+		responseday[[scenarioname]] <- as.numeric(strsplit(gsub("^.*: ","",temp[grep("Reactive strategies deployed on day", temp)]),",")[[1]])
+		responseduration[[scenarioname]] <- as.numeric(strsplit(gsub("^.*: ","",temp[grep("School closure days", temp)]),",")[[1]])
+                y <- newlysymptomatic[[scenarioname]]*denominator/popsize.seattle
+                if (plottype == "cumulative") {
+                    y <- csymptomatic[[scenarioname]]*100/popsize.seattle
+                }
+                lines(x=responseday[[scenarioname]] + c(0,responseduration[[scenarioname]]), y=rep(-ymax*0.02,2), col="red", lty="dashed", lwd=2) # duration of shutdown
+                lines(x=1:length(y), y=y, col=ifelse(randomseed==1,pallayers[["ll/wfh+school+shelter+home iso"]],"gray"), lwd=ifelse(randomseed==1,1,0.3))
+            }
+}
+```
+
+```{r shutdown-trace, echo=FALSE}
+summaryfile <- readLines("results/Summary-seattle26-layered1-30-all-150-365-0.5-0.3-0.5-0-none-0-14-1")
+responseday <- as.numeric(strsplit(gsub("^.*: ","",summaryfile[grep("Reactive strategies deployed on day", summaryfile)]),",")[[1]])
+responselength <- as.numeric(strsplit(gsub("^.*: ","",summaryfile[grep("School closure days", summaryfile)]),",")[[1]])
+
+individuals <- fread("results/Individuals-seattle26-layered1-30-all-150-365-0.5-0.3-0.5-0-none-0-14-1", sep=",", header=TRUE) # response starts on day 33
+  individuals$SOURCETYPE <- as.factor(ifelse(individuals$sourcetype==0, NA,
+                   ifelse(individuals$sourcetype==1, "daytime.family",
+                   ifelse(individuals$sourcetype==2, "daytime.comm",
+                   ifelse(individuals$sourcetype==3, "daytime.nh",
+                   ifelse(individuals$sourcetype==4, "daytime.school",
+                   ifelse(individuals$sourcetype==5, "daytime.work",
+                   ifelse(individuals$sourcetype==10, "nighttime.family",
+                   ifelse(individuals$sourcetype==11, "nighttime.comm",
+                   ifelse(individuals$sourcetype==12, "nighttime.nh",
+                   ifelse(individuals$sourcetype==13, "nighttime.hhcluster",
+                   ifelse(individuals$sourcetype==20, "seeded",
+		   ifelse(individuals$sourcetype==21, "airport", "error")))))))))))))
+individuals$generationtime <- (individuals$infectedtime-individuals$infectedtime[match(individuals$sourceid,individuals$id)])/2 # how many days ago was the infecter infected?
+individuals$generationtime[individuals$infectedtime<=0] <- NA # remove people never infected or infected on day 0
+individuals$infectedday = individuals$infectedtime/2
+
+# response starts on day 30. there were 49 symptomatic people on this day
+#sum(individuals$infectedday>0 & individuals$infectedday<responseday & individuals$infectedday>responseday-21) # how many infectious
+temp <- data.frame(before.shutdown=as.vector(table(individuals$SOURCETYPE[individuals$infectedday<responseday])),
+                   during.shutdown=as.vector(table(individuals$SOURCETYPE[individuals$infectedday>responseday & individuals$infectedday<responseday+responselength])))
+rownames(temp) <- levels(individuals$SOURCETYPE)
+temp <- rbind(temp, total=colSums(temp))
+kable(temp, caption="Proportion of cases by setting before and during a shutdown.")
+
+# how many infectious people each day (prevalence)
+#y <- sapply(1:180, function(t) {sum(individuals$infectedday>0 & individuals$infectedday<t & individuals$infectedday>t-21)})
+#which.max(y)
+#max(y)
+
+# household R_effective
+a <- (unique(individuals$id[individuals$infectedday>responseday+21 & individuals$infectedday<responseday+responselength-21])) # people who were infected during the shutdown (with a buffer of 21 days on either side)
+b <- (unique(individuals$familyid[individuals$infectedday>responseday+21 & individuals$infectedday<responseday+responselength-21])) # households who were infected during the shutdown (with a buffer of 21 days on either side)
+d <- (individuals$sourceid %in% a) & (individuals$infectedday<responseday+responselength) # who was infected by people in these households?
+e <- (individuals$familyid != individuals$familyid[match(individuals$sourceid,individuals$id)]) # who were infected by people from outside their households? (households that "infect themselves" are knocked out)
+f <- (individuals$familyid[d & e]) # households infected by people outside their households?
+#sum(d)/length(unique(a)) # R_effective
+#length(unique(f))/length(unique(b)) # household R_effective
+```
+
+We simulated combined liberal leave + work-from-home + shelter-in-place + home isolation of ascertained cases that start on day 30 and never end, with school closures that start on day 30 and end on day 180. We ran this 20 times.
+
+In one of the stochastic runs,
+`r sum(individuals$infectedday>0 & individuals$infectedday<responseday & individuals$infectedday>responseday-21)` people were infectious when the response started on day `r responseday`.
+`r sum(individuals$infectedday>0 & individuals$incubationdays>0 & individuals$infectedday+individuals$incubationdays<responseday & individuals$infectedday>responseday-21)` people were symptomatic when the response started (more would become symptomatic after the response started).
+`r sum(individuals$infectedday>0 & individuals$infectedday<responseday+responselength & individuals$infectedday>responseday+responselength-21)` people were infectious when the schools re-opened on  `r responseday+responselength`.
+
+To compute R_effective, we take the people infected at least 21 days after the response and at least 21 days before schools re-open (`r sum(individuals$infectedday>responseday+21 & individuals$infectedday<responseday+responselength-21)` people), 
+and find that they infect `r sum(individuals$sourceid %in% individuals$id[individuals$infectedday>responseday+21 & individuals$infectedday<responseday+responselength-21])` others, giving us an R_effective of 
+`r round(sum(individuals$sourceid %in% individuals$id[individuals$infectedday>responseday+21 & individuals$infectedday<responseday+responselength-21]) / sum(individuals$infectedday>responseday+21 & individuals$infectedday<responseday+responselength-21),5)`.
+
+For the "household" version of R_effective, we found people in `r length(unique(b))` households were infected at least 21 days after the response and at least 21 days before schools re-open, and 
+these people infected members of `r length(unique(f))` other households,
+meaning "household" R_effective was `r length(unique(f))/length(unique(b))`.
+
+This Rmd generates 5 ".dot" files for making transmission trees for the first 180 days of one stochastic run: shutdown-1.dot, shutdown-2.dot, shutdown-3.dot, shutdown-4.dot, and shutdown-5.dot.
+Each file has the transmission tree rooted at one of the 5 initially infected individuals.
+To plot transmission trees, you will need to install Graphviz.
+To generate a plot with a ".dot" file, you can run:
+
+* dot -Tpdf shutdown-1.dot > tree-shutdown-1.pdf
+
+```{r shutdown-trace-graphviz, echo=FALSE}
+# output files for graphviz
+summaryfile <- readLines("results/Summary-seattle26-layered1-30-all-150-365-0.5-0.3-0.5-0-none-0-14-1")
+responseday <- as.numeric(strsplit(gsub("^.*: ","",summaryfile[grep("Reactive strategies deployed on day", summaryfile)]),",")[[1]])
+responselength <- as.numeric(strsplit(gsub("^.*: ","",summaryfile[grep("School closure days", summaryfile)]),",")[[1]])
+
+individuals <- fread("results/Individuals-seattle26-layered1-30-all-150-365-0.5-0.3-0.5-0-none-0-14-1", sep=",", header=TRUE) # response starts on day 33
+  individuals$SOURCETYPE <- as.factor(ifelse(individuals$sourcetype==0, NA,
+                   ifelse(individuals$sourcetype==1, "daytime.family",
+                   ifelse(individuals$sourcetype==2, "daytime.comm",
+                   ifelse(individuals$sourcetype==3, "daytime.nh",
+                   ifelse(individuals$sourcetype==4, "daytime.school",
+                   ifelse(individuals$sourcetype==5, "daytime.work",
+                   ifelse(individuals$sourcetype==10, "nighttime.family",
+                   ifelse(individuals$sourcetype==11, "nighttime.comm",
+                   ifelse(individuals$sourcetype==12, "nighttime.nh",
+                   ifelse(individuals$sourcetype==13, "nighttime.hhcluster",
+                   ifelse(individuals$sourcetype==20, "seeded",
+		   ifelse(individuals$sourcetype==21, "airport", "error")))))))))))))
+individuals$generationtime <- (individuals$infectedtime-individuals$infectedtime[match(individuals$sourceid,individuals$id)])/2 # how many days ago was the infecter infected?
+individuals$generationtime[individuals$infectedtime<=0] <- NA # remove people never infected or infected on day 0
+individuals$infectedday = individuals$infectedtime/2
+
+# find the root of the infection tree for each person
+individuals$firstsource <- individuals$sourceid
+for (i in 1:80) {
+individuals$firstsource <- ifelse(individuals$firstsource==0,0,
+                                  individuals$sourceid[match(individuals$firstsource,individuals$id)])
+}
+
+# output file for graphviz
+seeds <- individuals$id[individuals$sourcetype==20]
+for (subgraph in 1:length(seeds)) {
+    inplot <- ((individuals$infectedday>=0 & individuals$infectedday<responseday+responselength) | individuals$SOURCETYPE=="seeded") & individuals$firstsource==seeds[subgraph]
+    lastcases <- (inplot & individuals$infectedday+21>responseday+responselength)
+    filename <- paste("shutdown-",subgraph,".dot",sep="")
+    cat("digraph G{\n", file=filename, append=FALSE)
+    cat(" margin=0\n", file=filename, append=TRUE)
+    cat(" nodesep=0.15\n", file=filename, append=TRUE)
+    cat(" ranksep=0.3\n", file=filename, append=TRUE)
+
+    # first define styles for all the nodes
+    # make index cases different
+    cat(" node [style=filled, shape=diamond, color=purple, fontsize=12, fontname=Helvetica] {", file=filename, append=TRUE)
+    cat(individuals$id[inplot & !lastcases & !is.na(individuals$SOURCETYPE) & individuals$SOURCETYPE=="seeded"], file=filename, append=TRUE)
+    cat("}\n", file=filename, append=TRUE)
+    cat(" node [fontsize=10, width=0.25, height=0.2, margin=0.02, fontname=Helvetica]\n", file=filename, append=TRUE)
+    # school
+    cat(" node [style=filled, shape=ellipse, color=steelblue] {", file=filename, append=TRUE)
+    cat(individuals$id[inplot & !lastcases & !is.na(individuals$SOURCETYPE) & individuals$SOURCETYPE=="daytime.school"], file=filename, append=TRUE)
+    cat("}\n", file=filename, append=TRUE)
+    # work
+    cat(" node [style=filled, shape=ellipse, color=springgreen] {", file=filename, append=TRUE)
+    cat(individuals$id[inplot & !lastcases & !is.na(individuals$SOURCETYPE) & individuals$SOURCETYPE=="daytime.work"], file=filename, append=TRUE)
+    cat("}\n", file=filename, append=TRUE)
+    # family
+    cat(" node [style=filled, shape=ellipse, color=red] {", file=filename, append=TRUE)
+    cat(individuals$id[inplot & !lastcases & !is.na(individuals$SOURCETYPE) & individuals$SOURCETYPE %in% c("daytime.family","nighttime.family")], file=filename, append=TRUE)
+    cat("}\n", file=filename, append=TRUE)
+    # community
+    cat(" node [style=filled, shape=ellipse, color=tan] {", file=filename, append=TRUE)
+    cat(individuals$id[inplot & !lastcases & !is.na(individuals$SOURCETYPE) & individuals$SOURCETYPE %in% c("daytime.comm","daytime.nh","nighttime.nh","nighttime.comm","nighttime.hhcluster")], file=filename, append=TRUE)
+    cat("}\n", file=filename, append=TRUE)
+    # family, last cases
+    cat(" node [style=filled, shape=box, color=red, fontsize=18] {", file=filename, append=TRUE)
+    cat(individuals$id[inplot & lastcases & !is.na(individuals$SOURCETYPE) & individuals$SOURCETYPE %in% c("daytime.family","nighttime.family")], file=filename, append=TRUE)
+    cat("}\n", file=filename, append=TRUE)
+    # community, last cases
+    cat(" node [style=filled, shape=box, color=tan, fontsize=18] {", file=filename, append=TRUE)
+    cat(individuals$id[inplot & lastcases & !is.na(individuals$SOURCETYPE) & individuals$SOURCETYPE %in% c("daytime.comm","daytime.nh","nighttime.nh","nighttime.comm","nighttime.hhcluster")], file=filename, append=TRUE)
+    cat("}\n", file=filename, append=TRUE)
+    # work, last cases
+    cat(" node [style=filled, shape=box, color=springgreen, fontsize=18] {", file=filename, append=TRUE)
+    cat(individuals$id[inplot & lastcases & !is.na(individuals$SOURCETYPE) & individuals$SOURCETYPE=="daytime.work"], file=filename, append=TRUE)
+    cat("}\n", file=filename, append=TRUE)
+    # school, last cases
+    cat(" node [style=filled, shape=box, color=steelblue, fontsize=18] {", file=filename, append=TRUE)
+    cat(individuals$id[inplot & lastcases & !is.na(individuals$SOURCETYPE) & individuals$SOURCETYPE=="daytime.school"], file=filename, append=TRUE)
+    cat("}\n", file=filename, append=TRUE)
+
+    # output all the edges
+    for (i in which(inplot)) {
+        if (!is.na(individuals$SOURCETYPE[i])) {
+            if (individuals$id[i] != individuals$sourceid[i]) {
+                cat(paste(" ",individuals$sourceid[i], " -> ", individuals$id[i], "\n", sep=""), file=filename, append=TRUE)
+            }
+        }
+    }
+    cat("}\n", file=filename, append=TRUE)
+}
+
+# run from the command line:
+#dot -Tpdf shutdown-1.dot > tree-shutdown-1.pdf
+#twopi -Tpdf shutdown-1.dot > radialtree-shutdown-1.pdf
+```
+
+\clearpage
+# Model overview
+
+```{r map-seattle, fig.width=4, fig.height=4, fig.cap="Map of the census tracts for the synthetic Seattle population. Dot size proportional to resident population. Red circle size is proportional to the number of people who work in each tract.", echo=FALSE}
+par(mar=c(3.5,3.5,1,1), #bottom, left, top, and right.
+    mgp=c(2.0, 0.6, 0))
+plot(x=tractlocs.seattle$longitude, y=tractlocs.seattle$latitude, col="blue", cex=0.01*sqrt(tracts.seattle$pop[match(tractlocs.seattle$fipstract, tracts.seattle$FIPStract)]), pch=19, xlab="longitude", ylab="latitude", asp=1, cex.axis=0.5, cex.lab=0.8)
+points(x=tractlocs.seattle$longitude, y=tractlocs.seattle$latitude, col="red", cex=0.01*sqrt(tracts.seattle$workers[match(tractlocs.seattle$fipstract, tracts.seattle$FIPStract)]), pch=1)
+```
+
+## Calibration for SARS-CoV-2 transmission
+
+### Symptomatic fraction, incubation period, shedding (infectiousness) kinetics
+
+```{r incubation, fig.width=4.25, fig.height=3.25, fig.cap="Incubation period distribution and shedding trajectory in Corvid. Black curve is the log-normal distribution of incubation periods from Lauer et al, truncated at day 14. Incubation periods are drawn from this distribution in Corvid. The blue curve is shedding over time in Corvid, which is a log-normal distribution with a higher mean but same sd as the incubation distribution. The distribution truncated at day 21. In Corvid, people start shedding the day after infection regardless of symptomatic status.", echo=FALSE}
+par(mar=c(3.5,3.5,1,1), #bottom, left, top, and right.
+    mgp=c(2.0, 0.6, 0))
+time <- seq(0,14,0.1)
+plot(x=time, y=dlnorm(time, meanlog=1.621, sdlog=0.418), xlim=c(0,21), type="l", lwd=1.5, xlab="days after infection", ylab="density", ylim=c(0,0.25), cex.lab=0.8, cex.axis=0.7) # from Lauer
+
+days <- seq(1,14,1) 
+cumulative <- plnorm(days, meanlog=1.621, sdlog=0.418)
+
+time <- seq(0,21,0.1)
+lines(x=time, y=dlnorm(time, meanlog=log(exp(1.621)+4), sdlog=0.418), col="blue")
+legend("topright", legend=c("incubation period distribution","shedding trajectory"), col=c("black","blue"), lty=rep("solid",2), cex=0.8, inset=0.01)
+```

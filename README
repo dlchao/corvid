@@ -4,22 +4,25 @@ March 2020
 
 Corvid is an individual-based model that simulates the spread of SARS-CoV-2
 in synthetic populations that represent communities in the United States.
+It is described in "Modeling layered non-pharmaceutical interventions 
+against SARS-CoV-2 in the United States with Corvid", available on medRxiv.
 
 Corvid is based on the influenza model FluTE (https://github.com/dlchao/FluTE).
-
 Several parameters were adjusted to adapt the FluTE flu transmission 
 to SARS-CoV-2 transmission, such as incubation period, symptomatic fraction,
 and viral load trajectories.
 
 This model only supports single-core (unlike FluTE, which had a parallel
-computing version), so populations of more than 10,000,000 will probably
-not run on a laptop.
+computing version), so populations of more than 10,000,000 might not
+run on a laptop.
 
 We include several scripts that we use for reports in the "scripts"
 directory. There are Makefile targets for setting up directories and
 running these scripts. When these runs are completed, you should be
 able to compile the R Markdown files (*.Rmd) to generate reports
 based on these results.
+
+The pdf "corvid-guide.pdf" is a short guide on how to run Corvid.
 
 --------------------------
 1. Compilation
@@ -31,7 +34,7 @@ is infectious). You can also make "guide", which will compile corvid and
 run it in a new directory "corvid-guide" using sample configuration files
 for a Seattle-like population. You can then use the R Markdown file
 ("corvid-guide.Rmd") that parses the outputs from these runs and produces
-a document on how to use Corvid.
+a short document on how to use Corvid, corvid-guide.pdf. 
 
 The source files are:
   epimodel.cpp - model implementation
