@@ -19,7 +19,7 @@ pallayers <- c("gray25", "royalblue", "red", "magenta", "seagreen", "purple", "o
 names(pallayers) <- scenarios
 ```
 
-This pdf is generated from an R Markdown script. The Markdown generates figures and other results for "Modeling layered non-pharmaceutical interventions against SARS-CoV-2 in the United States with Corvid".
+This pdf is generated from an R Markdown script. The Markdown generates figures and other results for "Modeling layered non-pharmaceutical interventions against SARS-CoV-2 in the United States with Corvid", available at https://www.medrxiv.org/content/10.1101/2020.04.08.20058487v1.
 
 ```{r load-seattle, echo=FALSE}
 tractlocs.seattle <- read.csv("../corviddata/seattle-tracts.dat", header=FALSE, col.names=c("fipsstate", "fipscounty", "fipstract", "population", "latitude", "longitude"))
@@ -100,15 +100,16 @@ then slowed to `r round(1/lmf2$coefficients[2],2)` days.
 The average generation time was `r round(mean(individuals.seattle[[as.character(r0)]]$generationtime,na.rm=TRUE),2)` days, median of `r median(individuals.seattle[[as.character(r0)]]$generationtime,na.rm=TRUE)` days. The maximum infectious period allowed by the model was 21 days.
 
 
-```{r seattle-r0test, fig.width=5.5, fig.height=3.75, fig.cap="Number of people an individual infects in the Seattle population model. R0=2.6", echo=FALSE}
+```{r seattle-r0distribution, fig.width=5.5, fig.height=3.75, fig.cap="Number of people an individual infects in the Seattle population model. R0=2.6", echo=FALSE}
 # kable(100*table(individuals.seattle[[as.character(r0)]]$SOURCETYPE)/sum(!is.na(individuals.seattle[[as.character(r0)]]$sourcetype) & individuals.seattle[[as.character(r0)]]$sourcetype<20), digits=2, caption="source of infections R0=2.6, %")
-temp <- table(table(individuals.seattle[[as.character(r0)]]$sourceid))
-plot(temp, ylim=c(0,1.05*max(temp)), xlab="number of people an individual infects", ylab="frequency", pch=4, cex=0.5, col="red", lwd=2)
+temp <- table(table(individuals.seattle[[as.character(r0)]]$sourceid[individuals.seattle[[as.character(r0)]]$sourceid!=individuals.seattle[[as.character(r0)]]$id]))
+temp <- append(sum(individuals.seattle[[as.character(r0)]]$infectedtime>=0) - sum(temp),temp)
+names(temp)[1] <- "0"  
+plot(x=as.numeric(names(temp)), y=temp, ylim=c(0,1.05*max(temp)), xlab="number of people an individual infects", ylab="frequency", type="h", pch=4, cex=0.5, col="red", lwd=2)
 text(x=as.numeric(names(temp)), y=temp, lab=temp, col="blue", adj=c(0.5,-0.5), cex=0.6)
 ```
 
 \clearpage
-## Modeling layered non-pharmaceutical interventions
 
 ```{r cases-seattle-layered, fig.width=7, fig.height=8, fig.cap="Simulating layered NPIs. NPIs were started on day 30 or 90 of the epidemic. The left plots show log-transformed numbers of newly symptomatic people per day per 100,000 population, and the right plots show cumulative % of the population that has been symptomatic. Each curve represents one stochastic simulation. The days when workplace policies are in effect is shown as a blue horizontal dashed line near the x-axis and school closures as a red line.", echo=FALSE}
 # output runs

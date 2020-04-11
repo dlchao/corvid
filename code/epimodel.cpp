@@ -542,7 +542,7 @@ void EpiModel::create_person(int nAgeGroup, int nFamilySize, int nFamily, int nH
   p.nHomeNeighborhood=p.nDayNeighborhood=p.nWorkNeighborhood=nNeighborhood;
   p.status = p.iday = p.ibits = p.vbits = p.nTravelTimer = p.sourcetype = 0;
   setSusceptible(p);
-  p.sourceid = p.id;
+  p.sourceid = p.id;  // can't remember why I set the default sourceid = id
   p.nInfectedTime = -1;
   p.nIncubationDays = -1;
   p.nVaccinePriority=0;

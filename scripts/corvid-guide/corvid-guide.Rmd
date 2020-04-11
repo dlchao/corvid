@@ -15,8 +15,11 @@ output:
 # Introduction
 
 Corvid is an agent-based model to simulate SARS-CoV-2 transmission.
-The model is based on FluTE (doi 10.1371/journal.pcbi.1000656).
+The model is described in "Modeling layered non-pharmaceutical interventions 
+against SARS-CoV-2 in the United States with Corvid", available on medRxiv
+(https://www.medrxiv.org/content/10.1101/2020.04.08.20058487v1).
 The code is available at https://github.com/dlchao/corvid.
+The model is based on a previously published open-source influenza transmission model, FluTE.
 
 # Compiling and running corvid
 
@@ -325,6 +328,10 @@ for (plottype in c("symptomatic", "cumulative")) {
 \clearpage
 # References
 
+* Chao DL, Oron AP, Srikrishna D, Famulare M.
+  Modeling layered non-pharmaceutical interventions against SARS-CoV-2 in the United States with Corvid.
+  medRxiv. 2020 Apr 11. https://www.medrxiv.org/content/10.1101/2020.04.08.20058487v1.
+  doi: 10.1101/2020.04.08.20058487.
 * Chao DL, Halloran ME, Obenchain VJ, Longini IM Jr.
   FluTE, a publicly available stochastic influenza epidemic simulation model.
   PLoS Comput Biol. 2010 Jan 29;6(1):e1000656. doi: 10.1371/journal.pcbi.1000656
