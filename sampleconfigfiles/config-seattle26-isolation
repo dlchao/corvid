@@ -10,4 +10,4 @@ randomnumberseed 1
 seedinfected 5
 seedinfecteddaily 0
 responseday 60
-isolation 0.6
+voluntaryisolation 0.6

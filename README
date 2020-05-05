@@ -6,7 +6,7 @@ Corvid is an individual-based model that simulates the spread of SARS-CoV-2
 in synthetic populations that represent communities in the United States.
 It is described in "Modeling layered non-pharmaceutical interventions 
 against SARS-CoV-2 in the United States with Corvid", available on medRxiv
-(https://www.medrxiv.org/content/10.1101/2020.04.08.20058487v1).
+(https://doi.org/10.1101/2020.04.08.20058487).
 
 Corvid is based on the influenza model FluTE (https://github.com/dlchao/FluTE).
 Several parameters were adjusted to adapt the FluTE flu transmission 
@@ -279,7 +279,7 @@ ascertainedisolation : real
 Ascertained isolation compliance probability. This is the probability that a sick person stays after being ascertained. Default is 0, no isolation.
 
 quarantine : real
-Voluntary household quarantine compliance probability. This is the probability that the members of a household stay home if one of the family members gets sick. Default is 0, no quarantine. 
+Voluntary household quarantine compliance probability. This is the probability that the members of a household stay home if one of the family members becomes ascertained. Default is 0, no quarantine. 
 
 quarantinelength : integer
 Length of household quarantine in days. Default is 14.
@@ -426,4 +426,5 @@ that run scripts are:
   * layerednpisapril2020 : produces the main figures for the medRxiv
     manuscript "Modeling layered non-pharmaceutical interventions 
     against SARS-CoV-2 in the United States with Corvid", available
-    at https://www.medrxiv.org/content/10.1101/2020.04.08.20058487v1.
+    at https://doi.org/10.1101/2020.04.08.20058487.
+

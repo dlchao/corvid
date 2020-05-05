@@ -19,7 +19,7 @@ pallayers <- c("gray25", "royalblue", "red", "magenta", "seagreen", "purple", "o
 names(pallayers) <- scenarios
 ```
 
-This pdf is generated from an R Markdown script. The Markdown generates figures and other results for "Modeling layered non-pharmaceutical interventions against SARS-CoV-2 in the United States with Corvid", available at https://www.medrxiv.org/content/10.1101/2020.04.08.20058487v1.
+This pdf is generated from an R Markdown script. The Markdown generates figures and other results for "Modeling layered non-pharmaceutical interventions against SARS-CoV-2 in the United States with Corvid", available at https://doi.org/10.1101/2020.04.08.20058487.
 
 ```{r load-seattle, echo=FALSE}
 tractlocs.seattle <- read.csv("../corviddata/seattle-tracts.dat", header=FALSE, col.names=c("fipsstate", "fipscounty", "fipstract", "population", "latitude", "longitude"))
