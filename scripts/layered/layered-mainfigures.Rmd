@@ -67,12 +67,15 @@ In an unmitigated outbreak starting with five infected people, `r round(100*csym
 
 ```{r cases-seattle, fig.width=7, fig.height=3.25, fig.cap="Symptomatic people over time in a metropolitan area. On the left, the number of people who become symptomatic each day for R0=2.6 and R0=2.0. On the right, the log$_2$ cumulative cases are plotted and two linear regression fits to estimate doubling time for R0=2.6.", echo=FALSE}
 par(mfrow=c(1,2),
-    mar=c(3.5,3.5,1,1), #bottom, left, top, and right.
+    mar=c(3.5,3.7,2,1), #bottom, left, top, and right.
     mgp=c(2.0, 0.6, 0))
 days <- 1:length(newlysymptomatic.seattle[["2.6"]])
 plot(x=days, y=newlysymptomatic.seattle[["2.6"]], xlab="days since introduction", ylab="newly symptomatic per day", type="l", lwd=2)
 lines(x=days, y=newlysymptomatic.seattle[["2"]], lwd=2, col="red")
 legend("topleft", legend=c("R0=2.6", "R0=2.0"), fill=c("black", "red"), inset=0.01, cex=0.8)
+usr <- par("usr")
+clip(usr[1]-100, usr[2], usr[3], usr[4]+1000)
+text(x=usr[1]-45, y=usr[4]+200, lab="A", cex=2, adj=c(1,0))
 startday <- 25
 endday <- 45
 startday2 <- 60
@@ -84,15 +87,24 @@ text(35,5,substitute(log2(cumulative) == a * day + b, list(a=round(lmf$coefficie
 lmf2 = summary(lm(log(csymptomatic.seattle[["2.6"]][startday2:endday2],2) ~ days[startday2:endday2], na.action = na.omit))
 abline(lmf2$coefficients[1],lmf2$coefficients[2], col="blue")
 text(35,3,substitute(log2(cumulative) == a * day + b, list(a=round(lmf2$coefficients[2],digits=4), b=round(lmf2$coefficients[1],digits=4))), pos=4, cex=0.65, col="blue")
+usr <- par("usr")
+clip(usr[1]-100, usr[2], usr[3], usr[4]+20)
+text(x=usr[1]-45, y=usr[4]+0.55, lab="B", cex=2, adj=c(1,0))
 ```
 
 ```{r seattle-generationtime, fig.width=7, fig.height=3.25, fig.cap="Generation time and incubation period distribution. Results from one epidemic simulation with R0=2.6. On the left, the distribution of generation times. On the right, incubation period distribution.", echo=FALSE}
 par(mfrow=c(1,2),
-    mar=c(3.5,3.5,1,1), #bottom, left, top, and right.
+    mar=c(3.5,3.7,4,1), #bottom, left, top, and right.
     mgp=c(2.0, 0.6, 0))
 hist(individuals.seattle[[as.character(r0)]]$generationtime, breaks=seq(0,max(individuals.seattle[[as.character(r0)]]$generationtime,na.rm=TRUE)+0.5,1), xlab="generation time, days", main="generation time distribution")
+usr <- par("usr")
+clip(usr[1]-100, usr[2], usr[3], usr[4]+50000)
+text(x=usr[1]-3, y=usr[4]+15000, lab="A", cex=2, adj=c(1,0))
 hist(individuals.seattle[[as.character(r0)]]$incubationdays[individuals.seattle[[as.character(r0)]]$incubationdays>0], breaks=seq(0,max(individuals.seattle[[as.character(r0)]]$incubationdays,na.rm=TRUE)+0.5,1), xlab="incubation period, days", main="incubation period distribution")
 # incubation of 0 is asymptomatic in the model
+usr <- par("usr")
+clip(usr[1]-100, usr[2], usr[3], usr[4]+50000)
+text(x=usr[1]-2, y=usr[4]+12000, lab="B", cex=2, adj=c(1,0))
 ```
 
 The doubling time was initially `r round(1/lmf$coefficients[2],2)` days
@@ -114,7 +126,7 @@ text(x=as.numeric(names(temp)), y=temp, lab=temp, col="blue", adj=c(0.5,-0.5), c
 ```{r cases-seattle-layered, fig.width=7, fig.height=8, fig.cap="Simulating layered NPIs. NPIs were started on day 30 or 90 of the epidemic. The left plots show log-transformed numbers of newly symptomatic people per day per 100,000 population, and the right plots show cumulative % of the population that has been symptomatic. Each curve represents one stochastic simulation. The days when workplace policies are in effect is shown as a blue horizontal dashed line near the x-axis and school closures as a red line.", echo=FALSE}
 # output runs
 par(mfrow=c(3,2),
-    mar=c(3.5,3.5,2,1), #bottom, left, top, and right.
+    mar=c(3.5,3.8,4,1), #bottom, left, top, and right.
     mgp=c(2.0, 0.6, 0))
 r0 = 2.6
 denominator <- 100000
@@ -176,10 +188,14 @@ for (responseday in c(30,90)) {
             } else if (scenario=="ll/wfh") {
                 lines(x=triggerday[[scenario]]+c(0,365), y=rep(ifelse(!logy,ymin-ymax*0.02,ymin*0.85),2), col=pallayers[scenario], lwd=2, lty="dashed")
             }
-        }
-        if ((!logy & plottype=="symptomatic") |
-            (logy & plottype=="cumulative" & triggerday[[scenario]]==90)) {
-            legend(ifelse(plottype=="symptomatic","topright","bottomright"), legend=scenarios, fill=pallayers, cex=ifelse(plottype=="symptomatic",0.62,0.75), inset=ifelse(plottype=="symptomatic",0.01,0.06), bg="white")
+	}
+        usr <- par("usr")
+        if (logy) {
+            clip(usr[1]-150, usr[2], 1, usr[4]+100000)
+            text(x=-51, y=8400, lab=ifelse(responseday==30,"A","C"), cex=2.7, adj=c(1,0))
+	} else {
+            clip(usr[1]-150, usr[2], usr[3], usr[4]+500)
+            text(x=-51, y=usr[4]+8, lab=ifelse(responseday==30,"B","D"), cex=2.7, adj=c(1,0))
         }
     }
 }
@@ -189,7 +205,7 @@ legend("topleft", legend=scenarios, fill=pallayers, cex=1.3, inset=0, bg="white"
 
 ```{r cases-seattle-layered-schoolopen, fig.width=7, fig.height=8, fig.cap="Simulating re-opening schools after school closure and other sustained NPIs. NPIs were started on day 30 or 90 of the epidemic, and schools were re-opened on day 180.    The left plots show log-transformed numbers of newly symptomatic people per day per 100,000 population, and the right plots show cumulative % of the population symptomatic. Each curve represents one stochastic simulation. The days when workplace policies are in effect is shown as a blue horizontal dashed line near the x-axis and school closures as a red line.", echo=FALSE}
 par(mfrow=c(3,2),
-    mar=c(3.5,3.5,2,1), #bottom, left, top, and right.
+    mar=c(3.5,3.8,4,1), #bottom, left, top, and right.
     mgp=c(2.0, 0.6, 0))
 r0 = 2.6
 denominator <- 100000
@@ -252,10 +268,14 @@ for (responseday in c(30,90)) {
 	    lines(x=triggerday[[scenario]]+c(0,365), y=rep(ifelse(!logy,ymin-ymax*0.02,ymin*0.85),2), col=pallayers[scenario], lwd=2, lty="dashed")
         }
     }
-    if ((!logy & plottype=="symptomatic") |
-        (logy & plottype=="cumulative" & triggerday[[scenario]]==90)) {
-        legend(ifelse(plottype=="symptomatic","topright","bottomright"), legend=scenarios, fill=pallayers, cex=ifelse(plottype=="symptomatic",0.55,0.72), inset=ifelse(plottype=="symptomatic",0.01,0.06), bg="white")
-    }
+        usr <- par("usr")
+        if (logy) {
+            clip(usr[1]-150, usr[2], 1, usr[4]+100000)
+            text(x=-51, y=8400, lab=ifelse(responseday==30,"A","C"), cex=2.7, adj=c(1,0))
+	} else {
+            clip(usr[1]-150, usr[2], usr[3], usr[4]+500)
+            text(x=-51, y=usr[4]+8, lab=ifelse(responseday==30,"B","D"), cex=2.7, adj=c(1,0))
+        }
   }
 }
 plot(x=NA, y=NA, xlab="", ylab="", main="", axes=FALSE, lwd=2, cex.main=1, cex.lab=0.8, ylim=c(ymin,ymax), xlim=c(0,xmax))
@@ -267,7 +287,7 @@ legend("topleft", legend=scenarios, fill=pallayers, cex=1.1, inset=0, bg="white"
 scenarios2 <- scenarios[c(1,5,6,7)]
 
 par(mfrow=c(3,2),
-    mar=c(3.5,3.5,2,1), #bottom, left, top, and right.
+    mar=c(3.5,3.8,4,1), #bottom, left, top, and right.
     mgp=c(2.0, 0.6, 0))
 r0 = 2.6
 denominator <- 100000
@@ -331,9 +351,13 @@ for (responseday in c(30,90)) {
                 }
             }
         }
-        if ((!logy & plottype=="symptomatic") | 
-            (logy & plottype=="cumulative")) {
-            legend(ifelse(plottype=="symptomatic","topright","bottomright"), legend=scenarios2, fill=pallayers[scenarios2], cex=ifelse(plottype=="symptomatic",0.5,0.7), inset=ifelse(plottype=="symptomatic",0.01,0.06), bg="white")
+        usr <- par("usr")
+        if (logy) {
+            clip(usr[1]-150, usr[2], 1, usr[4]+100000)
+            text(x=-51, y=8400, lab=ifelse(responseday==30,"A","C"), cex=2.7, adj=c(1,0))
+	} else {
+            clip(usr[1]-150, usr[2], usr[3], usr[4]+500)
+            text(x=-51, y=usr[4]+8, lab=ifelse(responseday==30,"B","D"), cex=2.7, adj=c(1,0))
         }
     }
 }
@@ -398,7 +422,7 @@ legend("bottomright", legend=settings, fill=palsettings, inset=0.01)
 
 ```{r cases-shutdown-stochastic, fig.width=7, fig.height=3.25, fig.cap="Simulating a ``shutdown'' for 150 days. We simulated a combination of liberal leave + work from home + school closure + shelter-in-place +  home isolation. Each curve is one stochastic realization, 20 per panel. The red bars on the bottom indicate the shutdown dates, and the vertical lines are the starts of the shutdowns for each of the stochastic realizations. R0=2.6.", echo=FALSE}
 par(mfrow=c(1,2),
-    mar=c(3.4,3.4,2,1), #bottom, left, top, and right.
+    mar=c(3.4,3.8,3,1), #bottom, left, top, and right.
     mgp=c(1.9, 0.6, 0))
 r0 <- 2.6
 denominator <- 100000
@@ -431,6 +455,13 @@ for (plottype in c("symptomatic", "cumulative")) {
                 lines(x=responseday[[scenarioname]] + c(0,responseduration[[scenarioname]]), y=rep(-ymax*0.02,2), col="red", lty="dashed", lwd=2) # duration of shutdown
                 lines(x=1:length(y), y=y, col=ifelse(randomseed==1,pallayers[["ll/wfh+school+shelter+home iso"]],"gray"), lwd=ifelse(randomseed==1,1,0.3))
             }
+	    usr <- par("usr")
+            clip(usr[1]-100, usr[2], usr[3], usr[4]+100)
+            if (plottype=="symptomatic") {
+                text(x=-54, y=113, lab="A", cex=2, adj=c(1,0))
+	    } else {
+                text(x=-54, y=3.3, lab="B", cex=2, adj=c(1,0))
+	    }
 }
 ```
 
