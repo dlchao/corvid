@@ -28,3 +28,6 @@ communitycontactreductiondays 365
 antiviralpolicy treatmentonly
 quarantine 0
 quarantinelength 14
+AVEi 1
+AVEp 0
+AVEs 0
