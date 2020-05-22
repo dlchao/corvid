@@ -1,0 +1,20 @@
+# metro seattle with self-isolation
+# "self" isolation is simulated by ascertaining and isolating symptomatic cases immediately AND giving them an antiviral that totally blocks transmission to family members
+label example-seattle-26-selfisolation
+datafile seattle
+R0 2.6
+runlength 180
+summaryfilename Summary-seattle26-selfisolation.txt
+logfilename Log-seattle26-selfisolation.txt
+tractfilename Tracts-seattle26-selfisolation.txt
+randomnumberseed 1
+seedinfected 5
+seedinfecteddaily 0
+responseday 60
+ascertainmentdelay 0
+ascertainmentfraction 0.6
+ascertainedisolation 1.0
+antiviralpolicy treatmentonly
+AVEi 1
+AVEp 0
+AVEs 0

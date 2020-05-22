@@ -201,7 +201,7 @@ There are no "cases" on day 1 because the initially infected people are not symp
 \clearpage
 # Simulating interventions
 
-We can simulate interventions like liberal leave at workplaces (employees even more likely than usual to go home if sick), work from home policies (workers stay at home instead of going to work), self-isolation by sick people, and home quarantine of family members of sick people.
+We can simulate interventions like liberal leave at workplaces (employees even more likely than usual to go home if sick), work from home policies (workers stay at home instead of going to work), voluntary isolation by sick people (isolation at home after symptom onset), self isolation by ascertained cases (isolation without transmission to household members, simulated by using an "antiviral"), and home quarantine of family members of sick people.
 Here's the configuration file "config-seattle26-workfromhome" for having a "work from home" policy start on day 60:
 ```{r print-configfile-workfromhome, echo=FALSE}
 temp <- readLines("config-seattle26-workfromhome")
@@ -222,8 +222,8 @@ cat(temp, sep="\n")
 ```
 
 ```{r interventions-seattle, fig.width=7, fig.height=3.25, fig.cap="Non-pharmaceutical intervention simulations. R0=2.6 and compliance for the interventions is 60% (except for school closures, which is 100%).", echo=FALSE}
-interventions <- c("closeallschools","isolation","liberalleave","workfromhome", "quarantine")
-palinterventions <- c("black","red","blue","purple","orange","darkgreen")
+interventions <- c("closeallschools","voluntaryisolation","selfisolation","liberalleave","workfromhome", "quarantine")
+palinterventions <- c("black","red","blue","purple","orange","darkgreen","magenta")
 names(palinterventions) <- c("no intervention",interventions)
 par(mfrow=c(1,2),
     mar=c(2.8,2.8,3.6,1), #bottom, left, top, and right.

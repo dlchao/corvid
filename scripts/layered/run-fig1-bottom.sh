@@ -12,4 +12,4 @@
 #ll/wfh+school+shelter+self isolate 
 ./corvid config-seattle26-layered1-90-all-365-365-0.5-0.3-0.5-0-treatmentonly-0-14-1
 #ll/wfh+school+shelter+home isolate+quarantine 
-./corvid config-seattle26-layered1-90-all-365-365-0.5-0.3-0.5-0-none-1-14-1
+./corvid config-seattle26-layered1-90-all-365-365-0.5-0.3-0.5-0-none-0.8-14-1

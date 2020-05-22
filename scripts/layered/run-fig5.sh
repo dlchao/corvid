@@ -1,4 +1,5 @@
 #!/bin/bash
+# Figure 8
 # stochastic variation runs with school closure, workplace policies, reduction in community contacts, and home isolation of 50% of symptomatics
 
 ./corvid config-seattle26-layered1-30-all-150-365-0.5-0.3-0.5-0-none-0-14-2 ; ./corvid config-seattle26-layered1-30-all-150-365-0.5-0.3-0.5-0-none-0-14-3 ; ./corvid config-seattle26-layered1-30-all-150-365-0.5-0.3-0.5-0-none-0-14-4 ; ./corvid config-seattle26-layered1-30-all-150-365-0.5-0.3-0.5-0-none-0-14-5 ; ./corvid config-seattle26-layered1-30-all-150-365-0.5-0.3-0.5-0-none-0-14-6 ; ./corvid config-seattle26-layered1-30-all-150-365-0.5-0.3-0.5-0-none-0-14-7 ; ./corvid config-seattle26-layered1-30-all-150-365-0.5-0.3-0.5-0-none-0-14-8 ; ./corvid config-seattle26-layered1-30-all-150-365-0.5-0.3-0.5-0-none-0-14-9 ; ./corvid config-seattle26-layered1-30-all-150-365-0.5-0.3-0.5-0-none-0-14-10 

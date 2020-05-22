@@ -42,7 +42,7 @@ guide: corvid
 #	rm -rf ../corvid-guide
 	mkdir -p ../corvid-guide
 	cd ../corvid-guide; ln -s ../code/corvid .; ln -s ../corviddata/seattle* .; cp ../scripts/corvid-guide/* .
-	cd ../corvid-guide; ./corvid config-seattle26; ./corvid config-seattle26-closeallschools; ./corvid config-seattle26-isolation;  ./corvid config-seattle26-liberalleave; ./corvid config-seattle26-quarantine; ./corvid config-seattle26-workfromhome; ./corvid config-seattle21-threshold;  ./corvid config-seattle26-threshold
+	cd ../corvid-guide; ./corvid config-seattle26; ./corvid config-seattle26-closeallschools; ./corvid config-seattle26-voluntaryisolation; ./corvid config-seattle26-selfisolation; ./corvid config-seattle26-liberalleave; ./corvid config-seattle26-quarantine; ./corvid config-seattle26-workfromhome; ./corvid config-seattle21-threshold;  ./corvid config-seattle26-threshold
 
 # makes directory ../cdcmarch2020/ and runs several Seattle scenarios in response to the CDC coronavirus Modeling Team
 # The runs will take hours. You might want to customize the run script to take advantage of computer resources better than my own.
