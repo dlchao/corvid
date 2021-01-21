@@ -256,7 +256,7 @@ bool EpiModelParameters::readConfigFile(const char *configname) {
 	  iss>>bIndividualsFile;
 	} else if (param.compare("R0")==0) {
 	  if (read_config_double(R0, iss, "R0", 0.0, 1000.0)) {
-	    beta = (R0-0.0947)/14.7482;
+	    beta = (R0-0.1804)/14.1668;
 	  }
 	} else if (param.compare("symptomaticfraction")==0) {
 	  read_config_double(fBaseSymptomaticProb, iss, "symptomaticfraction", 0.0, 1.0);
